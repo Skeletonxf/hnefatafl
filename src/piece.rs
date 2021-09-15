@@ -1,4 +1,5 @@
 use std::cmp::PartialEq;
+use std::convert::TryFrom;
 use std::fmt::Display;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -59,5 +60,17 @@ impl PartialEq<Tile> for Piece {
 impl PartialEq<Piece> for Tile {
     fn eq(&self, piece: &Piece) -> bool {
         piece.eq(self)
+    }
+}
+
+impl TryFrom<Tile> for Piece {
+    type Error = ();
+    fn try_from(tile: Tile) -> Result<Self, Self::Error> {
+        match tile {
+            Tile::Attacker => Ok(Piece::Attacker),
+            Tile::Defender => Ok(Piece::Defender),
+            Tile::King => Ok(Piece::King),
+            Tile::Empty => Err(()),
+        }
     }
 }
