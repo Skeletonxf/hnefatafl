@@ -75,7 +75,7 @@ impl GameState {
                 E, E, E, E, E, E, E, E, E, E, E,
                 A, E, E, E, E, D, E, E, E, E, A,
                 A, E, E, E, D, D, D, E, E, E, A,
-                A, E, E, D, D, K, D, D, E, E, A,
+                A, A, E, D, D, K, D, D, E, A, A,
                 A, E, E, E, D, D, D, E, E, E, A,
                 A, E, E, E, E, D, E, E, E, E, A,
                 E, E, E, E, E, E, E, E, E, E, E,
