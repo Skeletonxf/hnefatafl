@@ -38,6 +38,15 @@ enum Direction {
     Down,
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum GameStateUpdate {
+    DefenderWin,
+    AttackerWin,
+    DefenderCapture,
+    AttackerCapture,
+    Nothing,
+}
+
 impl Display for Player {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(
@@ -133,13 +142,16 @@ impl Board {
         let (w, h) = self.size();
         match position {
             (0, _) | (_, 0) => true,
-            (x, y) => x == w || y == h,
+            (x, y) => x == w - 1 || y == h - 1,
         }
     }
 
     fn is_corner(&self, position: Position) -> bool {
         let (w, h) = self.size();
-        position == (0, 0) || position == (0, h) || position == (w, 0) || position == (w, h)
+        position == (0, 0)
+            || position == (0, h - 1)
+            || position == (w - 1, 0)
+            || position == (w - 1, h - 1)
     }
 
     fn on(&self, position: Position) -> bool {
@@ -239,8 +251,18 @@ impl Tile {
     }
 }
 
+impl GameStateUpdate {
+    fn update(&self, event: GameStateUpdate) -> GameStateUpdate {
+        match (self, event) {
+            (GameStateUpdate::DefenderWin, _) => GameStateUpdate::DefenderWin,
+            (GameStateUpdate::AttackerWin, _) => GameStateUpdate::AttackerWin,
+            _ => event,
+        }
+    }
+}
+
 impl GameState {
-    pub fn make_play(&mut self, play: &Play) -> Result<(), ()> {
+    pub fn make_play(&mut self, play: &Play) -> Result<GameStateUpdate, ()> {
         if !self.board.on(play.from) || !self.board.on(play.to) {
             return Err(());
         }
@@ -252,9 +274,13 @@ impl GameState {
             return Err(());
         }
         self.board.swap(play.from, play.to);
-        self.check_capture(play);
-        self.turn = self.turn.next();
-        Ok(())
+        let mut info = self.check_capture(play);
+        if self.is_defender_victory() {
+            info = info.update(GameStateUpdate::DefenderWin);
+        } else {
+            self.turn = self.turn.next();
+        }
+        Ok(info)
     }
 
     fn is_valid_defender_play(&self, play: &Play) -> bool {
@@ -352,7 +378,8 @@ impl GameState {
         position < self.board.size()
     }
 
-    fn check_capture(&mut self, play: &Play) {
+    fn check_capture(&mut self, play: &Play) -> GameStateUpdate {
+        let mut info = GameStateUpdate::Nothing;
         for &next in self
             .board
             .adjacent(play.to)
@@ -377,7 +404,7 @@ impl GameState {
                         };
                         if capture {
                             self.board[next] = Tile::Empty;
-                            println!("Captured: {:?}", next);
+                            info = info.update(GameStateUpdate::AttackerCapture);
                         }
                     }
                     Tile::King => {
@@ -401,7 +428,7 @@ impl GameState {
                             .all(|c| c == true);
                         if capture {
                             self.board[next] = Tile::Empty;
-                            println!("Captured: {:?}", next);
+                            info = info.update(GameStateUpdate::AttackerWin);
                         }
                     }
                     _ => (),
@@ -424,7 +451,7 @@ impl GameState {
                             };
                             if capture {
                                 self.board[next] = Tile::Empty;
-                                println!("Captured: {:?}", next);
+                                info = info.update(GameStateUpdate::DefenderCapture);
                             }
                         }
                         _ => (),
@@ -433,5 +460,14 @@ impl GameState {
                 Tile::Empty => unreachable!(),
             }
         }
+        info
+    }
+
+    fn is_defender_victory(&self) -> bool {
+        let (w, h) = self.board.size();
+        self.board[(0, 0)] == Tile::King
+            || self.board[(w - 1, 0)] == Tile::King
+            || self.board[(0, h - 1)] == Tile::King
+            || self.board[(w - 1, h - 1)] == Tile::King
     }
 }

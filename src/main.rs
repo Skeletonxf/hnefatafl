@@ -5,8 +5,9 @@ use state::{GameState, Play};
 
 fn make_play(game: &mut GameState, play: Play) {
     println!("{:?}", play);
-    game.make_play(&play).unwrap();
-    println!("{}\n", game);
+    let info = game.make_play(&play).unwrap();
+    println!("{}", game);
+    println!("{:?}\n", info);
 }
 
 fn main() {
