@@ -3,6 +3,23 @@ mod state;
 
 use state::{GameState, Play};
 
+use structopt::StructOpt;
+
+#[derive(StructOpt, Debug)]
+#[structopt(name = "hnefatafl")]
+/// Hnefatafl
+struct Arguments {
+    #[structopt(subcommand)]
+    mode: Mode,
+}
+
+#[derive(StructOpt, Debug)]
+/// Game mode
+enum Mode {
+    /// Two player game
+    TwoPlayer,
+}
+
 fn make_play(game: &mut GameState, play: Play) {
     println!("{:?}", play);
     let info = game.make_play(&play).unwrap();
@@ -11,34 +28,13 @@ fn make_play(game: &mut GameState, play: Play) {
 }
 
 fn main() {
+    let arguments = Arguments::from_args();
+    match arguments.mode {
+        Mode::TwoPlayer => two_player(),
+    }
+}
+
+fn two_player() {
     let mut game = GameState::default();
     println!("{}\n", game);
-    make_play(
-        &mut game,
-        Play {
-            from: (3, 5),
-            to: (3, 2),
-        },
-    );
-    make_play(
-        &mut game,
-        Play {
-            from: (3, 0),
-            to: (3, 1),
-        },
-    );
-    make_play(
-        &mut game,
-        Play {
-            from: (4, 4),
-            to: (4, 1),
-        },
-    );
-    make_play(
-        &mut game,
-        Play {
-            from: (0, 3),
-            to: (3, 3),
-        },
-    );
 }
