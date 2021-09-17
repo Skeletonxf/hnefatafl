@@ -3,9 +3,6 @@ mod state;
 
 use state::{GameState, Play};
 
-use std::io;
-use std::io::BufRead;
-
 use structopt::StructOpt;
 
 #[derive(StructOpt, Debug)]
@@ -39,12 +36,13 @@ fn main() {
 
 fn two_player() {
     let mut game = GameState::default();
-    let stdin = io::stdin();
+    let mut rl = rustyline::Editor::<()>::new();
     println!("{}\n", game);
     loop {
-        println!("Enter move:");
-        let input = stdin.lock().lines().next().unwrap().unwrap();
+        let input = match rl.readline("Enter move: ") {
+            Ok(s) => s,
+            Err(_) => return,
+        };
         println!("{:?}", input);
-        
     }
 }
