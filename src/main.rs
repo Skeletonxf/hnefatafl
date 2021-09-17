@@ -3,6 +3,9 @@ mod state;
 
 use state::{GameState, Play};
 
+use std::io;
+use std::io::BufRead;
+
 use structopt::StructOpt;
 
 #[derive(StructOpt, Debug)]
@@ -36,5 +39,12 @@ fn main() {
 
 fn two_player() {
     let mut game = GameState::default();
+    let stdin = io::stdin();
     println!("{}\n", game);
+    loop {
+        println!("Enter move:");
+        let input = stdin.lock().lines().next().unwrap().unwrap();
+        println!("{:?}", input);
+        
+    }
 }
