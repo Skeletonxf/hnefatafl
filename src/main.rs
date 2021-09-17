@@ -1,9 +1,12 @@
 mod piece;
 mod state;
 
-use state::{GameState, Play};
+use state::{GameState, GameStateUpdate, Play};
 
 use structopt::StructOpt;
+
+use std::num::ParseIntError;
+use std::str::FromStr;
 
 #[derive(StructOpt, Debug)]
 #[structopt(name = "hnefatafl")]
@@ -20,17 +23,97 @@ enum Mode {
     TwoPlayer,
 }
 
+impl Play {
+    fn new(play: Move) -> Self {
+        Play {
+            from: (play.from.x.into(), play.from.y.into()),
+            to: (play.to.x.into(), play.to.y.into()),
+        }
+    }
+}
+
 fn make_play(game: &mut GameState, play: Play) {
-    println!("{:?}", play);
-    let info = game.make_play(&play).unwrap();
-    println!("{}", game);
-    println!("{:?}\n", info);
+    match game.make_play(&play) {
+        Ok(info) => {
+            println!("{}", game);
+            match info {
+                GameStateUpdate::DefenderWin => println!("White wins!"),
+                GameStateUpdate::AttackerWin => println!("Red wins!"),
+                GameStateUpdate::DefenderCapture => println!("Capture!"),
+                GameStateUpdate::AttackerCapture => println!("Capture!"),
+                GameStateUpdate::Nothing => (),
+            }
+            println!("");
+        }
+        Err(_) => println!("Invalid move"),
+    }
 }
 
 fn main() {
     let arguments = Arguments::from_args();
     match arguments.mode {
         Mode::TwoPlayer => two_player(),
+    }
+}
+
+#[derive(Debug, PartialEq)]
+enum ParseMoveError {
+    ParseIntError(ParseIntError),
+    ParsePositionError,
+    ParseMoveError,
+}
+
+#[derive(Debug, PartialEq)]
+struct Move {
+    from: Position,
+    to: Position,
+}
+
+#[derive(Debug, PartialEq)]
+struct Position {
+    x: u8,
+    y: u8,
+}
+
+impl From<ParseIntError> for ParseMoveError {
+    fn from(error: ParseIntError) -> Self {
+        ParseMoveError::ParseIntError(error)
+    }
+}
+
+impl FromStr for Position {
+    type Err = ParseMoveError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let coords: Vec<&str> = s
+            .trim_matches(|p| p == '(' || p == ')')
+            .split(',')
+            .collect();
+
+        if coords.len() != 2 {
+            return Err(ParseMoveError::ParsePositionError);
+        }
+
+        Ok(Position {
+            x: coords[0].trim().parse()?,
+            y: coords[1].trim().parse()?,
+        })
+    }
+}
+
+impl FromStr for Move {
+    type Err = ParseMoveError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let (from, to) = s
+            .split_once("->")
+            .or_else(|| s.split_once("to"))
+            .ok_or(ParseMoveError::ParseMoveError)?;
+
+        Ok(Move {
+            from: from.trim().parse()?,
+            to: to.trim().parse()?,
+        })
     }
 }
 
@@ -43,6 +126,12 @@ fn two_player() {
             Ok(s) => s,
             Err(_) => return,
         };
-        println!("{:?}", input);
+        let player_move = input.trim().parse::<Move>();
+        match player_move {
+            Ok(m) => make_play(&mut game, Play::new(m)),
+            Err(_) => {
+                println!("Did not understand input, expected input in the form (0, 0) -> (5, 0)")
+            }
+        };
     }
 }

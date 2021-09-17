@@ -374,10 +374,6 @@ impl GameState {
         self.board[position] != Tile::Empty
     }
 
-    fn is_in_range(&self, position: Position) -> bool {
-        position < self.board.size()
-    }
-
     fn check_capture(&mut self, play: &Play) -> GameStateUpdate {
         let mut info = GameStateUpdate::Nothing;
         for &next in self
