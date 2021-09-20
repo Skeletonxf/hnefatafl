@@ -126,6 +126,22 @@ fn two_player() {
             Ok(s) => s,
             Err(_) => return,
         };
+        if input.trim() == "enumerate" {
+            println!("Available moves:\n");
+            let plays = game.available_plays();
+            let total = plays.len();
+            for (i, play) in plays.iter().enumerate() {
+                let formatted = play.to_string();
+                print!("{} ", formatted);
+                for _ in 0.."(10,10) -> (10,11)".len() - formatted.len() {
+                    print!(" ");
+                }
+                if i % 4 == 3 || i == total {
+                    println!();
+                }
+            }
+            continue;
+        }
         let player_move = input.trim().parse::<Move>();
         match player_move {
             Ok(m) => make_play(&mut game, Play::new(m)),

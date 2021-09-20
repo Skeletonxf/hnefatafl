@@ -83,6 +83,16 @@ impl IndexMut<Position> for Board {
     }
 }
 
+impl Display for Play {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
+        write!(
+            f,
+            "({},{}) -> ({},{})",
+            self.from.0, self.from.1, self.to.0, self.to.1
+        )
+    }
+}
+
 impl Board {
     fn swap(&mut self, position1: Position, position2: Position) {
         let tmp = self[position1];
@@ -174,6 +184,17 @@ fn direction(from: Position, to: Position) -> Direction {
         Direction::Up
     } else {
         panic!("Bad input")
+    }
+}
+
+impl Direction {
+    fn directions() -> [Direction; 4] {
+        [
+            Direction::Left,
+            Direction::Up,
+            Direction::Right,
+            Direction::Down,
+        ]
     }
 }
 
@@ -295,13 +316,7 @@ impl GameState {
         if !Player::Defender.owns(piece) {
             return false;
         }
-        // Can we sit on the final position?
-        let to = self.board[play.to];
-        let unoccupied = match piece {
-            Piece::King => to == Tile::Empty,
-            _ => to == Tile::Empty && play.to != self.castle && !self.board.is_corner(play.to),
-        };
-        if !unoccupied {
+        if !self.can_stop_at(piece, play.to) {
             return false;
         }
         self.is_valid_path(play.from, play.to)
@@ -319,14 +334,32 @@ impl GameState {
         if !Player::Attacker.owns(piece) {
             return false;
         }
-        // Can we sit on the final position?
-        let to = self.board[play.to];
-        let unoccupied =
-            to == Tile::Empty && play.to != self.castle && !self.board.is_corner(play.to);
-        if !unoccupied {
+        if !self.can_stop_at(piece, play.to) {
             return false;
         }
         self.is_valid_path(play.from, play.to)
+    }
+
+    /// Is this piece allowed to be moved to this position assuming it has a path to it?
+    fn can_stop_at(&self, piece: Piece, position: Position) -> bool {
+        let to = self.board[position];
+        match piece {
+            Piece::Defender | Piece::Attacker => {
+                to == Tile::Empty && position != self.castle && !self.board.is_corner(position)
+            }
+            Piece::King => to == Tile::Empty,
+        }
+    }
+
+    /// Is this piece allowed to pass through this position during a movement?
+    fn can_pass_through(&self, piece: Piece, position: Position) -> bool {
+        let to = self.board[position];
+        match piece {
+            Piece::Defender | Piece::Attacker => {
+                to == Tile::Empty && !self.board.is_corner(position)
+            }
+            Piece::King => to == Tile::Empty,
+        }
     }
 
     /// Checks if the path between from and to is unoccpied and a single horizontal or vertical
@@ -465,5 +498,43 @@ impl GameState {
             || self.board[(w - 1, 0)] == Tile::King
             || self.board[(0, h - 1)] == Tile::King
             || self.board[(w - 1, h - 1)] == Tile::King
+    }
+
+    pub fn available_plays(&self) -> Vec<Play> {
+        let mut plays = Vec::new();
+        let (w, h) = self.board.size();
+        for x in 0..w {
+            for y in 0..h {
+                let tile = self.board[(x, y)];
+                let piece: Piece = match tile.try_into() {
+                    Ok(piece) => piece,
+                    Err(_) => continue,
+                };
+                match (&self.turn, piece) {
+                    (Player::Defender, Piece::Defender | Piece::King)
+                    | (Player::Attacker, Piece::Attacker) => {
+                        for direction in Direction::directions() {
+                            let (mut x1, mut y1) = (x, y);
+                            while let Some(position) = self.board.step((x1, y1), direction) {
+                                if self.can_stop_at(piece, position) {
+                                    plays.push(Play {
+                                        from: (x, y),
+                                        to: position,
+                                    });
+                                }
+                                if self.can_pass_through(piece, position) {
+                                    x1 = position.0;
+                                    y1 = position.1;
+                                } else {
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    _ => (),
+                }
+            }
+        }
+        plays
     }
 }
