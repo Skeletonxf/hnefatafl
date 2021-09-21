@@ -443,7 +443,7 @@ impl GameState {
                                 match owner {
                                     Some(Player::Attacker) => true,
                                     // corner squares count towards a capture
-                                    _ => self.board.is_edge(position),
+                                    _ => self.board.is_corner(position),
                                 }
                             }
                             None => false,
@@ -465,11 +465,11 @@ impl GameState {
                                     match owner {
                                         Some(Player::Attacker) => true,
                                         // corner squares count towards a capture
-                                        _ => self.board.is_edge(position),
+                                        _ => self.board.is_corner(position),
                                     }
                                 }
                                 // edge counts towards a capture for the king
-                                None => self.board.is_edge(next),
+                                None => true,
                             })
                             .all(|c| c == true);
                         if capture {
@@ -490,7 +490,7 @@ impl GameState {
                                     match owner {
                                         Some(Player::Defender) => true,
                                         // corner squares count towards a capture
-                                        _ => self.board.is_edge(position),
+                                        _ => self.board.is_corner(position),
                                     }
                                 }
                                 None => false,
