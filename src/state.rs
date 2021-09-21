@@ -236,7 +236,24 @@ impl Default for GameState {
 
 impl Display for GameState {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-        write!(f, "Turn: {}\n{}", self.turn, self.board)
+        writeln!(f, "Turn: {}", self.turn)?;
+        let (w, h) = self.board.size();
+        write!(f, "  ")?;
+        for x in 0..w {
+            write!(f, " {}", x)?;
+        }
+        writeln!(f)?;
+        for x in 0..w {
+            if x < 10 {
+                write!(f, " ")?;
+            }
+            write!(f, "{}", x)?;
+            for y in 0..h {
+                write!(f, " {}", self.board[(x, y)])?;
+            }
+            writeln!(f)?;
+        }
+        Ok(())
     }
 }
 
