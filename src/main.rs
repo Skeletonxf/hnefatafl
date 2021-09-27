@@ -1,7 +1,7 @@
 mod piece;
 mod state;
 
-use state::{GameState, GameStateUpdate, Play};
+use state::{GameState, GameStateUpdate, Play, Player};
 
 use structopt::StructOpt;
 
@@ -149,5 +149,12 @@ fn two_player() {
                 println!("Did not understand input, expected input in the form (0, 0) -> (5, 0)")
             }
         };
+        if let Some(winner) = game.winner() {
+            match winner {
+                Player::Attacker => println!("The King was captured!"),
+                Player::Defender => println!("The King escapes!"),
+            };
+            return;
+        }
     }
 }

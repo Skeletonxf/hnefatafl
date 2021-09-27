@@ -7,6 +7,7 @@ use std::convert::TryInto;
 use std::fmt::Display;
 use std::ops::{Index, IndexMut};
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Player {
     Defender,
     Attacker,
@@ -14,14 +15,17 @@ pub enum Player {
 
 type Position = (usize, usize);
 
+#[derive(Debug)]
 pub struct GameState {
     board: Board,
     turn: Player,
-    castle: Position,
+    winner: Option<Player>,
 }
 
+#[derive(Debug)]
 pub struct Board {
     board: Matrix<Tile>,
+    castle: Position,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -221,9 +225,12 @@ impl GameState {
             ])
         };
         GameState {
-            board: Board { board },
+            board: Board {
+                board,
+                castle: (5, 5),
+            },
             turn: Player::Defender,
-            castle: (5, 5),
+            winner: None,
         }
     }
 }
@@ -304,6 +311,9 @@ impl GameState {
         if !self.board.on(play.from) || !self.board.on(play.to) {
             return Err(());
         }
+        if self.winner.is_some() {
+            return Err(());
+        }
         let valid = match self.turn {
             Player::Defender => self.is_valid_defender_play(play),
             Player::Attacker => self.is_valid_attacker_play(play),
@@ -318,6 +328,11 @@ impl GameState {
         } else {
             self.turn = self.turn.next();
         }
+        match info {
+            GameStateUpdate::DefenderWin => self.winner = Some(Player::Defender),
+            GameStateUpdate::AttackerWin => self.winner = Some(Player::Attacker),
+            _ => (),
+        };
         Ok(info)
     }
 
@@ -362,7 +377,9 @@ impl GameState {
         let to = self.board[position];
         match piece {
             Piece::Defender | Piece::Attacker => {
-                to == Tile::Empty && position != self.castle && !self.board.is_corner(position)
+                to == Tile::Empty
+                    && position != self.board.castle
+                    && !self.board.is_corner(position)
             }
             Piece::King => to == Tile::Empty,
         }
@@ -518,6 +535,9 @@ impl GameState {
     }
 
     pub fn available_plays(&self) -> Vec<Play> {
+        if self.winner.is_some() {
+            return vec![];
+        }
         let mut plays = Vec::new();
         let (w, h) = self.board.size();
         for x in 0..w {
@@ -553,5 +573,9 @@ impl GameState {
             }
         }
         plays
+    }
+
+    pub fn winner(&self) -> Option<Player> {
+        self.winner
     }
 }
