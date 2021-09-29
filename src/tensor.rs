@@ -1,7 +1,5 @@
 // Prototype, will probably fold into Easy ML and relicense as MPL2 at some point
 
-use std::any::TypeId;
-
 // A named tensor http://nlp.seas.harvard.edu/NamedTensor
 pub struct Tensor<T, const D: usize> {
     data: Vec<T>,
@@ -10,23 +8,21 @@ pub struct Tensor<T, const D: usize> {
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub struct Dimension {
-    name: TypeId,
+    name: &'static str,
 }
 
 impl Dimension {
-    pub fn new<T: 'static>() -> Self {
-        Dimension {
-            name: TypeId::of::<T>(),
-        }
+    pub fn new(name: &'static str) -> Self {
+        Dimension { name }
     }
 }
 
-pub fn dimension<T: 'static>() -> Dimension {
-    Dimension::new::<T>()
+pub fn dimension(name: &'static str) -> Dimension {
+    Dimension::new(name)
 }
 
-pub fn of<T: 'static>(length: usize) -> (Dimension, usize) {
-    (dimension::<T>(), length)
+pub fn of(name: &'static str, length: usize) -> (Dimension, usize) {
+    (dimension(name), length)
 }
 
 fn has_duplicates(dimensions: &[(Dimension, usize)]) -> bool {
@@ -100,18 +96,16 @@ impl<T, const D: usize> Tensor<T, D> {
 
 #[test]
 fn indexing_test() {
-    struct X;
-    struct Y;
-    let tensor = Tensor::new(vec![1, 2, 3, 4], [of::<X>(2), of::<Y>(2)]);
+    let tensor = Tensor::new(vec![1, 2, 3, 4], [of("x", 2), of("y", 2)]);
     fn get_xy(tensor: &Tensor<u32, 2>, x: usize, y: usize) -> u32 {
-        tensor.get([of::<X>(x), of::<Y>(y)]).cloned().unwrap()
+        tensor.get([of("x", x), of("y", y)]).cloned().unwrap()
     }
     assert_eq!(get_xy(&tensor, 0, 0), 1);
     assert_eq!(get_xy(&tensor, 0, 1), 2);
     assert_eq!(get_xy(&tensor, 1, 0), 3);
     assert_eq!(get_xy(&tensor, 1, 1), 4);
     fn get_yx(tensor: &Tensor<u32, 2>, x: usize, y: usize) -> u32 {
-        tensor.get([of::<Y>(y), of::<X>(x)]).cloned().unwrap()
+        tensor.get([of("y", y), of("x", x)]).cloned().unwrap()
     }
     assert_eq!(get_yx(&tensor, 0, 0), 1);
     assert_eq!(get_yx(&tensor, 0, 1), 2);
@@ -122,13 +116,11 @@ fn indexing_test() {
 #[test]
 #[should_panic]
 fn repeated_name() {
-    struct X;
-    Tensor::new(vec![1, 2, 3, 4], [of::<X>(2), of::<X>(2)]);
+    Tensor::new(vec![1, 2, 3, 4], [of("x", 2), of("x", 2)]);
 }
 
 #[test]
 #[should_panic]
 fn wrong_size() {
-    struct X;
-    Tensor::new(vec![1, 2, 3, 4], [of::<X>(2), of::<X>(3)]);
+    Tensor::new(vec![1, 2, 3, 4], [of("x", 2), of("y", 3)]);
 }
