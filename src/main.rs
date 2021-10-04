@@ -1,6 +1,5 @@
 mod piece;
 mod state;
-mod tensor;
 
 use state::{GameState, GameStateUpdate, Play, Player};
 
