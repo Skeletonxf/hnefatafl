@@ -7,6 +7,6 @@ license = "AGPL-3.0-or-later"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-easy-ml = "1.7"
+easy-ml = { git = "https://github.com/Skeletonxf/easy-ml" } # 1.9 isn't out yet
 structopt = "0.3"
 rustyline = "9.0"

@@ -578,4 +578,8 @@ impl GameState {
     pub fn winner(&self) -> Option<Player> {
         self.winner
     }
+
+    pub fn representation(&self) -> easy_ml::tensors::Tensor<f64, 3> {
+        crate::bot::new_input(&self.board)
+    }
 }

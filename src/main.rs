@@ -1,3 +1,4 @@
+mod bot;
 mod piece;
 mod state;
 
@@ -121,7 +122,9 @@ fn two_player() {
     let mut game = GameState::default();
     let mut rl = rustyline::Editor::<()>::new();
     println!("{}\n", game);
+    println!("Enter 'enumerate' to list available moves");
     loop {
+        println!("NN encoding: {:?}", game.representation());
         let input = match rl.readline("Enter move: ") {
             Ok(s) => s,
             Err(_) => return,
