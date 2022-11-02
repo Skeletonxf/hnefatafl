@@ -43,6 +43,7 @@ private fun ContentPreview() = PreviewSurface {
 }
 
 fun main() = application {
+    Bridge().getLinkerInstance()
     Window(
         onCloseRequest = ::exitApplication,
         title = "Hnefatafl",

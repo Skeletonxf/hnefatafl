@@ -22,6 +22,11 @@ dependencies {
 compose.desktop {
     application {
         mainClass = "MainKt"
+        jvmArgs.addAll(listOf(
+            "--add-modules",
+            "jdk.incubator.foreign",
+            "--enable-native-access=ALL-UNNAMED"
+        ))
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
