@@ -33,7 +33,7 @@ private fun ColorBackground(
 
 @Composable
 @Preview
-fun ColorPreview() = PreviewSurface {
+private fun ColorPreview() = PreviewSurface {
     Column {
         ColorBackground(
             backgroundColor = MaterialTheme.colors.background,
