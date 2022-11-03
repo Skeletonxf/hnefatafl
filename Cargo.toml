@@ -4,9 +4,14 @@ version = "0.1.0"
 edition = "2018"
 license = "AGPL-3.0-or-later"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+crate-type = ["cdylib"]
 
 [dependencies]
 easy-ml = { git = "https://github.com/Skeletonxf/easy-ml" } # 1.9 isn't out yet
 structopt = "0.3"
 rustyline = "9.0"
+
+
+[build-dependencies]
+cbindgen = "0.24"
