@@ -10,6 +10,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
+import io.github.skeletonxf.Bridge
+import io.github.skeletonxf.HnefataflMaterialTheme
+import io.github.skeletonxf.PreviewSurface
 
 @Composable
 @Preview
@@ -43,7 +46,7 @@ private fun ContentPreview() = PreviewSurface {
 }
 
 fun main() = application {
-    Bridge().getLinkerInstance()
+    Bridge().helloWorld()
     Window(
         onCloseRequest = ::exitApplication,
         title = "Hnefatafl",
