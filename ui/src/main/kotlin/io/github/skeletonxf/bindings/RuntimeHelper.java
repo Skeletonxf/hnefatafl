@@ -37,7 +37,7 @@ final class RuntimeHelper {
             (size, align) -> MemorySegment.allocateNative(size, align, MemorySession.openImplicit());
 
     static {
-        
+
         SymbolLookup loaderLookup = SymbolLookup.loaderLookup();
         SYMBOL_LOOKUP = name -> loaderLookup.lookup(name).or(() -> LINKER.defaultLookup().lookup(name));
     }
