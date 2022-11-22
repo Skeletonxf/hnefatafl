@@ -1,5 +1,5 @@
+uniffi_macros::include_scaffolding!("hnefatafl");
 
-#[no_mangle]
-pub extern "C" fn hello_from_rust() {
-    println!("Hello from Rust!");
+fn hello_world() {
+    println!("Hello from rust!");
 }

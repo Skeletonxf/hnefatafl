@@ -11,7 +11,9 @@ crate-type = ["cdylib"]
 easy-ml = { git = "https://github.com/Skeletonxf/easy-ml" } # 1.9 isn't out yet
 structopt = "0.3"
 rustyline = "9.0"
-
+uniffi = "0.21"
+uniffi_macros = "0.21.0"
 
 [build-dependencies]
-cbindgen = "0.24"
+uniffi_build = "0.21"
+# cbindgen = "0.24"

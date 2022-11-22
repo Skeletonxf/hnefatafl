@@ -17,6 +17,9 @@ dependencies {
     // (in a separate module for demo project and in testMain).
     // With compose.desktop.common you will also lose @Preview functionality
     implementation(compose.desktop.currentOs)
+    // UniFFI dependency
+    // https://mvnrepository.com/artifact/net.java.dev.jna/jna
+    implementation("net.java.dev.jna:jna:5.12.1")
 }
 
 configure<SourceSetContainer> {
@@ -25,13 +28,25 @@ configure<SourceSetContainer> {
     }
 }
 
-val jvmVersion = 19
+val jvmVersion = 17
+
+val ffiBindings = tasks.register("generateUniFFIBindings", Exec::class) {
+    workingDir = File("${project.projectDir}")
+    commandLine = listOf(
+        "uniffi-bindgen",
+        "generate",
+        "../src/hnefatafl.udl",
+        "--language",
+        "kotlin",
+        "--out-dir",
+        "src/main/kotlin/"
+    )
+}
 
 tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile::class).all {
-    // 19 doesn't seem to be recognised yet?
-    // kotlinOptions {
-    //     jvmTarget = jvmVersion.toString()
-    // }
+     kotlinOptions {
+         jvmTarget = jvmVersion.toString()
+     }
 }
 
 java {
@@ -39,18 +54,28 @@ java {
 }
 
 tasks.withType(JavaCompile::class).all {
-    options.compilerArgs.add("--enable-preview")
+    //options.compilerArgs.add("--enable-preview")
+    dependsOn.add(ffiBindings)
 }
+
+// If the bindings are generated in the build dir, they can't be accessed by kotlin source code?
+//sourceSets {
+//    main {
+//        kotlin {
+//            include("${buildDir}/generated/source/bindings")
+//        }
+//    }
+//}
 
 compose.desktop {
     application {
         mainClass = "MainKt"
-        jvmArgs.addAll(listOf(
-            //"--add-modules",
-            //"jdk.incubator.foreign",
-            "--enable-native-access=ALL-UNNAMED",
-            "--enable-preview"
-        ))
+//        jvmArgs.addAll(listOf(
+//            //"--add-modules",
+//            //"jdk.incubator.foreign",
+//            "--enable-native-access=ALL-UNNAMED",
+//            "--enable-preview"
+//        ))
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
