@@ -13,3 +13,4 @@ build/
 /captures
 .externalNativeBuild
 .cxx
+/src/main/kotlin/io/github/skeletonxf/bindings/
