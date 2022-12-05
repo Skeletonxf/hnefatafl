@@ -4,20 +4,20 @@ mod state;
 
 use state::{GameState, GameStateUpdate, Play, Player};
 
-use structopt::StructOpt;
-
 use std::num::ParseIntError;
 use std::str::FromStr;
 
-#[derive(StructOpt, Debug)]
-#[structopt(name = "hnefatafl")]
+use clap::{Parser, Subcommand};
+
+#[derive(Parser, Debug)]
+#[command(name = "hnefatafl")]
 /// Hnefatafl
 struct Arguments {
-    #[structopt(subcommand)]
+    #[command(subcommand)]
     mode: Mode,
 }
 
-#[derive(StructOpt, Debug)]
+#[derive(Subcommand, Debug)]
 /// Game mode
 enum Mode {
     /// Two player game
@@ -51,7 +51,7 @@ fn make_play(game: &mut GameState, play: Play) {
 }
 
 fn main() {
-    let arguments = Arguments::from_args();
+    let arguments = Arguments::parse();
     match arguments.mode {
         Mode::TwoPlayer => two_player(),
     }
