@@ -582,4 +582,8 @@ impl GameState {
     pub fn representation(&self) -> easy_ml::tensors::Tensor<f64, 3> {
         crate::bot::new_input(&self.board)
     }
+
+    pub fn tiles(&self) -> Vec<Tile> {
+        self.board.board.column_major_iter().collect()
+    }
 }

@@ -1,6 +1,7 @@
 package io.github.skeletonxf
 
 import io.github.skeletonxf.bindings.bindings_h
+import io.github.skeletonxf.board.Tile
 import java.lang.foreign.MemoryAddress
 import java.lang.ref.Cleaner
 
@@ -22,6 +23,18 @@ class GameStateHandle: GameState {
 
     override fun debug() {
         bindings_h.game_state_handle_debug(handle)
+        board()
+    }
+
+    override fun board(): List<Tile> {
+        val tiles = bindings_h.game_state_handle_tiles(handle)
+        val length = bindings_h.tile_array_length(tiles)
+        // TODO: Use i32 on Rust side for indexing to make this easier here
+        val tileTypes = Tile.values()
+        // TODO: Utility on Tile maybe?
+        val copied = List(length.toInt()) { bindings_h.tile_array_get(tiles, it.toLong()) }.map { tileTypes[it.toInt()] }
+        bindings_h.tile_array_destroy(tiles)
+        return copied.also { println("Board is $it") }
     }
 
     companion object {

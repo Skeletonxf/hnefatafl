@@ -1,10 +1,12 @@
 mod bot;
 mod piece;
 mod state;
+mod ffi;
 
 use std::sync::Mutex;
 
 use state::GameState;
+use ffi::TileArray;
 
 #[derive(Debug)]
 pub struct GameStateHandle {
@@ -48,6 +50,18 @@ pub extern fn game_state_handle_debug(handle: *const GameStateHandle) {
     }
 }
 
+/// Returns the tiles in row major order
+#[no_mangle]
+pub extern fn game_state_handle_tiles(handle: *const GameStateHandle) -> *mut TileArray {
+    let tiles = with_handle(handle, |handle| {
+        handle.tiles()
+    }).unwrap_or_else(|error| {
+        eprint!("Error calling game_state_handle_tiles: {:?}", error);
+        vec![]
+    });
+    TileArray::new(tiles)
+}
+
 #[derive(Clone, Debug)]
 enum FFIError {
     NullPointer,
@@ -82,9 +96,4 @@ where
         op(&mut guard)
         // drop mutex guard
     }).map_err(|_| FFIError::Panic)
-}
-
-#[no_mangle]
-pub extern "C" fn hello_from_rust() {
-    println!("Hello from Rust!");
 }

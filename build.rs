@@ -9,7 +9,6 @@ fn main() {
     cbindgen::Builder::new()
       .with_crate(crate_dir)
       .with_language(Language::C)
-      .with_no_includes() // TODO: Probably will need to turn this back on
       .generate()
       .expect("Unable to generate bindings")
       .write_to_file("bindings.h");

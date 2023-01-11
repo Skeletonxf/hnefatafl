@@ -2,12 +2,13 @@ use std::cmp::PartialEq;
 use std::convert::TryFrom;
 use std::fmt::Display;
 
+#[repr(u8)]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Tile {
-    Empty,
-    Attacker,
-    Defender,
-    King,
+    Empty = 0,
+    Attacker = 1,
+    Defender = 2,
+    King = 3,
 }
 
 impl Display for Tile {
