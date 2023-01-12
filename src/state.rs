@@ -586,4 +586,8 @@ impl GameState {
     pub fn tiles(&self) -> Vec<Tile> {
         self.board.board.column_major_iter().collect()
     }
+
+    pub fn size(&self) -> (usize, usize) {
+        self.board.size()
+    }
 }

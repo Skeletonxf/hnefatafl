@@ -1,9 +1,9 @@
 package io.github.skeletonxf
 
-import io.github.skeletonxf.board.Tile
+import io.github.skeletonxf.board.BoardData
 
 interface GameState {
     fun debug()
 
-    fun board(): List<Tile>
+    fun board(): BoardData
 }

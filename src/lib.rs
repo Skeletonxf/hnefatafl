@@ -53,6 +53,8 @@ pub extern fn game_state_handle_debug(handle: *const GameStateHandle) {
 /// Returns the tiles in row major order
 #[no_mangle]
 pub extern fn game_state_handle_tiles(handle: *const GameStateHandle) -> *mut TileArray {
+    // TODO: Really need to just build a Result sort of API for cases where there is
+    // no good failure result fallback
     let tiles = with_handle(handle, |handle| {
         handle.tiles()
     }).unwrap_or_else(|error| {
@@ -60,6 +62,19 @@ pub extern fn game_state_handle_tiles(handle: *const GameStateHandle) -> *mut Ti
         vec![]
     });
     TileArray::new(tiles)
+}
+
+/// Returns the length of one side of the grid
+#[no_mangle]
+pub extern fn game_state_handle_grid_size(handle: *const GameStateHandle) -> usize {
+    // TODO: Really need to just build a Result sort of API for cases where there is
+    // no good failure result fallback
+    with_handle(handle, |handle| {
+        handle.size().0
+    }).unwrap_or_else(|error| {
+        eprint!("Error calling game_state_handle_grid_size: {:?}", error);
+        0
+    })
 }
 
 #[derive(Clone, Debug)]

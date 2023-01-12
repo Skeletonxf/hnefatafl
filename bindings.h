@@ -41,6 +41,11 @@ void game_state_handle_debug(const struct GameStateHandle *handle);
 struct TileArray *game_state_handle_tiles(const struct GameStateHandle *handle);
 
 /**
+ * Returns the length of one side of the grid
+ */
+uintptr_t game_state_handle_grid_size(const struct GameStateHandle *handle);
+
+/**
  * Returns a value from the array
  */
 Tile tile_array_get(const struct TileArray *array, uintptr_t index);

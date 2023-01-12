@@ -3,8 +3,8 @@ package io.github.skeletonxf.board
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.Stable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -13,23 +13,32 @@ import io.github.skeletonxf.HnefataflColors
 import io.github.skeletonxf.PreviewSurface
 
 enum class Tile {
-    Empty, Attacker, Defender, King
+    Empty, Attacker, Defender, King;
+
+    private fun value(): Byte = when (this) {
+        Empty -> 0
+        Attacker -> 1
+        Defender -> 2
+        King -> 3
+    }
+
+    companion object {
+        fun valueOf(tile: Byte) = when (tile) {
+            Attacker.value() -> Attacker
+            Defender.value() -> Defender
+            King.value() -> King
+            else -> Empty
+        }
+    }
 }
 
 enum class TileColor(val color: Color) {
     Blank(HnefataflColors.grey), Filled(HnefataflColors.brown)
 }
 
-@Stable
-interface BoardData {
-    fun get(x: Int, y: Int): Tile
-    val length: Int
-}
-
-object EmptyBoard : BoardData {
-    override val length = 11
-    override fun get(x: Int, y: Int) = Tile.Empty
-}
+val emptyBoard = BoardData(
+    List(11 * 11) { Tile.Empty }, 11
+)
 
 @Composable
 fun Board(
@@ -63,12 +72,22 @@ fun Board(
                                     true -> TileColor.Blank
                                     false -> TileColor.Filled
                                 }
-                                val tile = board.get(row, column)
+                                val tile = board[row, column]
                                 Box(
                                     modifier = Modifier
                                         .background(color.color)
                                         .size(tileSize)
-                                )
+                                ) {
+                                    Text(
+                                        text = when (tile) {
+                                            Tile.Empty -> " "
+                                            Tile.Attacker -> "A"
+                                            Tile.Defender -> "D"
+                                            Tile.King -> "K"
+                                        },
+                                        modifier = Modifier.align(Alignment.Center)
+                                    )
+                                }
                             }
                             Spacer(Modifier.height(margin))
                         }
@@ -83,5 +102,5 @@ fun Board(
 @Composable
 @Preview
 private fun EmptyBoardPreview() = PreviewSurface {
-    Board(EmptyBoard)
+    Board(emptyBoard)
 }

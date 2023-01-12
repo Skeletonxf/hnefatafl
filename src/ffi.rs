@@ -4,7 +4,6 @@ use crate::FFIError;
 /// An array of tiles.
 #[derive(Debug)]
 pub struct TileArray {
-    // TODO: Might as well make this 2 dimensional indexing by taking a copy of the Matrix?
     data: Vec<Tile>,
 }
 

@@ -10,35 +10,36 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
+import io.github.skeletonxf.board.BoardData
 import io.github.skeletonxf.GameStateHandle
 import io.github.skeletonxf.HnefataflMaterialTheme
 import io.github.skeletonxf.PreviewSurface
 import io.github.skeletonxf.board.Board
-import io.github.skeletonxf.board.EmptyBoard
+import io.github.skeletonxf.board.Tile
 
 @Composable
 @Preview
-fun App() {
+fun App(board: BoardData) {
     HnefataflMaterialTheme {
         Surface {
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center,
             ) {
-                Content()
+                Content(board)
             }
         }
     }
 }
 
 @Composable
-fun Content() {
+fun Content(board: BoardData) {
     Column {
         Box(
             Modifier.fillMaxSize().padding(8.dp),
             contentAlignment = Alignment.Center,
         ) {
-            Board(EmptyBoard)
+            Board(board)
         }
     }
 }
@@ -46,17 +47,18 @@ fun Content() {
 @Composable
 @Preview
 private fun ContentPreview() = PreviewSurface {
-    Content()
+    Content(BoardData(listOf(Tile.Empty), 1))
 }
 
 fun main() {
-    GameStateHandle().debug()
+    val state = GameStateHandle()
+    val board = state.board()
     application {
         Window(
             onCloseRequest = ::exitApplication,
             title = "Hnefatafl",
         ) {
-            App()
+            App(board)
         }
     }
 }
