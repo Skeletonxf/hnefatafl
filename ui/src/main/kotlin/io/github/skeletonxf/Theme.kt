@@ -20,6 +20,7 @@ object HnefataflColors {
     val middle = brown.copy(alpha = 0.5F).compositeOver(dark)
     val night = dark.copy(alpha = 0.6F).compositeOver(Color.Black)
     val grey = brown.copy(alpha = 0.1F).compositeOver(Color.White)
+    val light = brown.copy(alpha = 0.5F).compositeOver(Color.White)
 }
 
 @Composable
@@ -66,6 +67,11 @@ private fun ColorPreview() = PreviewSurface {
             backgroundColor = MaterialTheme.colors.secondaryVariant,
             textColor = MaterialTheme.colors.onSecondary,
             text = "Secondary variant",
+        )
+        ColorBackground(
+            backgroundColor = HnefataflColors.light,
+            textColor = MaterialTheme.colors.onBackground,
+            text = "Light",
         )
     }
 }

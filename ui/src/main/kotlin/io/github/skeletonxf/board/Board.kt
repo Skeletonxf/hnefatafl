@@ -3,11 +3,13 @@ package io.github.skeletonxf.board
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.Icon
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.*
 import io.github.skeletonxf.HnefataflColors
 import io.github.skeletonxf.PreviewSurface
@@ -78,15 +80,27 @@ fun Board(
                                         .background(color.color)
                                         .size(tileSize)
                                 ) {
-                                    Text(
-                                        text = when (tile) {
-                                            Tile.Empty -> " "
-                                            Tile.Attacker -> "A"
-                                            Tile.Defender -> "D"
-                                            Tile.King -> "K"
-                                        },
-                                        modifier = Modifier.align(Alignment.Center)
-                                    )
+                                    when (tile) {
+                                        Tile.Empty -> Unit
+                                        Tile.Attacker -> Icon(
+                                            painter = painterResource("images/piece.svg"),
+                                            contentDescription = "Attacker",
+                                            modifier = Modifier.size(tileSize.minus(8.dp)).align(Alignment.Center),
+                                            tint = HnefataflColors.night,
+                                        )
+                                        Tile.Defender -> Icon(
+                                            painter = painterResource("images/piece.svg"),
+                                            contentDescription = "Defender",
+                                            modifier = Modifier.size(tileSize.minus(8.dp)).align(Alignment.Center),
+                                            tint = HnefataflColors.light,
+                                        )
+                                        Tile.King -> Icon(
+                                            painter = painterResource("images/king.svg"),
+                                            contentDescription = "King",
+                                            modifier = Modifier.size(tileSize.minus(8.dp)).align(Alignment.Center),
+                                            tint = HnefataflColors.light,
+                                        )
+                                    }
                                 }
                             }
                             Spacer(Modifier.height(margin))
