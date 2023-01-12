@@ -9,13 +9,13 @@
    xmlns="http://www.w3.org/2000/svg"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="6.7034726mm"
-   height="7.0552344mm"
-   viewBox="0 0 6.0331253 6.349711"
+   width="7.1116643mm"
+   height="7.5560083mm"
+   viewBox="0 0 6.4004978 6.8004075"
    version="1.1"
    id="svg8"
    inkscape:version="0.92.5 (2060ec1f9f, 2020-04-08)"
-   sodipodi:docname="piece3.svg">
+   sodipodi:docname="piece.svg">
   <defs
      id="defs2" />
   <sodipodi:namedview
@@ -26,10 +26,10 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="16"
-     inkscape:cx="-1.5005192"
-     inkscape:cy="15.499501"
+     inkscape:cx="-0.72913305"
+     inkscape:cy="16.445846"
      inkscape:document-units="mm"
-     inkscape:current-layer="g4858"
+     inkscape:current-layer="g1000"
      showgrid="false"
      fit-margin-top="0"
      fit-margin-left="0"
@@ -57,7 +57,7 @@
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
      id="layer1"
-     transform="translate(-76.739358,-8.0408585)">
+     transform="translate(-76.555672,-7.8155105)">
     <g
        id="g4858"
        transform="rotate(-129.2,78.729675,11.121691)">
@@ -80,7 +80,7 @@
         <path
            transform="rotate(90,-11.775467,78.70869)"
            sodipodi:type="spiral"
-           style="fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.36500001;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+           style="fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.8154;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
            id="path4666-5-1-3-3"
            sodipodi:cx="-78.852005"
            sodipodi:cy="-11.052651"
@@ -93,7 +93,7 @@
         <path
            transform="rotate(-90,10.909295,-78.15563)"
            sodipodi:type="spiral"
-           style="fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.36500001;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+           style="fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.8154;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
            id="path4666-5-1-3-3-5"
            sodipodi:cx="-78.852005"
            sodipodi:cy="-11.052651"

@@ -20,7 +20,7 @@ object HnefataflColors {
     val middle = brown.copy(alpha = 0.5F).compositeOver(dark)
     val night = dark.copy(alpha = 0.6F).compositeOver(Color.Black)
     val grey = brown.copy(alpha = 0.1F).compositeOver(Color.White)
-    val light = brown.copy(alpha = 0.5F).compositeOver(Color.White)
+    val light = brown.copy(alpha = 0.3F).compositeOver(Color.White)
 }
 
 @Composable
