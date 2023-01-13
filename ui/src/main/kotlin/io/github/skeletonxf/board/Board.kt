@@ -35,7 +35,7 @@ enum class Tile {
 }
 
 enum class TileColor(val color: Color) {
-    Blank(HnefataflColors.light), Filled(HnefataflColors.brown)
+    Blank(HnefataflColors.grey), Filled(HnefataflColors.light)
 }
 
 val emptyBoard = BoardData(
@@ -86,19 +86,19 @@ fun Board(
                                             painter = painterResource("images/piece.svg"),
                                             contentDescription = "Attacker",
                                             modifier = Modifier.size(tileSize.minus(8.dp)).align(Alignment.Center),
-                                            tint = HnefataflColors.night,
+                                            tint = HnefataflColors.brown,
                                         )
                                         Tile.Defender -> Icon(
                                             painter = painterResource("images/piece.svg"),
                                             contentDescription = "Defender",
                                             modifier = Modifier.size(tileSize.minus(8.dp)).align(Alignment.Center),
-                                            tint = HnefataflColors.grey,
+                                            tint = HnefataflColors.night,
                                         )
                                         Tile.King -> Icon(
                                             painter = painterResource("images/king.svg"),
                                             contentDescription = "King",
                                             modifier = Modifier.size(tileSize.minus(8.dp)).align(Alignment.Center),
-                                            tint = HnefataflColors.grey,
+                                            tint = HnefataflColors.night,
                                         )
                                     }
                                 }

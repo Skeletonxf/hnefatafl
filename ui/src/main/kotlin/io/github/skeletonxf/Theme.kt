@@ -41,32 +41,32 @@ private fun ColorPreview() = PreviewSurface {
         ColorBackground(
             backgroundColor = MaterialTheme.colors.background,
             textColor = MaterialTheme.colors.onBackground,
-            text = "Background",
+            text = "Background (Grey)",
         )
         ColorBackground(
             backgroundColor = MaterialTheme.colors.surface,
             textColor = MaterialTheme.colors.onSurface,
-            text = "Surface",
+            text = "Surface (White)",
         )
         ColorBackground(
             backgroundColor = MaterialTheme.colors.primary,
             textColor = MaterialTheme.colors.onPrimary,
-            text = "Primary",
+            text = "Primary (Brown)",
         )
         ColorBackground(
             backgroundColor = MaterialTheme.colors.primaryVariant,
             textColor = MaterialTheme.colors.onPrimary,
-            text = "Primary variant",
+            text = "Primary variant (Middle)",
         )
         ColorBackground(
             backgroundColor = MaterialTheme.colors.secondary,
             textColor = MaterialTheme.colors.onSecondary,
-            text = "Secondary",
+            text = "Secondary (Dark)",
         )
         ColorBackground(
             backgroundColor = MaterialTheme.colors.secondaryVariant,
             textColor = MaterialTheme.colors.onSecondary,
-            text = "Secondary variant",
+            text = "Secondary variant (Night)",
         )
         ColorBackground(
             backgroundColor = HnefataflColors.light,
