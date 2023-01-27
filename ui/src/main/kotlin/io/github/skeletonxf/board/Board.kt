@@ -1,11 +1,16 @@
 package io.github.skeletonxf.board
 
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.desktop.ui.tooling.preview.Preview
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Icon
-import androidx.compose.material.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -46,6 +51,26 @@ val emptyBoard = BoardData(
 fun Board(
     board: BoardData,
 ) {
+    var selected by rememberSaveable { mutableStateOf<Position?>(null) }
+    Board(
+        board,
+        onSelect = {
+            selected = if (selected == it) {
+                null
+            } else {
+                it
+            }
+        },
+        selected = selected,
+    )
+}
+
+@Composable
+fun Board(
+    board: BoardData,
+    onSelect: (Position) -> Unit,
+    selected: Position?,
+) {
     BoxWithConstraints {
         val width = max(minWidth, maxWidth)
         val height = max(minHeight, maxHeight)
@@ -70,38 +95,17 @@ fun Board(
                         Row(modifier = Modifier.fillMaxWidth()) {
                             for (column in 0 until board.length) {
                                 Spacer(Modifier.width(margin))
-                                val color = when ((row + column) % 2 == 0) {
-                                    true -> TileColor.Blank
-                                    false -> TileColor.Filled
-                                }
-                                val tile = board[row, column]
-                                Box(
-                                    modifier = Modifier
-                                        .background(color.color)
-                                        .size(tileSize)
-                                ) {
-                                    when (tile) {
-                                        Tile.Empty -> Unit
-                                        Tile.Attacker -> Icon(
-                                            painter = painterResource("images/piece.svg"),
-                                            contentDescription = "Attacker",
-                                            modifier = Modifier.size(tileSize.minus(8.dp)).align(Alignment.Center),
-                                            tint = HnefataflColors.brown,
-                                        )
-                                        Tile.Defender -> Icon(
-                                            painter = painterResource("images/piece.svg"),
-                                            contentDescription = "Defender",
-                                            modifier = Modifier.size(tileSize.minus(8.dp)).align(Alignment.Center),
-                                            tint = HnefataflColors.night,
-                                        )
-                                        Tile.King -> Icon(
-                                            painter = painterResource("images/king.svg"),
-                                            contentDescription = "King",
-                                            modifier = Modifier.size(tileSize.minus(8.dp)).align(Alignment.Center),
-                                            tint = HnefataflColors.night,
-                                        )
-                                    }
-                                }
+                                val position = Position(row, column)
+                                Tile(
+                                    tile = board[row, column],
+                                    color = when ((row + column) % 2 == 0) {
+                                        true -> TileColor.Blank
+                                        false -> TileColor.Filled
+                                    },
+                                    tileSize = tileSize,
+                                    onClick = { onSelect(position) },
+                                    isSelected = position == selected,
+                                )
                             }
                             Spacer(Modifier.height(margin))
                         }
@@ -116,5 +120,62 @@ fun Board(
 @Composable
 @Preview
 private fun EmptyBoardPreview() = PreviewSurface {
-    Board(emptyBoard)
+    Board(emptyBoard, onSelect = {}, selected = null)
+}
+
+@Composable
+private fun Tile(
+    tile: Tile,
+    color: TileColor,
+    tileSize: Dp,
+    onClick: () -> Unit,
+    isSelected: Boolean,
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val resizeAnimation by animateFloatAsState(when (isSelected) {
+        true -> when (isPressed) {
+            true -> 8.0F
+            false -> 4.0F
+        }
+        false -> when (isPressed) {
+            true -> 4.0F
+            false -> 8.0F
+        }
+    })
+    val inset = resizeAnimation.dp
+    Box(
+        modifier = Modifier
+            .clickable(
+                onClick = onClick,
+                indication = LocalIndication.current,
+                interactionSource = interactionSource
+            )
+            .background(color.color)
+            .size(tileSize)
+    ) {
+        when (tile) {
+            Tile.Empty -> Unit
+            Tile.Attacker -> Icon(
+                painter = painterResource("images/piece.svg"),
+                contentDescription = "Attacker",
+                modifier = Modifier.size(tileSize.minus(inset)).align(Alignment.Center),
+                tint = HnefataflColors.brown,
+            )
+
+            Tile.Defender -> Icon(
+                painter = painterResource("images/piece.svg"),
+                contentDescription = "Defender",
+                modifier = Modifier.size(tileSize.minus(inset)).align(Alignment.Center),
+                tint = HnefataflColors.night,
+            )
+
+            Tile.King -> Icon(
+                painter = painterResource("images/king.svg"),
+                contentDescription = "King",
+                modifier = Modifier.size(tileSize.minus(inset)).align(Alignment.Center),
+                tint = HnefataflColors.night,
+            )
+        }
+    }
 }
