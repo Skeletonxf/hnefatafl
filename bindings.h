@@ -11,6 +11,11 @@ enum Tile {
 };
 typedef uint8_t Tile;
 
+/**
+ * A wrapper around a result
+ */
+typedef struct FFIResult_____TileArray FFIResult_____TileArray;
+
 typedef struct GameStateHandle GameStateHandle;
 
 /**
@@ -38,7 +43,7 @@ void game_state_handle_debug(const struct GameStateHandle *handle);
 /**
  * Returns the tiles in row major order
  */
-struct TileArray *game_state_handle_tiles(const struct GameStateHandle *handle);
+struct FFIResult_____TileArray *game_state_handle_tiles(const struct GameStateHandle *handle);
 
 /**
  * Returns the length of one side of the grid
@@ -46,7 +51,7 @@ struct TileArray *game_state_handle_tiles(const struct GameStateHandle *handle);
 uintptr_t game_state_handle_grid_size(const struct GameStateHandle *handle);
 
 /**
- * Returns a value from the array
+ * Returns a value from the array, or Empty if out of bounds
  */
 Tile tile_array_get(const struct TileArray *array, uintptr_t index);
 
@@ -61,3 +66,18 @@ uintptr_t tile_array_length(const struct TileArray *array);
  * program
  */
 void tile_array_destroy(struct TileArray *array);
+
+/**
+ * Safety: calling this on an invalid pointer is undefined behavior
+ */
+bool result_tile_array_is_ok(struct FFIResult_____TileArray *result);
+
+/**
+ * Safety: calling this on an invalid pointer or an Err variant is undefined behavior
+ */
+struct TileArray *result_tile_array_get_ok(struct FFIResult_____TileArray *result);
+
+/**
+ * Safety: calling this on an invalid pointer or an Ok variant is undefined behavior
+ */
+void result_tile_array_get_error(struct FFIResult_____TileArray *result);

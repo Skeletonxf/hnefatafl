@@ -1,5 +1,6 @@
-use crate::piece::Tile;
 use crate::FFIError;
+use crate::ffi::results::{FFIResult, is_ok, get_ok, get_error};
+use crate::piece::Tile;
 
 /// An array of tiles.
 #[derive(Debug)]
@@ -15,7 +16,7 @@ impl TileArray {
     }
 }
 
-/// Returns a value from the array
+/// Returns a value from the array, or Empty if out of bounds
 #[no_mangle]
 pub extern fn tile_array_get(array: *const TileArray, index: usize) -> Tile {
     with_array(array, |array| {
@@ -66,4 +67,22 @@ where
         };
         op(array)
     }).map_err(|_| FFIError::Panic)
+}
+
+/// Safety: calling this on an invalid pointer is undefined behavior
+#[no_mangle]
+pub unsafe extern fn result_tile_array_is_ok(result: *mut FFIResult<*mut TileArray, ()>) -> bool {
+    is_ok(result)
+}
+
+/// Safety: calling this on an invalid pointer or an Err variant is undefined behavior
+#[no_mangle]
+pub unsafe extern fn result_tile_array_get_ok(result: *mut FFIResult<*mut TileArray, ()>) -> *mut TileArray {
+    get_ok(result)
+}
+
+/// Safety: calling this on an invalid pointer or an Ok variant is undefined behavior
+#[no_mangle]
+pub unsafe extern fn result_tile_array_get_error(result: *mut FFIResult<*mut TileArray, ()>) -> () {
+    get_error(result)
 }

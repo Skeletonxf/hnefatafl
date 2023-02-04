@@ -6,7 +6,9 @@ mod ffi;
 use std::sync::Mutex;
 
 use state::GameState;
-use ffi::TileArray;
+use crate::ffi::FFIError;
+use crate::ffi::results::FFIResult;
+use crate::ffi::tile_array::TileArray;
 
 #[derive(Debug)]
 pub struct GameStateHandle {
@@ -52,16 +54,13 @@ pub extern fn game_state_handle_debug(handle: *const GameStateHandle) {
 
 /// Returns the tiles in row major order
 #[no_mangle]
-pub extern fn game_state_handle_tiles(handle: *const GameStateHandle) -> *mut TileArray {
-    // TODO: Really need to just build a Result sort of API for cases where there is
-    // no good failure result fallback
-    let tiles = with_handle(handle, |handle| {
-        handle.tiles()
-    }).unwrap_or_else(|error| {
+pub extern fn game_state_handle_tiles(handle: *const GameStateHandle) -> *mut FFIResult<*mut TileArray, ()> {
+    FFIResult::new(with_handle(handle, |handle| {
+        TileArray::new(handle.tiles())
+    }).map_err(|error| {
         eprint!("Error calling game_state_handle_tiles: {:?}", error);
-        vec![]
-    });
-    TileArray::new(tiles)
+        ()
+    }))
 }
 
 /// Returns the length of one side of the grid
@@ -75,12 +74,6 @@ pub extern fn game_state_handle_grid_size(handle: *const GameStateHandle) -> usi
         eprint!("Error calling game_state_handle_grid_size: {:?}", error);
         0
     })
-}
-
-#[derive(Clone, Debug)]
-enum FFIError {
-    NullPointer,
-    Panic,
 }
 
 /// Takes an (optionally) aliased handle to the game state, unlocks the mutex and performs

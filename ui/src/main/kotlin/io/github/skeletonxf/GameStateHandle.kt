@@ -28,7 +28,12 @@ class GameStateHandle: GameState {
     }
 
     override fun board(): BoardData {
-        val tiles = bindings_h.game_state_handle_tiles(handle)
+        val tiles = FFIResult.from(
+            handle = bindings_h.game_state_handle_tiles(handle),
+            is_ok = { bindings_h.result_tile_array_is_ok(it) },
+            get_ok = { bindings_h.result_tile_array_get_ok(it) },
+            get_err = { bindings_h.result_tile_array_get_error(it) },
+        ).okOrThrow()
         val length = bindings_h.tile_array_length(tiles).toInt()
         val copied = List(length) { i -> Tile.valueOf(bindings_h.tile_array_get(tiles, i.toLong())) }
         bindings_h.tile_array_destroy(tiles)
