@@ -151,8 +151,9 @@ dependencies = [
 
 [[package]]
 name = "easy-ml"
-version = "1.8.0"
-source = "git+https://github.com/Skeletonxf/easy-ml#7e6798f68e3bb594e7cf08fc1f14ab7adb66619e"
+version = "1.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c441658699af0f3ba8db6320c2927865b6e3fa6416fac3e947bb1aab49740921"
 
 [[package]]
 name = "endian-type"

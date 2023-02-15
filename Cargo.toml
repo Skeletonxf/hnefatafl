@@ -8,7 +8,7 @@ license = "AGPL-3.0-or-later"
 crate-type = ["cdylib"]
 
 [dependencies]
-easy-ml = { git = "https://github.com/Skeletonxf/easy-ml" } # 1.9 isn't out yet
+easy-ml = "1.9"
 clap = { version = "4", features = [ "derive" ] }
 rustyline = "9.0"
 
