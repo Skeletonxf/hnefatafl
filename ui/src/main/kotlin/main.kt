@@ -1,8 +1,5 @@
 import androidx.compose.desktop.ui.tooling.preview.Preview
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -19,11 +16,8 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
-import io.github.skeletonxf.GameState
+import io.github.skeletonxf.*
 import io.github.skeletonxf.board.BoardData
-import io.github.skeletonxf.GameStateHandle
-import io.github.skeletonxf.HnefataflMaterialTheme
-import io.github.skeletonxf.PreviewSurface
 import io.github.skeletonxf.board.Board
 import io.github.skeletonxf.board.Tile
 
@@ -38,7 +32,13 @@ fun App(state: GameState.State) {
             ) {
                 when (state) {
                     is GameState.State.Game ->  Content(state.board)
-                    is GameState.State.FatalError -> Text("Something went horribly wrong 😭")
+                    is GameState.State.FatalError -> Column {
+                        Text("Something went horribly wrong 😭")
+                        Spacer(Modifier.height(16.dp))
+                        Text(state.message)
+                        Spacer(Modifier.height(8.dp))
+                        Text(state.cause.message)
+                    }
                 }
             }
         }
@@ -86,4 +86,15 @@ private fun IconSideEffect(composeWindow: ComposeWindow) {
     SideEffect {
         composeWindow.iconImage = icon.toAwtImage(density, LayoutDirection.Ltr, Size(128F, 128F))
     }
+}
+
+@Composable
+@Preview
+private fun FatalErrorPreview() = PreviewSurface {
+    App(
+        state = GameState.State.FatalError(
+            message = "Contextual message here",
+            cause = FFIThrowable("Problem here", null, Void::class)
+        )
+    )
 }

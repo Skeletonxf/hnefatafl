@@ -31,14 +31,19 @@ class GameStateHandle: GameState {
     }
 
     private fun getGameState(): GameState.State {
-        val tiles = FFIResult.from(
-            handle = bindings_h.game_state_handle_tiles(handle),
-            is_ok = { bindings_h.result_tile_array_is_ok(it) },
-            get_ok = { bindings_h.result_tile_array_get_ok(it) },
-            get_err = { bindings_h.result_tile_array_get_error(it) },
-        ).okOrNull() ?: return GameState.State.FatalError(
-            IllegalStateException("Unable to query board tiles")
-        )
+        val tiles = when (
+            val result = FFIResult.from(
+                handle = bindings_h.game_state_handle_tiles(handle),
+                get_type = { bindings_h.result_tile_array_get_type(it) },
+                get_ok = { bindings_h.result_tile_array_get_ok(it) },
+                get_err = { bindings_h.result_tile_array_get_error(it) },
+            )
+        ) {
+            is FFIResult.Ok -> result.ok
+            is FFIResult.Err -> return GameState.State.FatalError(
+                "Unable to query board tiles", result.err.toThrowable()
+            )
+        }
         val length = bindings_h.tile_array_length(tiles).toInt()
         val copied = List(length) { i -> Tile.valueOf(bindings_h.tile_array_get(tiles, i.toLong())) }
         bindings_h.tile_array_destroy(tiles)

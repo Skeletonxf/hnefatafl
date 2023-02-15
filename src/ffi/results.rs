@@ -5,12 +5,35 @@ pub struct FFIResult<T, E> {
     result: Result<T, E>
 }
 
+#[repr(u8)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum FFIResultType {
+    Ok = 0,
+    Err = 1,
+    Null = 2,
+}
+
 impl<T, E> FFIResult<T, E> {
     pub fn new(result: Result<T, E>) -> *mut Self {
         let boxed = Box::new(FFIResult { result });
         // let the caller be responsible for managing this memory now
         Box::into_raw(boxed)
     }
+}
+
+/// Gets the type of the result. In almost all scenarios this should be Ok or Err, but if
+/// the pointer is null, invalid or otherwise corrupted, Null may be returned instead.
+pub unsafe fn get_type<T, E>(result: *const FFIResult<T, E>) -> FFIResultType
+where
+    T: std::panic::RefUnwindSafe,
+    E: std::panic::RefUnwindSafe,
+{
+    with_result(result, |result| {
+        match result.result {
+            Ok(_) => FFIResultType::Ok,
+            Err(_) => FFIResultType::Err,
+        }
+    }).unwrap_or(FFIResultType::Null)
 }
 
 pub unsafe fn get_ok<T, E>(result: *mut FFIResult<T, E>) -> T
@@ -22,17 +45,6 @@ where
     }
     let owned = Box::from_raw(result);
     owned.result.unwrap()
-}
-
-// this should really be an enum, there's ok, err, and invalid pointer
-pub unsafe fn is_ok<T, E>(result: *const FFIResult<T, E>) -> bool
-where
-    T: std::panic::RefUnwindSafe,
-    E: std::panic::RefUnwindSafe,
-{
-    with_result(result, |result| {
-        result.result.is_ok()
-    }).unwrap_or(false)
 }
 
 /// Returns the Err value, dropping the result

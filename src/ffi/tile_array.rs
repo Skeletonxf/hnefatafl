@@ -1,5 +1,5 @@
 use crate::FFIError;
-use crate::ffi::results::{FFIResult, is_ok, get_ok, get_error};
+use crate::ffi::results::{FFIResult, FFIResultType, get_type, get_ok, get_error};
 use crate::piece::Tile;
 
 /// An array of tiles.
@@ -71,8 +71,8 @@ where
 
 /// Safety: calling this on an invalid pointer is undefined behavior
 #[no_mangle]
-pub unsafe extern fn result_tile_array_is_ok(result: *mut FFIResult<*mut TileArray, ()>) -> bool {
-    is_ok(result)
+pub unsafe extern fn result_tile_array_get_type(result: *mut FFIResult<*mut TileArray, ()>) -> FFIResultType {
+    get_type(result)
 }
 
 /// Safety: calling this on an invalid pointer or an Err variant is undefined behavior

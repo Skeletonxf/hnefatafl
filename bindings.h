@@ -3,6 +3,13 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+enum FFIResultType {
+  Ok = 0,
+  Err = 1,
+  Null = 2,
+};
+typedef uint8_t FFIResultType;
+
 enum Tile {
   Empty = 0,
   Attacker = 1,
@@ -70,7 +77,7 @@ void tile_array_destroy(struct TileArray *array);
 /**
  * Safety: calling this on an invalid pointer is undefined behavior
  */
-bool result_tile_array_is_ok(struct FFIResult_____TileArray *result);
+FFIResultType result_tile_array_get_type(struct FFIResult_____TileArray *result);
 
 /**
  * Safety: calling this on an invalid pointer or an Err variant is undefined behavior
