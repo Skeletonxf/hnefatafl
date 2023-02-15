@@ -11,6 +11,16 @@ sealed class FFIResult<out T, out E> {
         is Err -> throw IllegalStateException("Wasn't Ok")
     }
 
+    fun okOrNull(): T? = when (this) {
+        is Ok -> ok
+        is Err -> null
+    }
+
+    fun <R> fold(ok: (T) -> R, err: (E) -> R) = when (this) {
+        is Ok -> ok(this.ok)
+        is Err -> err(this.err)
+    }
+
     companion object {
         fun <T, E> from(
             handle: MemoryAddress,

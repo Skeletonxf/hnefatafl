@@ -24,6 +24,7 @@ where
     owned.result.unwrap()
 }
 
+// this should really be an enum, there's ok, err, and invalid pointer
 pub unsafe fn is_ok<T, E>(result: *const FFIResult<T, E>) -> bool
 where
     T: std::panic::RefUnwindSafe,

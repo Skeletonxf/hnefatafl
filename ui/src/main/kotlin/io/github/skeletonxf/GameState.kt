@@ -1,9 +1,20 @@
 package io.github.skeletonxf
 
+import androidx.compose.runtime.State as ComposeState
 import io.github.skeletonxf.board.BoardData
 
 interface GameState {
     fun debug()
 
-    fun board(): BoardData
+    val state: ComposeState<State>
+
+    sealed class State {
+        data class Game(
+            val board: BoardData
+        ) : State()
+
+        data class FatalError(
+            val error: Throwable
+        ) : State()
+    }
 }

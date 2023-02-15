@@ -4,8 +4,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Surface
+import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.ComposeWindow
@@ -17,24 +19,27 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
+import io.github.skeletonxf.GameState
 import io.github.skeletonxf.board.BoardData
 import io.github.skeletonxf.GameStateHandle
 import io.github.skeletonxf.HnefataflMaterialTheme
 import io.github.skeletonxf.PreviewSurface
 import io.github.skeletonxf.board.Board
 import io.github.skeletonxf.board.Tile
-import java.awt.SystemColor.window
 
 @Composable
 @Preview
-fun App(board: BoardData) {
+fun App(state: GameState.State) {
     HnefataflMaterialTheme {
         Surface {
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center,
             ) {
-                Content(board)
+                when (state) {
+                    is GameState.State.Game ->  Content(state.board)
+                    is GameState.State.FatalError -> Text("Something went horribly wrong 😭")
+                }
             }
         }
     }
@@ -59,8 +64,8 @@ private fun ContentPreview() = PreviewSurface {
 }
 
 fun main() {
-    val state = GameStateHandle()
-    val board = state.board()
+    val handle = GameStateHandle()
+    val state by handle.state
 
     application {
         Window(
@@ -68,7 +73,7 @@ fun main() {
             title = "Hnefatafl",
         ) {
             IconSideEffect(window)
-            App(board)
+            App(state)
         }
     }
 }

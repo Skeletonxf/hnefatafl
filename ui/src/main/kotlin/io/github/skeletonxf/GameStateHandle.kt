@@ -1,5 +1,7 @@
 package io.github.skeletonxf
 
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
 import io.github.skeletonxf.bindings.bindings_h
 import io.github.skeletonxf.board.BoardData
 import io.github.skeletonxf.board.Tile
@@ -8,6 +10,8 @@ import java.lang.ref.Cleaner
 
 class GameStateHandle: GameState {
     private val handle: MemoryAddress = bindings_h.game_state_handle_new()
+
+    override val state: State<GameState.State> = mutableStateOf(getGameState())
 
     init {
         // We must not use any inner classes or lambdas for the runnable object, to avoid capturing our
@@ -24,21 +28,24 @@ class GameStateHandle: GameState {
 
     override fun debug() {
         bindings_h.game_state_handle_debug(handle)
-        board()
     }
 
-    override fun board(): BoardData {
+    private fun getGameState(): GameState.State {
         val tiles = FFIResult.from(
             handle = bindings_h.game_state_handle_tiles(handle),
             is_ok = { bindings_h.result_tile_array_is_ok(it) },
             get_ok = { bindings_h.result_tile_array_get_ok(it) },
             get_err = { bindings_h.result_tile_array_get_error(it) },
-        ).okOrThrow()
+        ).okOrNull() ?: return GameState.State.FatalError(
+            IllegalStateException("Unable to query board tiles")
+        )
         val length = bindings_h.tile_array_length(tiles).toInt()
         val copied = List(length) { i -> Tile.valueOf(bindings_h.tile_array_get(tiles, i.toLong())) }
         bindings_h.tile_array_destroy(tiles)
         val side = bindings_h.game_state_handle_grid_size(handle).toInt()
-        return BoardData(copied, side)
+        return GameState.State.Game(
+            board = BoardData(copied, side)
+        )
     }
 
     companion object {
