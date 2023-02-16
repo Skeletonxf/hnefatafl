@@ -1,10 +1,13 @@
-package io.github.skeletonxf
+package io.github.skeletonxf.ffi
 
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
+import from
+import io.github.skeletonxf.ui.GameState
 import io.github.skeletonxf.bindings.bindings_h
-import io.github.skeletonxf.board.BoardData
-import io.github.skeletonxf.board.Tile
+import io.github.skeletonxf.data.BoardData
+import io.github.skeletonxf.data.Tile
+import io.github.skeletonxf.data.KResult
 import java.lang.foreign.MemoryAddress
 import java.lang.ref.Cleaner
 
@@ -32,15 +35,15 @@ class GameStateHandle: GameState {
 
     private fun getGameState(): GameState.State {
         val tiles = when (
-            val result = FFIResult.from(
+            val result = KResult.from(
                 handle = bindings_h.game_state_handle_tiles(handle),
                 get_type = { bindings_h.result_tile_array_get_type(it) },
                 get_ok = { bindings_h.result_tile_array_get_ok(it) },
                 get_err = { bindings_h.result_tile_array_get_error(it) },
             )
         ) {
-            is FFIResult.Ok -> result.ok
-            is FFIResult.Err -> return GameState.State.FatalError(
+            is KResult.Ok -> result.ok
+            is KResult.Error -> return GameState.State.FatalError(
                 "Unable to query board tiles", result.err.toThrowable()
             )
         }

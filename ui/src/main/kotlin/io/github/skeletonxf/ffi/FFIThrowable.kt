@@ -1,4 +1,4 @@
-package io.github.skeletonxf
+package io.github.skeletonxf.ffi
 
 import kotlin.reflect.KClass
 

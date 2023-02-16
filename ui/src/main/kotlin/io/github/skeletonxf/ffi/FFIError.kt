@@ -1,4 +1,4 @@
-package io.github.skeletonxf
+package io.github.skeletonxf.ffi
 
 data class FFIError<E>(val message: String, val error: E) {
     @Suppress("UNNECESSARY_NOT_NULL_ASSERTION") // Compiler doesn't realise this

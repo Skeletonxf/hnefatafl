@@ -1,3 +1,3 @@
-package io.github.skeletonxf.board
+package io.github.skeletonxf.data
 
 data class Position(val x: Int, val y: Int)

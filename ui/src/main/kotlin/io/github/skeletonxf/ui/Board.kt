@@ -1,4 +1,4 @@
-package io.github.skeletonxf.board
+package io.github.skeletonxf.ui
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.desktop.ui.tooling.preview.Preview
@@ -13,35 +13,14 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.*
-import io.github.skeletonxf.HnefataflColors
-import io.github.skeletonxf.PreviewSurface
-
-enum class Tile {
-    Empty, Attacker, Defender, King;
-
-    private fun value(): Byte = when (this) {
-        Empty -> 0
-        Attacker -> 1
-        Defender -> 2
-        King -> 3
-    }
-
-    companion object {
-        fun valueOf(tile: Byte) = when (tile) {
-            Attacker.value() -> Attacker
-            Defender.value() -> Defender
-            King.value() -> King
-            else -> Empty
-        }
-    }
-}
-
-enum class TileColor(val color: Color) {
-    Blank(HnefataflColors.grey), Filled(HnefataflColors.light)
-}
+import io.github.skeletonxf.ui.theme.HnefataflColors
+import io.github.skeletonxf.ui.theme.PreviewSurface
+import io.github.skeletonxf.data.BoardData
+import io.github.skeletonxf.data.Position
+import io.github.skeletonxf.data.Tile
+import io.github.skeletonxf.data.TileColor
 
 val emptyBoard = BoardData(
     List(11 * 11) { Tile.Empty }, 11
