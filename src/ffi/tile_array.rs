@@ -1,41 +1,28 @@
-use crate::FFIError;
 use crate::ffi::results::{FFIResult, FFIResultType, get_type, get_ok, get_error};
+use crate::ffi::array::{Array, array_get, array_length, array_destroy};
 use crate::piece::Tile;
 
 /// An array of tiles.
-#[derive(Debug)]
-pub struct TileArray {
-    data: Vec<Tile>,
-}
-
-impl TileArray {
-    pub fn new(data: Vec<Tile>) -> *mut Self {
-        let boxed = Box::new(TileArray { data });
-        // let the caller be responsible for managing this memory now
-        Box::into_raw(boxed)
-    }
-}
+pub type TileArray = Array<Tile>;
 
 /// Returns a value from the array, or Empty if out of bounds
 #[no_mangle]
 pub extern fn tile_array_get(array: *const TileArray, index: usize) -> Tile {
-    with_array(array, |array| {
-        array.data.get(index).cloned().unwrap_or(Tile::Empty)
-    }).unwrap_or_else(|error| {
-        eprint!("Error calling tile_array_get: {:?}", error);
-        Tile::Empty
-    })
+    match array_get(array, index) {
+        Err(error) => {
+            eprint!("Error calling tile_array_get: {:?}", error);
+            Tile::Empty
+        },
+        Ok(None) => Tile::Empty,
+        Ok(Some(tile)) => tile,
+    }
 }
 
 /// Returns the length of the array
 #[no_mangle]
 pub extern fn tile_array_length(array: *const TileArray) -> usize {
-    with_array(array, |array| {
-        array.data.len()
-    }).unwrap_or_else(|error| {
-        eprint!("Error calling tile_array_length: {:?}", error);
-        0
-    })
+    // TODO: use FFIResult
+    array_length(array)
 }
 
 /// Destroys the data owned by the TileArray
@@ -43,30 +30,7 @@ pub extern fn tile_array_length(array: *const TileArray) -> usize {
 /// program
 #[no_mangle]
 pub unsafe extern fn tile_array_destroy(array: *mut TileArray) {
-    if array.is_null() {
-        return;
-    }
-    std::mem::drop(Box::from_raw(array));
-}
-
-/// Takes an (optionally) aliased handle to the tile array and performs
-/// an operation with an immutable reference to it, returning the
-/// result of the operation or an error if there was a failure with the FFI.
-fn with_array<F, R>(array: *const TileArray, op: F) -> Result<R, FFIError>
-where
-    F: FnOnce(&TileArray) -> R + std::panic::UnwindSafe,
-{
-    if array.is_null() {
-        return Err(FFIError::NullPointer)
-    }
-    std::panic::catch_unwind(|| {
-        // SAFETY: We only give out valid pointers, and are trusting that the Kotlin code
-        // does not invalidate them.
-        let array = unsafe {
-            &*array
-        };
-        op(array)
-    }).map_err(|_| FFIError::Panic)
+    array_destroy(array);
 }
 
 /// Safety: calling this on an invalid pointer is undefined behavior

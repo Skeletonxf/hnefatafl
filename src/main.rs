@@ -124,7 +124,7 @@ fn two_player() {
     println!("{}\n", game);
     println!("Enter 'enumerate' to list available moves");
     loop {
-        println!("NN encoding: {:?}", game.representation());
+        //println!("NN encoding: {:?}", game.representation());
         let input = match rl.readline("Enter move: ") {
             Ok(s) => s,
             Err(_) => return,

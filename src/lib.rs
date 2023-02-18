@@ -9,6 +9,7 @@ use state::GameState;
 use crate::ffi::FFIError;
 use crate::ffi::results::FFIResult;
 use crate::ffi::tile_array::TileArray;
+use crate::ffi::play_array::PlayArray;
 
 #[derive(Debug)]
 pub struct GameStateHandle {
@@ -66,14 +67,24 @@ pub extern fn game_state_handle_tiles(handle: *const GameStateHandle) -> *mut FF
 /// Returns the length of one side of the grid
 #[no_mangle]
 pub extern fn game_state_handle_grid_size(handle: *const GameStateHandle) -> usize {
-    // TODO: Really need to just build a Result sort of API for cases where there is
-    // no good failure result fallback
+    // TODO: use FFIResult
     with_handle(handle, |handle| {
         handle.size().0
     }).unwrap_or_else(|error| {
         eprint!("Error calling game_state_handle_grid_size: {:?}", error);
         0
     })
+}
+
+/// Returns the available plays
+#[no_mangle]
+pub extern fn game_state_available_plays(handle: *const GameStateHandle) -> *mut FFIResult<*mut PlayArray, ()> {
+    FFIResult::new(with_handle(handle, |handle| {
+        PlayArray::new(handle.available_plays())
+    }).map_err(|error| {
+        eprint!("Error calling game_state_handle_tiles: {:?}", error);
+        ()
+    }))
 }
 
 /// Takes an (optionally) aliased handle to the game state, unlocks the mutex and performs

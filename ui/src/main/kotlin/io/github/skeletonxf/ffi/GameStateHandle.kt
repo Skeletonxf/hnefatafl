@@ -5,13 +5,14 @@ import androidx.compose.runtime.mutableStateOf
 import from
 import io.github.skeletonxf.ui.GameState
 import io.github.skeletonxf.bindings.bindings_h
-import io.github.skeletonxf.data.BoardData
-import io.github.skeletonxf.data.Tile
-import io.github.skeletonxf.data.KResult
+import io.github.skeletonxf.data.*
 import java.lang.foreign.MemoryAddress
+import java.lang.foreign.MemorySession
+import java.lang.foreign.SegmentAllocator
+import java.lang.foreign.ValueLayout
 import java.lang.ref.Cleaner
 
-class GameStateHandle: GameState {
+class GameStateHandle : GameState {
     private val handle: MemoryAddress = bindings_h.game_state_handle_new()
 
     override val state: State<GameState.State> = mutableStateOf(getGameState())
@@ -56,12 +57,46 @@ class GameStateHandle: GameState {
         )
     }
 
+    private fun getAvailablePlays() {
+        val plays = when (
+            val result = KResult.from(
+                handle = bindings_h.game_state_available_plays(handle),
+                get_type = { bindings_h.result_play_array_get_type(it) },
+                get_ok = { bindings_h.result_play_array_get_ok(it) },
+                get_err = { bindings_h.result_play_array_get_error(it) }
+            )
+        ) {
+            is KResult.Ok -> result.ok
+            is KResult.Error -> return
+        }
+        val length = bindings_h.play_array_length(plays).toInt()
+        val bytesPerPlay = 4
+        val copied: List<Play>
+        MemorySession.openConfined().use { memorySession ->
+            val allocator = SegmentAllocator.newNativeArena((bytesPerPlay * length).toLong(), memorySession)
+            copied = List(length) { i ->
+                val memorySegment = bindings_h.play_array_get(allocator, plays, i.toLong())
+                Play(
+                    from = Position(
+                        x = memorySegment.get(ValueLayout.JAVA_BYTE, 0L).toInt(),
+                        y = memorySegment.get(ValueLayout.JAVA_BYTE, 1L).toInt()
+                    ),
+                    to = Position(
+                        x = memorySegment.get(ValueLayout.JAVA_BYTE, 2L).toInt(),
+                        y = memorySegment.get(ValueLayout.JAVA_BYTE, 3L).toInt()
+                    )
+                )
+            }
+        }
+        println("Read $copied")
+    }
+
     companion object {
         private val bridgeCleaner: Cleaner = Cleaner.create()
     }
 }
 
-private data class BridgeHandleCleaner(private val handle: MemoryAddress): Runnable {
+private data class BridgeHandleCleaner(private val handle: MemoryAddress) : Runnable {
     override fun run() {
         // Because this class is private, and we only ever call it from the cleaner, and we never
         // give out any references to our `handle: MemoryAddress` to any other classes, this
