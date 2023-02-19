@@ -3,6 +3,7 @@ package io.github.skeletonxf.ffi
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import from
+import io.github.skeletonxf.bindings.FlatPlay
 import io.github.skeletonxf.ui.GameState
 import io.github.skeletonxf.bindings.bindings_h
 import io.github.skeletonxf.data.*
@@ -47,13 +48,15 @@ class GameStateHandle : GameState {
             is KResult.Error -> return GameState.State.FatalError(
                 "Unable to query board tiles", result.err.toThrowable()
             )
+        }.use(
+            destroy = bindings_h::tile_array_destroy
+        ) { tiles ->
+            val length = bindings_h.tile_array_length(tiles).toInt()
+            List(length) { i -> Tile.valueOf(bindings_h.tile_array_get(tiles, i.toLong())) }
         }
-        val length = bindings_h.tile_array_length(tiles).toInt()
-        val copied = List(length) { i -> Tile.valueOf(bindings_h.tile_array_get(tiles, i.toLong())) }
-        bindings_h.tile_array_destroy(tiles)
         val side = bindings_h.game_state_handle_grid_size(handle).toInt()
         return GameState.State.Game(
-            board = BoardData(copied, side)
+            board = BoardData(tiles, side)
         )
     }
 
@@ -68,27 +71,29 @@ class GameStateHandle : GameState {
         ) {
             is KResult.Ok -> result.ok
             is KResult.Error -> return
-        }
-        val length = bindings_h.play_array_length(plays).toInt()
-        val bytesPerPlay = 4
-        val copied: List<Play>
-        MemorySession.openConfined().use { memorySession ->
-            val allocator = SegmentAllocator.newNativeArena((bytesPerPlay * length).toLong(), memorySession)
-            copied = List(length) { i ->
-                val memorySegment = bindings_h.play_array_get(allocator, plays, i.toLong())
-                Play(
-                    from = Position(
-                        x = memorySegment.get(ValueLayout.JAVA_BYTE, 0L).toInt(),
-                        y = memorySegment.get(ValueLayout.JAVA_BYTE, 1L).toInt()
-                    ),
-                    to = Position(
-                        x = memorySegment.get(ValueLayout.JAVA_BYTE, 2L).toInt(),
-                        y = memorySegment.get(ValueLayout.JAVA_BYTE, 3L).toInt()
+        }.use(
+            destroy = bindings_h::play_array_destroy
+        ) { plays ->
+            val length = bindings_h.play_array_length(plays).toInt()
+            val bytesPerPlay = FlatPlay.sizeof()
+            MemorySession.openConfined().use { memorySession ->
+                val allocator = SegmentAllocator.newNativeArena((bytesPerPlay * length), memorySession)
+                List(length) { i ->
+                    val memorySegment = bindings_h.play_array_get(allocator, plays, i.toLong())
+                    Play(
+                        from = Position(
+                            x = FlatPlay.`from_x$get`(memorySegment).toInt(),
+                            y = FlatPlay.`from_y$get`(memorySegment).toInt()
+                        ),
+                        to = Position(
+                            x = FlatPlay.`to_x$get`(memorySegment).toInt(),
+                            y = FlatPlay.`to_y$get`(memorySegment).toInt()
+                        )
                     )
-                )
+                }
             }
         }
-        println("Read $copied")
+        println("Read $plays")
     }
 
     companion object {
