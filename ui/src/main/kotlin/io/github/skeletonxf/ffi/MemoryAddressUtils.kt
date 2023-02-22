@@ -1,5 +1,6 @@
 package io.github.skeletonxf.ffi
 
+import io.github.skeletonxf.data.KResult
 import java.lang.foreign.MemoryAddress
 
 /**
@@ -18,3 +19,8 @@ fun <R> MemoryAddress.use(
         destroy(this)
     }
 }
+
+fun <T, E,> KResult<MemoryAddress, E>.map(
+    destroy: (MemoryAddress) -> Unit,
+    operation: (MemoryAddress) -> T
+): KResult<T, E> = map { address -> address.use(destroy, operation) }

@@ -12,9 +12,14 @@ sealed class KResult<out T, out E> {
         is Error -> null
     }
 
-    fun <R> fold(ok: (T) -> R, error: (E) -> R) = when (this) {
+    fun <R> fold(ok: (T) -> R, error: (E) -> R): R = when (this) {
         is Ok -> ok(this.ok)
         is Error -> error(this.err)
+    }
+
+    fun <T2> map(op: (T) -> T2): KResult<T2, E> = when (this) {
+        is Ok -> Ok(op(this.ok))
+        is Error -> this
     }
 
     companion object

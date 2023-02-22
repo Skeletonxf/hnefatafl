@@ -36,64 +36,61 @@ class GameStateHandle : GameState {
     }
 
     private fun getGameState(): GameState.State {
-        val tiles = when (
-            val result = KResult.from(
-                handle = bindings_h.game_state_handle_tiles(handle),
-                get_type = { bindings_h.result_tile_array_get_type(it) },
-                get_ok = { bindings_h.result_tile_array_get_ok(it) },
-                get_err = { bindings_h.result_tile_array_get_error(it) },
-            )
-        ) {
+        val board = when (val result = getBoard()) {
             is KResult.Ok -> result.ok
             is KResult.Error -> return GameState.State.FatalError(
                 "Unable to query board tiles", result.err.toThrowable()
             )
-        }.use(
-            destroy = bindings_h::tile_array_destroy
-        ) { tiles ->
-            val length = bindings_h.tile_array_length(tiles).toInt()
-            List(length) { i -> Tile.valueOf(bindings_h.tile_array_get(tiles, i.toLong())) }
         }
-        val side = bindings_h.game_state_handle_grid_size(handle).toInt()
+        val plays = when (val result = getAvailablePlays()) {
+            is KResult.Ok -> result.ok
+            is KResult.Error -> return GameState.State.FatalError(
+                "Unable to query available plays", result.err.toThrowable()
+            )
+        }
         return GameState.State.Game(
-            board = BoardData(tiles, side)
+            board = board,
+            plays = plays,
         )
     }
 
-    private fun getAvailablePlays() {
-        val plays = when (
-            val result = KResult.from(
-                handle = bindings_h.game_state_available_plays(handle),
-                get_type = { bindings_h.result_play_array_get_type(it) },
-                get_ok = { bindings_h.result_play_array_get_ok(it) },
-                get_err = { bindings_h.result_play_array_get_error(it) }
-            )
-        ) {
-            is KResult.Ok -> result.ok
-            is KResult.Error -> return
-        }.use(
-            destroy = bindings_h::play_array_destroy
-        ) { plays ->
-            val length = bindings_h.play_array_length(plays).toInt()
-            val bytesPerPlay = FlatPlay.sizeof()
-            MemorySession.openConfined().use { memorySession ->
-                val allocator = SegmentAllocator.newNativeArena((bytesPerPlay * length), memorySession)
-                List(length) { i ->
-                    val memorySegment = bindings_h.play_array_get(allocator, plays, i.toLong())
-                    Play(
-                        from = Position(
-                            x = FlatPlay.`from_x$get`(memorySegment).toInt(),
-                            y = FlatPlay.`from_y$get`(memorySegment).toInt()
-                        ),
-                        to = Position(
-                            x = FlatPlay.`to_x$get`(memorySegment).toInt(),
-                            y = FlatPlay.`to_y$get`(memorySegment).toInt()
-                        )
+    private fun getBoard(): KResult<BoardData, FFIError<Unit?>> = KResult.from(
+        handle = bindings_h.game_state_handle_tiles(handle),
+        get_type = { bindings_h.result_tile_array_get_type(it) },
+        get_ok = { bindings_h.result_tile_array_get_ok(it) },
+        get_err = { bindings_h.result_tile_array_get_error(it) },
+    ).map(destroy = bindings_h::tile_array_destroy) { tiles ->
+        val length = bindings_h.tile_array_length(tiles).toInt()
+        BoardData(
+            tiles = List(length) { i -> Tile.valueOf(bindings_h.tile_array_get(tiles, i.toLong())) },
+            length = bindings_h.game_state_handle_grid_size(handle).toInt()
+        )
+    }
+
+    private fun getAvailablePlays(): KResult<List<Play>, FFIError<Unit?>> = KResult.from(
+        handle = bindings_h.game_state_available_plays(handle),
+        get_type = { bindings_h.result_play_array_get_type(it) },
+        get_ok = { bindings_h.result_play_array_get_ok(it) },
+        get_err = { bindings_h.result_play_array_get_error(it) }
+    ).map(destroy = bindings_h::play_array_destroy) { plays ->
+        val length = bindings_h.play_array_length(plays).toInt()
+        val bytesPerPlay = FlatPlay.sizeof()
+        MemorySession.openConfined().use { memorySession ->
+            val allocator = SegmentAllocator.newNativeArena((bytesPerPlay * length), memorySession)
+            List(length) { i ->
+                val memorySegment = bindings_h.play_array_get(allocator, plays, i.toLong())
+                Play(
+                    from = Position(
+                        x = FlatPlay.`from_x$get`(memorySegment).toInt(),
+                        y = FlatPlay.`from_y$get`(memorySegment).toInt()
+                    ),
+                    to = Position(
+                        x = FlatPlay.`to_x$get`(memorySegment).toInt(),
+                        y = FlatPlay.`to_y$get`(memorySegment).toInt()
                     )
-                }
+                )
             }
         }
-        println("Read $plays")
     }
 
     companion object {
