@@ -1,9 +1,9 @@
 package io.github.skeletonxf.data
 
-enum class Tile {
-    Empty, Attacker, Defender, King;
+sealed interface Piece
 
-    private fun value(): Byte = when (this) {
+sealed interface Tile {
+    fun value(): Byte = when (this) {
         Empty -> 0
         Attacker -> 1
         Defender -> 2
@@ -18,4 +18,9 @@ enum class Tile {
             else -> Empty
         }
     }
+
+    object Empty : Tile
+    object Attacker : Tile, Piece
+    object Defender : Tile, Piece
+    object King : Tile, Piece
 }

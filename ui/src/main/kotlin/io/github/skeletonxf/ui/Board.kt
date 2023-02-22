@@ -7,20 +7,40 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.Icon
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.unit.*
-import io.github.skeletonxf.ui.theme.HnefataflColors
-import io.github.skeletonxf.ui.theme.PreviewSurface
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.isFinite
+import androidx.compose.ui.unit.max
+import androidx.compose.ui.unit.min
 import io.github.skeletonxf.data.BoardData
+import io.github.skeletonxf.data.Piece
+import io.github.skeletonxf.data.Play
 import io.github.skeletonxf.data.Position
 import io.github.skeletonxf.data.Tile
 import io.github.skeletonxf.data.TileColor
+import io.github.skeletonxf.ui.theme.HnefataflColors
+import io.github.skeletonxf.ui.theme.PreviewSurface
 
 val emptyBoard = BoardData(
     List(11 * 11) { Tile.Empty }, 11
@@ -29,10 +49,12 @@ val emptyBoard = BoardData(
 @Composable
 fun Board(
     board: BoardData,
+    plays: List<Play>,
 ) {
     var selected by rememberSaveable { mutableStateOf<Position?>(null) }
     Board(
         board,
+        moves = plays.filter { play -> play.from == selected }.map { it.to },
         onSelect = {
             selected = if (selected == it) {
                 null
@@ -47,6 +69,7 @@ fun Board(
 @Composable
 fun Board(
     board: BoardData,
+    moves: List<Position>,
     onSelect: (Position) -> Unit,
     selected: Position?,
 ) {
@@ -63,6 +86,7 @@ fun Board(
         val roundedDownTileSize = (availableTileSize.value.toInt() / 4) * 4
         val tileSize = roundedDownTileSize.dp - margin
         val boardSize = (tileSize * board.length) + (margin * (board.length + 1))
+        val selectedPiece = selected?.let { board[it.x, it.y] }
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center,
@@ -84,6 +108,10 @@ fun Board(
                                     tileSize = tileSize,
                                     onClick = { onSelect(position) },
                                     isSelected = position == selected,
+                                    isMoveFor = when {
+                                        moves.contains(position) && selectedPiece is Piece -> selectedPiece
+                                        else ->  null
+                                    },
                                 )
                             }
                             Spacer(Modifier.height(margin))
@@ -99,7 +127,7 @@ fun Board(
 @Composable
 @Preview
 private fun EmptyBoardPreview() = PreviewSurface {
-    Board(emptyBoard, onSelect = {}, selected = null)
+    Board(board = emptyBoard, moves = listOf(), onSelect = {}, selected = null)
 }
 
 @Composable
@@ -109,6 +137,7 @@ private fun Tile(
     tileSize: Dp,
     onClick: () -> Unit,
     isSelected: Boolean,
+    isMoveFor: Piece?,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
@@ -130,31 +159,38 @@ private fun Tile(
                 indication = LocalIndication.current,
                 interactionSource = interactionSource
             )
-            .background(color.color)
+            .background(color.adjust(isLegalMove = isMoveFor != null))
             .size(tileSize)
     ) {
+        val modifier = Modifier.size(tileSize.minus(inset)).align(Alignment.Center)
         when (tile) {
             Tile.Empty -> Unit
-            Tile.Attacker -> Icon(
-                painter = painterResource("images/piece.svg"),
-                contentDescription = "Attacker",
-                modifier = Modifier.size(tileSize.minus(inset)).align(Alignment.Center),
-                tint = HnefataflColors.brown,
-            )
-
-            Tile.Defender -> Icon(
-                painter = painterResource("images/piece.svg"),
-                contentDescription = "Defender",
-                modifier = Modifier.size(tileSize.minus(inset)).align(Alignment.Center),
-                tint = HnefataflColors.night,
-            )
-
-            Tile.King -> Icon(
-                painter = painterResource("images/king.svg"),
-                contentDescription = "King",
-                modifier = Modifier.size(tileSize.minus(inset)).align(Alignment.Center),
-                tint = HnefataflColors.night,
-            )
+            is Piece -> tile.Icon(modifier)
         }
+        isMoveFor?.Icon(modifier.alpha(0.20F))
     }
+}
+
+@Composable
+private fun Piece.Icon(
+    modifier: Modifier
+) = when (this) {
+    Tile.Attacker -> Icon(
+        painter = painterResource("images/piece.svg"),
+        contentDescription = "Attacker",
+        modifier = modifier,
+        tint = HnefataflColors.brown,
+    )
+    Tile.Defender -> Icon(
+        painter = painterResource("images/piece.svg"),
+        contentDescription = "Defender",
+        modifier = modifier,
+        tint = HnefataflColors.night,
+    )
+    Tile.King -> Icon(
+        painter = painterResource("images/king.svg"),
+        contentDescription = "King",
+        modifier = modifier,
+        tint = HnefataflColors.night,
+    )
 }

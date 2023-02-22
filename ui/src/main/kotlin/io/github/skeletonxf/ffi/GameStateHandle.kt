@@ -6,11 +6,14 @@ import from
 import io.github.skeletonxf.bindings.FlatPlay
 import io.github.skeletonxf.ui.GameState
 import io.github.skeletonxf.bindings.bindings_h
-import io.github.skeletonxf.data.*
+import io.github.skeletonxf.data.BoardData
+import io.github.skeletonxf.data.KResult
+import io.github.skeletonxf.data.Play
+import io.github.skeletonxf.data.Position
+import io.github.skeletonxf.data.Tile
 import java.lang.foreign.MemoryAddress
 import java.lang.foreign.MemorySession
 import java.lang.foreign.SegmentAllocator
-import java.lang.foreign.ValueLayout
 import java.lang.ref.Cleaner
 
 class GameStateHandle : GameState {
