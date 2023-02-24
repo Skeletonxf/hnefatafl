@@ -22,7 +22,10 @@ fun main() {
             title = "Hnefatafl",
         ) {
             IconSideEffect(window)
-            App(state)
+            App(
+                state = state,
+                makePlay = handle::makePlay,
+            )
         }
     }
 }

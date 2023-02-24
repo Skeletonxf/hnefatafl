@@ -50,6 +50,7 @@ val emptyBoard = BoardData(
 fun Board(
     board: BoardData,
     plays: List<Play>,
+    makePlay: (Play) -> Unit,
 ) {
     var selected by rememberSaveable { mutableStateOf<Position?>(null) }
     Board(
@@ -63,6 +64,7 @@ fun Board(
             }
         },
         selected = selected,
+        makePlay = makePlay,
     )
 }
 
@@ -72,6 +74,7 @@ fun Board(
     moves: List<Position>,
     onSelect: (Position) -> Unit,
     selected: Position?,
+    makePlay: (Play) -> Unit,
 ) {
     BoxWithConstraints {
         val width = max(minWidth, maxWidth)
@@ -99,6 +102,7 @@ fun Board(
                             for (column in 0 until board.length) {
                                 Spacer(Modifier.width(margin))
                                 val position = Position(row, column)
+                                val isMoveForSelected = moves.contains(position)
                                 Tile(
                                     tile = board[row, column],
                                     color = when ((row + column) % 2 == 0) {
@@ -106,10 +110,16 @@ fun Board(
                                         false -> TileColor.Filled
                                     },
                                     tileSize = tileSize,
-                                    onClick = { onSelect(position) },
+                                    onClick = {
+                                        if (isMoveForSelected && selected != null) {
+                                            makePlay(Play(from = selected, to = position))
+                                        } else {
+                                            onSelect(position)
+                                        }
+                                    },
                                     isSelected = position == selected,
                                     isMoveFor = when {
-                                        moves.contains(position) && selectedPiece is Piece -> selectedPiece
+                                        isMoveForSelected && selectedPiece is Piece -> selectedPiece
                                         else ->  null
                                     },
                                 )
@@ -127,7 +137,7 @@ fun Board(
 @Composable
 @Preview
 private fun EmptyBoardPreview() = PreviewSurface {
-    Board(board = emptyBoard, moves = listOf(), onSelect = {}, selected = null)
+    Board(board = emptyBoard, moves = listOf(), onSelect = {}, selected = null, makePlay = {})
 }
 
 @Composable

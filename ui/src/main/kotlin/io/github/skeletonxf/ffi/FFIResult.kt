@@ -8,12 +8,12 @@ private const val FFI_RESULT_TYPE_NULL: Byte = 2
 
 fun <T, E> KResult.Companion.from(
     handle: MemoryAddress,
-    get_type: (MemoryAddress) -> Byte,
-    get_ok: (MemoryAddress) -> T,
-    get_err: (MemoryAddress) -> E,
-): KResult<T, FFIError<E?>> = when (get_type(handle)) {
-    FFI_RESULT_TYPE_OK -> KResult.Ok(get_ok(handle))
-    FFI_RESULT_TYPE_ERROR -> KResult.Error(FFIError("Data was error", get_err(handle)))
+    getType: (MemoryAddress) -> Byte,
+    getOk: (MemoryAddress) -> T,
+    getError: (MemoryAddress) -> E,
+): KResult<T, FFIError<E?>> = when (getType(handle)) {
+    FFI_RESULT_TYPE_OK -> KResult.Ok(getOk(handle))
+    FFI_RESULT_TYPE_ERROR -> KResult.Error(FFIError("Data was error", getError(handle)))
     FFI_RESULT_TYPE_NULL -> KResult.Error(FFIError("Data was null or corrupted", null))
     else -> KResult.Error(FFIError("Unrecognised FFI result type", null))
 }

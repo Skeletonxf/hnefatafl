@@ -1,5 +1,6 @@
 package io.github.skeletonxf.ffi
 
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import from
@@ -7,8 +8,10 @@ import io.github.skeletonxf.bindings.FlatPlay
 import io.github.skeletonxf.ui.GameState
 import io.github.skeletonxf.bindings.bindings_h
 import io.github.skeletonxf.data.BoardData
+import io.github.skeletonxf.data.GameStateUpdate
 import io.github.skeletonxf.data.KResult
 import io.github.skeletonxf.data.Play
+import io.github.skeletonxf.data.Player
 import io.github.skeletonxf.data.Position
 import io.github.skeletonxf.data.Tile
 import java.lang.foreign.MemoryAddress
@@ -19,7 +22,7 @@ import java.lang.ref.Cleaner
 class GameStateHandle : GameState {
     private val handle: MemoryAddress = bindings_h.game_state_handle_new()
 
-    override val state: State<GameState.State> = mutableStateOf(getGameState())
+    override val state: MutableState<GameState.State> = mutableStateOf(getGameState())
 
     init {
         // We must not use any inner classes or lambdas for the runnable object, to avoid capturing our
@@ -38,7 +41,40 @@ class GameStateHandle : GameState {
         bindings_h.game_state_handle_debug(handle)
     }
 
-    private fun getGameState(): GameState.State {
+    override fun makePlay(play: Play) {
+        state.value = KResult
+            .from(
+                handle = bindings_h.game_state_handle_make_play(
+                    handle,
+                    play.from.x.toByte(),
+                    play.from.y.toByte(),
+                    play.to.x.toByte(),
+                    play.to.y.toByte()
+                ),
+                getType = bindings_h::result_game_state_update_get_type,
+                getOk = bindings_h::result_game_state_update_get_ok,
+                getError = bindings_h::result_game_state_update_get_error,
+            )
+            .map(GameStateUpdate::valueOf)
+            .fold(
+                ok = { gameStateUpdate ->
+                    when (gameStateUpdate) {
+                        GameStateUpdate.DefenderWin -> getGameState(winner = Player.Defender)
+                        GameStateUpdate.AttackerWin -> getGameState(winner = Player.Attacker)
+                        GameStateUpdate.DefenderCapture,
+                        GameStateUpdate.AttackerCapture,
+                        GameStateUpdate.Nothing -> getGameState()
+                    }
+                },
+                error = { error ->
+                    GameState.State.FatalError(
+                        "Failed to make play", error.toThrowable()
+                    )
+                }
+            )
+    }
+
+    private fun getGameState(winner: Player? = null): GameState.State {
         val board = when (val result = getBoard()) {
             is KResult.Ok -> result.ok
             is KResult.Error -> return GameState.State.FatalError(
@@ -51,17 +87,19 @@ class GameStateHandle : GameState {
                 "Unable to query available plays", result.err.toThrowable()
             )
         }
+        // TODO: Can actually query winner from the game state handle instead of needing to pass in override
         return GameState.State.Game(
             board = board,
             plays = plays,
+            winner = winner,
         )
     }
 
     private fun getBoard(): KResult<BoardData, FFIError<Unit?>> = KResult.from(
         handle = bindings_h.game_state_handle_tiles(handle),
-        get_type = { bindings_h.result_tile_array_get_type(it) },
-        get_ok = { bindings_h.result_tile_array_get_ok(it) },
-        get_err = { bindings_h.result_tile_array_get_error(it) },
+        getType = { bindings_h.result_tile_array_get_type(it) },
+        getOk = { bindings_h.result_tile_array_get_ok(it) },
+        getError = { bindings_h.result_tile_array_get_error(it) },
     ).map(destroy = bindings_h::tile_array_destroy) { tiles ->
         val length = bindings_h.tile_array_length(tiles).toInt()
         BoardData(
@@ -72,11 +110,14 @@ class GameStateHandle : GameState {
 
     private fun getAvailablePlays(): KResult<List<Play>, FFIError<Unit?>> = KResult.from(
         handle = bindings_h.game_state_available_plays(handle),
-        get_type = { bindings_h.result_play_array_get_type(it) },
-        get_ok = { bindings_h.result_play_array_get_ok(it) },
-        get_err = { bindings_h.result_play_array_get_error(it) }
+        getType = { bindings_h.result_play_array_get_type(it) },
+        getOk = { bindings_h.result_play_array_get_ok(it) },
+        getError = { bindings_h.result_play_array_get_error(it) }
     ).map(destroy = bindings_h::play_array_destroy) { plays ->
         val length = bindings_h.play_array_length(plays).toInt()
+        if (length == 0) {
+            return@map listOf()
+        }
         val bytesPerPlay = FlatPlay.sizeof()
         MemorySession.openConfined().use { memorySession ->
             val allocator = SegmentAllocator.newNativeArena((bytesPerPlay * length), memorySession)

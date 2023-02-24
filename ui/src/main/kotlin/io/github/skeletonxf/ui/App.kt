@@ -22,7 +22,7 @@ import io.github.skeletonxf.ffi.FFIThrowable
 
 @Composable
 @Preview
-fun App(state: GameState.State) {
+fun App(state: GameState.State, makePlay: (Play) -> Unit) {
     HnefataflMaterialTheme {
         Surface {
             Box(
@@ -30,7 +30,11 @@ fun App(state: GameState.State) {
                 contentAlignment = Alignment.Center,
             ) {
                 when (state) {
-                    is GameState.State.Game ->  Content(state.board, state.plays)
+                    is GameState.State.Game ->  Content(
+                        board = state.board,
+                        plays = state.plays,
+                        makePlay = makePlay,
+                    )
                     is GameState.State.FatalError -> Column {
                         Text("Something went horribly wrong 😭")
                         Spacer(Modifier.height(16.dp))
@@ -45,13 +49,13 @@ fun App(state: GameState.State) {
 }
 
 @Composable
-fun Content(board: BoardData, plays: List<Play>) {
+fun Content(board: BoardData, plays: List<Play>, makePlay: (Play) -> Unit) {
     Column {
         Box(
             Modifier.fillMaxSize().padding(8.dp),
             contentAlignment = Alignment.Center,
         ) {
-            Board(board, plays)
+            Board(board, plays, makePlay)
         }
     }
 }
@@ -59,7 +63,7 @@ fun Content(board: BoardData, plays: List<Play>) {
 @Composable
 @Preview
 private fun ContentPreview() = PreviewSurface {
-    Content(BoardData(listOf(Tile.Empty), 1), plays = listOf())
+    Content(BoardData(listOf(Tile.Empty), 1), plays = listOf(), makePlay = {})
 }
 
 @Composable
@@ -69,6 +73,7 @@ private fun FatalErrorPreview() = PreviewSurface {
         state = GameState.State.FatalError(
             message = "Contextual message here",
             cause = FFIThrowable("Problem here", null, Void::class)
-        )
+        ),
+        makePlay = {},
     )
 }
