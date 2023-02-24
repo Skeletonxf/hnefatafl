@@ -10,6 +10,15 @@ enum FFIResultType {
 };
 typedef uint8_t FFIResultType;
 
+enum GameStateUpdate {
+  DefenderWin = 0,
+  AttackerWin = 1,
+  DefenderCapture = 2,
+  AttackerCapture = 3,
+  Nothing = 4,
+};
+typedef uint8_t GameStateUpdate;
+
 enum Tile {
   Empty = 0,
   Attacker = 1,
@@ -27,6 +36,11 @@ typedef struct Array_Play Array_Play;
  * An array of something
  */
 typedef struct Array_Tile Array_Tile;
+
+/**
+ * A wrapper around a result
+ */
+typedef struct FFIResult_GameStateUpdate FFIResult_GameStateUpdate;
 
 /**
  * A wrapper around a result
@@ -85,12 +99,36 @@ struct FFIResult_____TileArray *game_state_handle_tiles(const struct GameStateHa
 /**
  * Returns the length of one side of the grid
  */
-uintptr_t game_state_handle_grid_size(const struct GameStateHandle *handle);
+uint8_t game_state_handle_grid_size(const struct GameStateHandle *handle);
 
 /**
  * Returns the available plays
  */
 struct FFIResult_____PlayArray *game_state_available_plays(const struct GameStateHandle *handle);
+
+/**
+ * Makes a play, if legal
+ */
+struct FFIResult_GameStateUpdate *game_state_handle_make_play(const struct GameStateHandle *handle,
+                                                              uint8_t from_x,
+                                                              uint8_t from_y,
+                                                              uint8_t to_x,
+                                                              uint8_t to_y);
+
+/**
+ * Safety: calling this on an invalid pointer is undefined behavior
+ */
+FFIResultType result_game_state_update_get_type(struct FFIResult_GameStateUpdate *result);
+
+/**
+ * Safety: calling this on an invalid pointer or an Err variant is undefined behavior
+ */
+GameStateUpdate result_game_state_update_get_ok(struct FFIResult_GameStateUpdate *result);
+
+/**
+ * Safety: calling this on an invalid pointer or an Ok variant is undefined behavior
+ */
+void result_game_state_update_get_error(struct FFIResult_GameStateUpdate *result);
 
 /**
  * Returns a value from the array, or Empty if out of bounds

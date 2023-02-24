@@ -1,4 +1,4 @@
-use crate::FFIError;
+use crate::ffi::FFIError;
 
 /// An array of something
 #[derive(Debug)]

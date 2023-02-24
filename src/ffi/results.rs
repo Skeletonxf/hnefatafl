@@ -1,4 +1,4 @@
-use crate::FFIError;
+use crate::ffi::FFIError;
 
 /// A wrapper around a result
 pub struct FFIResult<T, E> {

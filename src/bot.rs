@@ -10,21 +10,21 @@ pub fn new_input(board: &Board) -> Tensor<f64, 3> {
 
     let mut attackers = representation.select_mut([("piece", 0)]);
     for ([y, x], value) in attackers.iter_reference_mut().with_index() {
-        if board[(x, y)] == Tile::Attacker {
+        if board[(x as u8, y as u8)] == Tile::Attacker {
             *value = 1.0;
         }
     }
 
     let mut defenders = representation.select_mut([("piece", 1)]);
     for ([y, x], value) in defenders.iter_reference_mut().with_index() {
-        if board[(x, y)] == Tile::Defender {
+        if board[(x as u8, y as u8)] == Tile::Defender {
             *value = 1.0;
         }
     }
 
     let mut king = representation.select_mut([("piece", 2)]);
     for ([y, x], value) in king.iter_reference_mut().with_index() {
-        if board[(x, y)] == Tile::King {
+        if board[(x as u8, y as u8)] == Tile::King {
             *value = 10.0;
         }
     }

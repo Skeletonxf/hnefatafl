@@ -13,7 +13,7 @@ pub enum Player {
     Attacker,
 }
 
-type Position = (usize, usize);
+type Position = (u8, u8);
 
 #[derive(Debug)]
 pub struct GameState {
@@ -42,13 +42,14 @@ enum Direction {
     Down,
 }
 
+#[repr(u8)]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum GameStateUpdate {
-    DefenderWin,
-    AttackerWin,
-    DefenderCapture,
-    AttackerCapture,
-    Nothing,
+    DefenderWin = 0,
+    AttackerWin = 1,
+    DefenderCapture = 2,
+    AttackerCapture = 3,
+    Nothing = 4,
 }
 
 impl Display for Player {
@@ -74,7 +75,7 @@ impl Index<Position> for Board {
     type Output = Tile;
 
     fn index(&self, position: Position) -> &Self::Output {
-        self.board.get_reference(position.1, position.0)
+        self.board.get_reference(position.1 as usize, position.0 as usize)
     }
 }
 
@@ -82,7 +83,7 @@ impl IndexMut<Position> for Board {
     fn index_mut(&mut self, position: Position) -> &mut Self::Output {
         // how did I forget to make get_reference_mut a thing?
         self.board
-            .try_get_reference_mut(position.1, position.0)
+            .try_get_reference_mut(position.1 as usize, position.0 as usize)
             .unwrap()
     }
 }
@@ -106,8 +107,9 @@ impl Board {
 }
 
 impl Board {
-    fn size(&self) -> Position {
-        self.board.size()
+    fn size(&self) -> (u8, u8) {
+        let (w, h) = self.board.size();
+        (w as u8, h as u8)
     }
 
     fn adjacent(&self, position: Position) -> [Option<Position>; 4] {
@@ -399,7 +401,7 @@ impl GameState {
     /// Checks if the path between from and to is unoccpied and a single horizontal or vertical
     /// movement.
     fn is_valid_path(&self, from: Position, to: Position) -> bool {
-        fn range(x0: usize, x1: usize) -> std::ops::RangeInclusive<usize> {
+        fn range(x0: u8, x1: u8) -> std::ops::RangeInclusive<u8> {
             if x0 < x1 {
                 x0..=x1
             } else {
@@ -587,7 +589,7 @@ impl GameState {
         self.board.board.column_major_iter().collect()
     }
 
-    pub fn size(&self) -> (usize, usize) {
+    pub fn size(&self) -> (u8, u8) {
         self.board.size()
     }
 }
