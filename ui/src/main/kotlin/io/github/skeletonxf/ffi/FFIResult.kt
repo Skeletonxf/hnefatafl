@@ -1,10 +1,12 @@
+package io.github.skeletonxf.ffi
+
+import io.github.skeletonxf.bindings.bindings_h
 import io.github.skeletonxf.data.KResult
-import io.github.skeletonxf.ffi.FFIError
 import java.lang.foreign.MemoryAddress
 
-private const val FFI_RESULT_TYPE_OK: Byte = 0
-private const val FFI_RESULT_TYPE_ERROR: Byte = 1
-private const val FFI_RESULT_TYPE_NULL: Byte = 2
+private val FFI_RESULT_TYPE_OK: Byte = bindings_h.Ok().toByte()
+private val FFI_RESULT_TYPE_ERROR: Byte = bindings_h.Err().toByte()
+private val FFI_RESULT_TYPE_NULL: Byte = bindings_h.Null().toByte()
 
 fun <T, E> KResult.Companion.from(
     handle: MemoryAddress,

@@ -5,6 +5,7 @@ import androidx.compose.runtime.State as ComposeState
 import io.github.skeletonxf.data.BoardData
 import io.github.skeletonxf.data.Play
 import io.github.skeletonxf.data.Player
+import io.github.skeletonxf.data.Winner
 
 interface GameState {
     fun debug()
@@ -17,7 +18,7 @@ interface GameState {
         data class Game(
             val board: BoardData,
             val plays: List<Play>,
-            val winner: Player?,
+            val winner: Winner,
         ) : State()
 
         data class FatalError(

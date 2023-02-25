@@ -1,28 +1,25 @@
 package io.github.skeletonxf.data
 
-enum class GameStateUpdate {
+import io.github.skeletonxf.bindings.bindings_h
+import io.github.skeletonxf.ffi.KEnum
+
+enum class GameStateUpdate : KEnum {
     DefenderWin,
     AttackerWin,
     DefenderCapture,
     AttackerCapture,
     Nothing;
 
-    fun value(): Byte = when (this) {
-        DefenderWin -> 0
-        AttackerWin -> 1
-        DefenderCapture -> 2
-        AttackerCapture -> 3
-        Nothing -> 4
+    override fun value(): Byte = when (this) {
+        DefenderWin -> bindings_h.DefenderWin().toByte()
+        AttackerWin -> bindings_h.AttackerWin().toByte()
+        DefenderCapture -> bindings_h.DefenderCapture().toByte()
+        AttackerCapture -> bindings_h.AttackerCapture().toByte()
+        Nothing -> bindings_h.Nothing().toByte()
     }
 
     companion object {
-        fun valueOf(gameStateUpdate: Byte) = when (gameStateUpdate) {
-            DefenderWin.value() -> DefenderWin
-            AttackerWin.value() -> AttackerWin
-            DefenderCapture.value() -> DefenderCapture
-            AttackerCapture.value() -> AttackerCapture
-            Nothing.value() -> Nothing
-            else -> Nothing
-        }
+        private val variants = GameStateUpdate.values().toList()
+        fun valueOf(gameStateUpdate: Byte) = KEnum.valueOf(gameStateUpdate, variants, Nothing)
     }
 }

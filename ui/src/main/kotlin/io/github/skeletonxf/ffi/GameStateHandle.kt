@@ -2,7 +2,6 @@ package io.github.skeletonxf.ffi
 
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
-import from
 import io.github.skeletonxf.bindings.FlatPlay
 import io.github.skeletonxf.ui.GameState
 import io.github.skeletonxf.bindings.bindings_h
@@ -13,6 +12,7 @@ import io.github.skeletonxf.data.Play
 import io.github.skeletonxf.data.Player
 import io.github.skeletonxf.data.Position
 import io.github.skeletonxf.data.Tile
+import io.github.skeletonxf.data.Winner
 import java.lang.foreign.MemoryAddress
 import java.lang.foreign.MemorySession
 import java.lang.foreign.SegmentAllocator
@@ -58,8 +58,9 @@ class GameStateHandle : GameState {
             .fold(
                 ok = { gameStateUpdate ->
                     when (gameStateUpdate) {
-                        GameStateUpdate.DefenderWin -> getGameState(winner = Player.Defender)
-                        GameStateUpdate.AttackerWin -> getGameState(winner = Player.Attacker)
+                        // Might want to do something in particular when entering a win or capture state here?
+                        GameStateUpdate.DefenderWin,
+                        GameStateUpdate.AttackerWin,
                         GameStateUpdate.DefenderCapture,
                         GameStateUpdate.AttackerCapture,
                         GameStateUpdate.Nothing -> getGameState()
@@ -73,7 +74,7 @@ class GameStateHandle : GameState {
             )
     }
 
-    private fun getGameState(winner: Player? = null): GameState.State {
+    private fun getGameState(): GameState.State {
         val board = when (val result = getBoard()) {
             is KResult.Ok -> result.ok
             is KResult.Error -> return GameState.State.FatalError(
@@ -86,7 +87,12 @@ class GameStateHandle : GameState {
                 "Unable to query available plays", result.err.toThrowable()
             )
         }
-        // TODO: Can actually query winner from the game state handle instead of needing to pass in override
+        val winner = when (val result = getWinner()) {
+            is KResult.Ok -> result.ok
+            is KResult.Error -> return GameState.State.FatalError(
+                "Unable to query winner", result.err.toThrowable()
+            )
+        }
         return GameState.State.Game(
             board = board,
             plays = plays,
@@ -135,6 +141,14 @@ class GameStateHandle : GameState {
             }
         }
     }
+
+    private fun getWinner(): KResult<Winner, FFIError<Unit?>> = KResult
+        .from(
+            handle = bindings_h.game_state_handle_winner(handle),
+            getType = bindings_h::result_winner_get_type,
+            getOk = bindings_h::result_winner_get_ok,
+            getError = bindings_h::result_winner_get_error
+        ).map { Winner.valueOf(it) }
 
     companion object {
         private val bridgeCleaner: Cleaner = Cleaner.create()

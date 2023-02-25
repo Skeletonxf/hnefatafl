@@ -1,22 +1,21 @@
 package io.github.skeletonxf.data
 
+import io.github.skeletonxf.bindings.bindings_h
+import io.github.skeletonxf.ffi.KEnum
+
 sealed interface Piece
 
-sealed interface Tile {
-    fun value(): Byte = when (this) {
-        Empty -> 0
-        Attacker -> 1
-        Defender -> 2
-        King -> 3
+sealed interface Tile : KEnum {
+    override fun value(): Byte = when (this) {
+        Empty -> bindings_h.Empty().toByte()
+        Attacker -> bindings_h.Attacker().toByte()
+        Defender -> bindings_h.Defender().toByte()
+        King -> bindings_h.King().toByte()
     }
 
     companion object {
-        fun valueOf(tile: Byte) = when (tile) {
-            Attacker.value() -> Attacker
-            Defender.value() -> Defender
-            King.value() -> King
-            else -> Empty
-        }
+        private val variants = listOf(Empty, Attacker, Defender, King)
+        fun valueOf(tile: Byte) = KEnum.valueOf(tile, variants, Empty)
     }
 
     object Empty : Tile
