@@ -1,20 +1,22 @@
+use crate::ffi::results::{FFIResult, FFIResultType, get_type, get_ok, get_error};
+use crate::state::{GameState, GameStateUpdate, Play};
+use crate::ffi::tile_array::TileArray;
+use crate::ffi::play_array::PlayArray;
+use crate::ffi::winner::Winner;
+
+use std::sync::Mutex;
+
 pub mod array;
 pub mod results;
 pub mod tile_array;
 pub mod play_array;
+pub mod winner;
 
 #[derive(Clone, Debug)]
 pub enum FFIError {
     NullPointer,
     Panic,
 }
-
-use std::sync::Mutex;
-
-use crate::ffi::results::{FFIResult, FFIResultType, get_type, get_ok, get_error};
-use crate::state::{GameState, GameStateUpdate, Play};
-use crate::ffi::tile_array::TileArray;
-use crate::ffi::play_array::PlayArray;
 
 #[derive(Debug)]
 pub struct GameStateHandle {
@@ -116,6 +118,17 @@ pub extern fn game_state_handle_make_play(
             }
         }
     )
+}
+
+/// Returns the winner, if any
+#[no_mangle]
+pub extern fn game_state_handle_winner(handle: *const GameStateHandle) -> *mut FFIResult<Winner, ()> {
+    FFIResult::new(with_handle(handle, |handle| {
+        Winner::from(handle.winner())
+    }).map_err(|error| {
+        eprint!("Error calling game_state_handle_winner: {:?}", error);
+        ()
+    }))
 }
 
 /// Takes an (optionally) aliased handle to the game state, unlocks the mutex and performs
