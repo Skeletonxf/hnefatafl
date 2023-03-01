@@ -2,7 +2,7 @@ use crate::ffi::results::{FFIResult, FFIResultType, get_type, get_ok, get_error}
 use crate::state::{GameState, GameStateUpdate, Play};
 use crate::ffi::tile_array::TileArray;
 use crate::ffi::play_array::PlayArray;
-use crate::ffi::winner::Winner;
+use crate::ffi::player::{Winner, TurnPlayer};
 
 use std::sync::Mutex;
 
@@ -10,7 +10,7 @@ pub mod array;
 pub mod results;
 pub mod tile_array;
 pub mod play_array;
-pub mod winner;
+pub mod player;
 
 #[derive(Clone, Debug)]
 pub enum FFIError {
@@ -127,6 +127,17 @@ pub extern fn game_state_handle_winner(handle: *const GameStateHandle) -> *mut F
         Winner::from(handle.winner())
     }).map_err(|error| {
         eprint!("Error calling game_state_handle_winner: {:?}", error);
+        ()
+    }))
+}
+
+/// Returns the player that is making the current turn
+#[no_mangle]
+pub extern fn game_state_current_player(handle: *const GameStateHandle) -> *mut FFIResult<TurnPlayer, ()> {
+    FFIResult::new(with_handle(handle, |handle| {
+        TurnPlayer::from(handle.turn())
+    }).map_err(|error| {
+        eprint!("Error calling game_state_current_player: {:?}", error);
         ()
     }))
 }

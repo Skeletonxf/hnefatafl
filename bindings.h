@@ -27,6 +27,12 @@ enum Tile {
 };
 typedef uint8_t Tile;
 
+enum TurnPlayer {
+  DefendersTurn = 0,
+  AttackersTurn = 1,
+};
+typedef uint8_t TurnPlayer;
+
 enum Winner {
   Defenders = 0,
   Attackers = 1,
@@ -48,6 +54,11 @@ typedef struct Array_Tile Array_Tile;
  * A wrapper around a result
  */
 typedef struct FFIResult_GameStateUpdate FFIResult_GameStateUpdate;
+
+/**
+ * A wrapper around a result
+ */
+typedef struct FFIResult_TurnPlayer FFIResult_TurnPlayer;
 
 /**
  * A wrapper around a result
@@ -131,6 +142,11 @@ struct FFIResult_GameStateUpdate *game_state_handle_make_play(const struct GameS
  * Returns the winner, if any
  */
 struct FFIResult_Winner *game_state_handle_winner(const struct GameStateHandle *handle);
+
+/**
+ * Returns the player that is making the current turn
+ */
+struct FFIResult_TurnPlayer *game_state_current_player(const struct GameStateHandle *handle);
 
 /**
  * Safety: calling this on an invalid pointer is undefined behavior
@@ -225,3 +241,18 @@ Winner result_winner_get_ok(struct FFIResult_Winner *result);
  * Safety: calling this on an invalid pointer or an Ok variant is undefined behavior
  */
 void result_winner_get_error(struct FFIResult_Winner *result);
+
+/**
+ * Safety: calling this on an invalid pointer is undefined behavior
+ */
+FFIResultType result_player_get_type(struct FFIResult_TurnPlayer *result);
+
+/**
+ * Safety: calling this on an invalid pointer or an Err variant is undefined behavior
+ */
+TurnPlayer result_player_get_ok(struct FFIResult_TurnPlayer *result);
+
+/**
+ * Safety: calling this on an invalid pointer or an Ok variant is undefined behavior
+ */
+void result_player_get_error(struct FFIResult_TurnPlayer *result);

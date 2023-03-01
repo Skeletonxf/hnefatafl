@@ -592,4 +592,8 @@ impl GameState {
     pub fn size(&self) -> (u8, u8) {
         self.board.size()
     }
+
+    pub fn turn(&self) -> Player {
+        self.turn
+    }
 }
