@@ -80,7 +80,7 @@ fun Board(
         val width = max(minWidth, maxWidth)
         val height = max(minHeight, maxHeight)
         if (!width.isFinite || !height.isFinite) {
-            throw UnsupportedOperationException()
+            throw UnsupportedOperationException("Constraints are bad $constraints")
         }
         val square = min(width, height)
         val margin = 1.dp

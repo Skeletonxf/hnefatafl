@@ -19,6 +19,7 @@ interface GameState {
             val board: BoardData,
             val plays: List<Play>,
             val winner: Winner,
+            val turn: Player,
         ) : State()
 
         data class FatalError(

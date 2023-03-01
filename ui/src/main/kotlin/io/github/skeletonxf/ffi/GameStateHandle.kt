@@ -93,10 +93,17 @@ class GameStateHandle : GameState {
                 "Unable to query winner", result.err.toThrowable()
             )
         }
+        val turn = when (val result = getTurnPlayer()) {
+            is KResult.Ok -> result.ok
+            is KResult.Error -> return GameState.State.FatalError(
+                "Unable to query turn player", result.err.toThrowable()
+            )
+        }
         return GameState.State.Game(
             board = board,
             plays = plays,
             winner = winner,
+            turn = turn,
         )
     }
 
@@ -149,6 +156,14 @@ class GameStateHandle : GameState {
             getOk = bindings_h::result_winner_get_ok,
             getError = bindings_h::result_winner_get_error
         ).map { Winner.valueOf(it) }
+
+    private fun getTurnPlayer(): KResult<Player, FFIError<Unit?>> = KResult
+        .from(
+            handle = bindings_h.game_state_current_player(handle),
+            getType = bindings_h::result_player_get_type,
+            getOk = bindings_h::result_player_get_ok,
+            getError = bindings_h::result_player_get_error,
+        ).map { Player.valueOf(it) }
 
     companion object {
         private val bridgeCleaner: Cleaner = Cleaner.create()
