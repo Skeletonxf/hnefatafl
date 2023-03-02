@@ -80,7 +80,7 @@ fun Board(
         val width = max(minWidth, maxWidth)
         val height = max(minHeight, maxHeight)
         if (!width.isFinite || !height.isFinite) {
-            throw UnsupportedOperationException("Constraints are bad $constraints")
+            throw UnsupportedOperationException("Unsupported constraints: $constraints")
         }
         val square = min(width, height)
         val margin = 1.dp
@@ -90,45 +90,40 @@ fun Board(
         val tileSize = roundedDownTileSize.dp - margin
         val boardSize = (tileSize * board.length) + (margin * (board.length + 1))
         val selectedPiece = selected?.let { board[it.x, it.y] }
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center,
-        ) {
-            Box(modifier = Modifier.background(HnefataflColors.night).size(boardSize)) {
-                Column(modifier = Modifier.fillMaxSize()) {
-                    for (row in 0 until board.length) {
-                        Spacer(Modifier.height(margin))
-                        Row(modifier = Modifier.fillMaxWidth()) {
-                            for (column in 0 until board.length) {
-                                Spacer(Modifier.width(margin))
-                                val position = Position(row, column)
-                                val isMoveForSelected = moves.contains(position)
-                                Tile(
-                                    tile = board[row, column],
-                                    color = when ((row + column) % 2 == 0) {
-                                        true -> TileColor.Blank
-                                        false -> TileColor.Filled
-                                    },
-                                    tileSize = tileSize,
-                                    onClick = {
-                                        if (isMoveForSelected && selected != null) {
-                                            makePlay(Play(from = selected, to = position))
-                                        } else {
-                                            onSelect(position)
-                                        }
-                                    },
-                                    isSelected = position == selected,
-                                    isMoveFor = when {
-                                        isMoveForSelected && selectedPiece is Piece -> selectedPiece
-                                        else ->  null
-                                    },
-                                )
-                            }
-                            Spacer(Modifier.height(margin))
-                        }
-                    }
+        Box(modifier = Modifier.background(HnefataflColors.night).size(boardSize)) {
+            Column(modifier = Modifier.fillMaxSize()) {
+                for (row in 0 until board.length) {
                     Spacer(Modifier.height(margin))
+                    Row(modifier = Modifier.fillMaxWidth()) {
+                        for (column in 0 until board.length) {
+                            Spacer(Modifier.width(margin))
+                            val position = Position(row, column)
+                            val isMoveForSelected = moves.contains(position)
+                            Tile(
+                                tile = board[row, column],
+                                color = when ((row + column) % 2 == 0) {
+                                    true -> TileColor.Blank
+                                    false -> TileColor.Filled
+                                },
+                                tileSize = tileSize,
+                                onClick = {
+                                    if (isMoveForSelected && selected != null) {
+                                        makePlay(Play(from = selected, to = position))
+                                    } else {
+                                        onSelect(position)
+                                    }
+                                },
+                                isSelected = position == selected,
+                                isMoveFor = when {
+                                    isMoveForSelected && selectedPiece is Piece -> selectedPiece
+                                    else -> null
+                                },
+                            )
+                        }
+                        Spacer(Modifier.height(margin))
+                    }
                 }
+                Spacer(Modifier.height(margin))
             }
         }
     }
@@ -151,16 +146,19 @@ private fun Tile(
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
-    val resizeAnimation by animateFloatAsState(when (isSelected) {
-        true -> when (isPressed) {
-            true -> 8.0F
-            false -> 4.0F
+    val resizeAnimation by animateFloatAsState(
+        when (isSelected) {
+            true -> when (isPressed) {
+                true -> 8.0F
+                false -> 4.0F
+            }
+
+            false -> when (isPressed) {
+                true -> 4.0F
+                false -> 8.0F
+            }
         }
-        false -> when (isPressed) {
-            true -> 4.0F
-            false -> 8.0F
-        }
-    })
+    )
     val inset = resizeAnimation.dp
     Box(
         modifier = Modifier
@@ -191,12 +189,14 @@ private fun Piece.Icon(
         modifier = modifier,
         tint = HnefataflColors.brown,
     )
+
     Tile.Defender -> Icon(
         painter = painterResource("images/piece.svg"),
         contentDescription = "Defender",
         modifier = modifier,
         tint = HnefataflColors.night,
     )
+
     Tile.King -> Icon(
         painter = painterResource("images/king.svg"),
         contentDescription = "King",

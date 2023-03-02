@@ -3,6 +3,7 @@ package io.github.skeletonxf.ui
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
 import androidx.compose.desktop.ui.tooling.preview.Preview
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -15,6 +16,7 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -22,6 +24,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.WindowPosition.PlatformDefault.y
 import io.github.skeletonxf.ui.theme.HnefataflMaterialTheme
 import io.github.skeletonxf.ui.theme.PreviewSurface
 import io.github.skeletonxf.data.BoardData
@@ -30,6 +33,7 @@ import io.github.skeletonxf.data.Player
 import io.github.skeletonxf.data.Tile
 import io.github.skeletonxf.ffi.FFIThrowable
 import io.github.skeletonxf.ui.theme.HnefataflColors
+import java.lang.Integer.max
 import java.lang.Integer.min
 
 @Composable
@@ -74,7 +78,7 @@ fun Content(board: BoardData, plays: List<Play>, turn: Player, makePlay: (Play) 
                 color = HnefataflColors.night,
                 textAlign = TextAlign.Center,
                 style = TextStyle(
-                    fontWeight = FontWeight.Normal,
+                    fontWeight = FontWeight.Bold,
                     fontSize = 48.sp,
                     letterSpacing = 0.sp
                 ),
@@ -83,16 +87,20 @@ fun Content(board: BoardData, plays: List<Play>, turn: Player, makePlay: (Play) 
     }
     val mainContent: @Composable () -> Unit = {
         Box(
-            Modifier.fillMaxSize().padding(8.dp),
+            Modifier.fillMaxWidth().padding(8.dp),
             contentAlignment = Alignment.Center,
         ) {
             Board(board, plays, makePlay)
         }
     }
+    val header: @Composable () -> Unit = {
+        Box(Modifier.background(HnefataflColors.light))
+    }
     Layout(
         content = {
             title()
             mainContent()
+            header()
         },
         modifier = Modifier.fillMaxSize()
     ) { measurables, constraints ->
@@ -102,37 +110,49 @@ fun Content(board: BoardData, plays: List<Play>, turn: Player, makePlay: (Play) 
         ) {
             throw IllegalArgumentException("Constraints unsupported: $constraints")
         }
-        val (titleMeasurable, mainContentMeasurable) = measurables[0] to measurables[1]
+
+        val titleMeasurable = measurables[0]
+        val mainContentMeasurable = measurables[1]
+        val headerMeasurable = measurables[2]
 
         val titlePlaceable = titleMeasurable.measure(constraints.copy(minHeight = 0))
-        val centerAlign = constraints.maxHeight > titlePlaceable.height * 8
-        val restrictedHeight = if (centerAlign) {
-            // Title can comfortably push main content below it and still center the main content
-            constraints.maxHeight - (titlePlaceable.height * 2)
-        } else {
-            // Push main content down, don't try to vertically center it because space is tight
-            constraints.maxHeight - (titlePlaceable.height)
-        }
         val mainContentPlaceable = mainContentMeasurable.measure(
             Constraints(
                 minWidth = constraints.minWidth,
                 maxWidth = constraints.maxWidth,
-                minHeight = min(constraints.minHeight, restrictedHeight),
-                maxHeight = restrictedHeight,
+                minHeight = 0,
+                maxHeight = constraints.maxHeight - (titlePlaceable.height),
+            )
+        )
+
+        val desiredVerticalPadding = constraints.maxHeight - mainContentPlaceable.height
+        val usedHeight = mainContentPlaceable.height + titlePlaceable.height
+        val emptyHeight = constraints.maxHeight - usedHeight
+        val verticalPadding = min(max((desiredVerticalPadding / 2) - titlePlaceable.height, 0), emptyHeight)
+
+        val headerHeight = verticalPadding + titlePlaceable.height
+        val headerPlaceable = headerMeasurable.measure(
+            Constraints(
+                minWidth = constraints.maxWidth,
+                maxWidth = constraints.maxWidth,
+                minHeight = headerHeight,
+                maxHeight = headerHeight,
             )
         )
 
         layout(constraints.maxWidth, constraints.maxHeight) {
-            // Title is top aligned
+            // Header sits at the top behind everything else
+            headerPlaceable.placeRelative(x = 0, y = 0)
+            // Title sits above board
             titlePlaceable.placeRelative(
                 x = 0,
-                y = 0
+                y = verticalPadding
             )
             // Main content varies based on available space for vertical alignment, but always starts just below
             // title
             mainContentPlaceable.placeRelative(
                 x = 0,
-                y = titlePlaceable.height
+                y = verticalPadding + titlePlaceable.height
             )
         }
     }
