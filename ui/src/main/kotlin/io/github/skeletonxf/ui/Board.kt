@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.Icon
@@ -27,7 +28,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.isFinite
@@ -41,6 +44,9 @@ import io.github.skeletonxf.data.Tile
 import io.github.skeletonxf.data.TileColor
 import io.github.skeletonxf.ui.theme.HnefataflColors
 import io.github.skeletonxf.ui.theme.PreviewSurface
+import kotlin.math.max
+import kotlin.math.min
+import kotlin.math.roundToInt
 
 val emptyBoard = BoardData(
     List(11 * 11) { Tile.Empty }, 11
@@ -203,4 +209,71 @@ private fun Piece.Icon(
         modifier = modifier,
         tint = HnefataflColors.night,
     )
+}
+
+@Composable
+private fun PieceGraveyard(
+    dead: List<Piece>,
+    tileSize: Dp,
+    modifier: Modifier = Modifier,
+) {
+    val inset = 8.dp
+    val pieceSize = tileSize - inset
+    Layout(
+        content = {
+            dead.forEach { piece ->
+                Box(modifier = Modifier.size(tileSize)) {
+                    piece.Icon(modifier = Modifier.size(pieceSize).align(Alignment.Center))
+                }
+            }
+        },
+        modifier = modifier,
+    ) { measurables, constraints ->
+        if (!constraints.hasBoundedWidth || !constraints.hasBoundedHeight) {
+            throw IllegalArgumentException("Constraints unsupported: $constraints")
+        }
+        val width = max(constraints.minWidth, constraints.maxWidth)
+        val height = max(constraints.minHeight, constraints.maxHeight)
+        val pieces = measurables.size
+        val heightPerPiece = (height - (tileSize.toPx() / 2)) / pieces
+        val heightUsed = heightPerPiece
+        val placeables = measurables.map { measurable ->
+            measurable.measure(
+                Constraints(
+                    minWidth = 0,
+                    maxWidth = tileSize.roundToPx(),
+                    minHeight = 0,
+                    maxHeight = tileSize.roundToPx()
+                )
+            )
+        }
+        layout(width, height) {
+            var y = height - (tileSize.toPx() / 2)
+            placeables.forEach { placeable ->
+                placeable.placeRelative(
+                    x = (width - placeable.width) / 2,
+                    y = (y - (placeable.height / 2)).roundToInt(),
+                )
+                y -= heightUsed
+            }
+        }
+    }
+}
+
+@Composable
+@Preview
+private fun PieceGraveyardPreview() = PreviewSurface {
+    Row {
+        listOf(1, 3, 4, 6, 10, 12, 16, 18).forEach { number ->
+            PieceGraveyard(
+                dead = List(number) { Tile.Defender },
+                modifier = Modifier
+                    .padding(horizontal = 2.dp)
+                    .background(HnefataflColors.light)
+                    .width(50.dp)
+                    .height(300.dp),
+                tileSize = 32.dp
+            )
+        }
+    }
 }
