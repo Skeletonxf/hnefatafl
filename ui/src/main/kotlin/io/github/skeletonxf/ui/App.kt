@@ -16,7 +16,6 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -24,13 +23,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.WindowPosition.PlatformDefault.y
 import io.github.skeletonxf.ui.theme.HnefataflMaterialTheme
 import io.github.skeletonxf.ui.theme.PreviewSurface
 import io.github.skeletonxf.data.BoardData
 import io.github.skeletonxf.data.Play
 import io.github.skeletonxf.data.Player
-import io.github.skeletonxf.data.Tile
+import io.github.skeletonxf.data.Winner
 import io.github.skeletonxf.ffi.FFIThrowable
 import io.github.skeletonxf.ui.theme.HnefataflColors
 import java.lang.Integer.max
@@ -49,6 +47,7 @@ fun App(state: GameState.State, makePlay: (Play) -> Unit) {
                         board = state.board,
                         plays = state.plays,
                         turn = state.turn,
+                        winner = state.winner,
                         makePlay = makePlay,
                     )
 
@@ -66,22 +65,39 @@ fun App(state: GameState.State, makePlay: (Play) -> Unit) {
 }
 
 @Composable
-fun Content(board: BoardData, plays: List<Play>, turn: Player, makePlay: (Play) -> Unit) {
+private fun Title(
+    turn: Player,
+    winner: Winner,
+    modifier: Modifier = Modifier,
+) {
+    Text(
+        text = when (winner) {
+            Winner.None -> when (turn) {
+                Player.Defender -> "Defender's turn"
+                Player.Attacker -> "Attacker's turn"
+            }
+            Winner.Defenders -> "Defender's victory"
+            Winner.Attackers -> "Attacker's victory"
+        },
+        modifier = modifier,
+        color = HnefataflColors.night,
+        textAlign = TextAlign.Center,
+        style = TextStyle(
+            fontWeight = FontWeight.Bold,
+            fontSize = 48.sp,
+            letterSpacing = 0.sp
+        ),
+    )
+}
+
+@Composable
+fun Content(board: BoardData, plays: List<Play>, turn: Player, winner: Winner, makePlay: (Play) -> Unit) {
     val title: @Composable () -> Unit = {
         Crossfade(targetState = turn, animationSpec = tween(durationMillis = 500)) { turn ->
-            Text(
-                text = when (turn) {
-                    Player.Defender -> "Defender's turn"
-                    Player.Attacker -> "Attacker's turn"
-                },
+            Title(
+                turn = turn,
+                winner = winner,
                 modifier = Modifier.fillMaxWidth().padding(start = 8.dp, top = 8.dp, end = 8.dp),
-                color = HnefataflColors.night,
-                textAlign = TextAlign.Center,
-                style = TextStyle(
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 48.sp,
-                    letterSpacing = 0.sp
-                ),
             )
         }
     }
@@ -161,7 +177,13 @@ fun Content(board: BoardData, plays: List<Play>, turn: Player, makePlay: (Play) 
 @Composable
 @Preview
 private fun ContentPreview() = PreviewSurface {
-    Content(BoardData(listOf(Tile.Empty), 1), plays = listOf(), turn = Player.Defender, makePlay = {})
+    Content(
+        board = emptyBoard,
+        plays = listOf(),
+        turn = Player.Defender,
+        winner = Winner.None,
+        makePlay = {}
+    )
 }
 
 @Composable
