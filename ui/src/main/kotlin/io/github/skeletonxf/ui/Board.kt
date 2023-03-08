@@ -4,6 +4,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
@@ -19,6 +20,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.Icon
+import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -39,13 +41,13 @@ import androidx.compose.ui.unit.min
 import io.github.skeletonxf.data.BoardData
 import io.github.skeletonxf.data.Piece
 import io.github.skeletonxf.data.Play
+import io.github.skeletonxf.data.Player
 import io.github.skeletonxf.data.Position
 import io.github.skeletonxf.data.Tile
 import io.github.skeletonxf.data.TileColor
 import io.github.skeletonxf.ui.theme.HnefataflColors
 import io.github.skeletonxf.ui.theme.PreviewSurface
 import kotlin.math.max
-import kotlin.math.min
 import kotlin.math.roundToInt
 
 val emptyBoard = BoardData(
@@ -62,6 +64,7 @@ fun Board(
     Board(
         board,
         moves = plays.filter { play -> play.from == selected }.map { it.to },
+        dead = listOf(), // TODO
         onSelect = {
             selected = if (selected == it) {
                 null
@@ -78,6 +81,7 @@ fun Board(
 fun Board(
     board: BoardData,
     moves: List<Position>,
+    dead: List<Piece>,
     onSelect: (Position) -> Unit,
     selected: Position?,
     makePlay: (Play) -> Unit,
@@ -88,7 +92,8 @@ fun Board(
         if (!width.isFinite || !height.isFinite) {
             throw UnsupportedOperationException("Unsupported constraints: $constraints")
         }
-        val square = min(width, height)
+        val sideArea = 32.dp
+        val square = min(width - (sideArea * 2), height)
         val margin = 1.dp
         val margins = margin.value * (board.length + 1)
         val availableTileSize = min(((square.value - margins) / board.length.toFloat()).dp, 64.dp)
@@ -96,41 +101,66 @@ fun Board(
         val tileSize = roundedDownTileSize.dp - margin
         val boardSize = (tileSize * board.length) + (margin * (board.length + 1))
         val selectedPiece = selected?.let { board[it.x, it.y] }
-        Box(modifier = Modifier.background(HnefataflColors.night).size(boardSize)) {
-            Column(modifier = Modifier.fillMaxSize()) {
-                for (row in 0 until board.length) {
-                    Spacer(Modifier.height(margin))
-                    Row(modifier = Modifier.fillMaxWidth()) {
-                        for (column in 0 until board.length) {
-                            Spacer(Modifier.width(margin))
-                            val position = Position(row, column)
-                            val isMoveForSelected = moves.contains(position)
-                            Tile(
-                                tile = board[row, column],
-                                color = when ((row + column) % 2 == 0) {
-                                    true -> TileColor.Blank
-                                    false -> TileColor.Filled
-                                },
-                                tileSize = tileSize,
-                                onClick = {
-                                    if (isMoveForSelected && selected != null) {
-                                        makePlay(Play(from = selected, to = position))
-                                    } else {
-                                        onSelect(position)
-                                    }
-                                },
-                                isSelected = position == selected,
-                                isMoveFor = when {
-                                    isMoveForSelected && selectedPiece is Piece -> selectedPiece
-                                    else -> null
-                                },
-                            )
-                        }
+        val availableSideWidth = (width - boardSize) / 2
+        val sideMargin = 4.dp
+        val sideWidth = min(availableSideWidth - sideMargin, tileSize)
+        Row {
+            PieceGraveyard(
+                dead = dead.filter { it.ownedBy(Player.Defender) },
+                tileSize = sideWidth,
+                modifier = Modifier
+                    .background(MaterialTheme.colors.background)
+                    .border(width = margin, color = HnefataflColors.night)
+                    .width(sideWidth)
+                    .height(boardSize)
+            )
+            Spacer(Modifier.width(sideMargin))
+            Box(modifier = Modifier.background(HnefataflColors.night).size(boardSize)) {
+                Column(modifier = Modifier.fillMaxSize()) {
+                    for (row in 0 until board.length) {
                         Spacer(Modifier.height(margin))
+                        Row(modifier = Modifier.fillMaxWidth()) {
+                            for (column in 0 until board.length) {
+                                Spacer(Modifier.width(margin))
+                                val position = Position(row, column)
+                                val isMoveForSelected = moves.contains(position)
+                                Tile(
+                                    tile = board[row, column],
+                                    color = when ((row + column) % 2 == 0) {
+                                        true -> TileColor.Blank
+                                        false -> TileColor.Filled
+                                    },
+                                    tileSize = tileSize,
+                                    onClick = {
+                                        if (isMoveForSelected && selected != null) {
+                                            makePlay(Play(from = selected, to = position))
+                                        } else {
+                                            onSelect(position)
+                                        }
+                                    },
+                                    isSelected = position == selected,
+                                    isMoveFor = when {
+                                        isMoveForSelected && selectedPiece is Piece -> selectedPiece
+                                        else -> null
+                                    },
+                                )
+                            }
+                            Spacer(Modifier.height(margin))
+                        }
                     }
+                    Spacer(Modifier.height(margin))
                 }
-                Spacer(Modifier.height(margin))
             }
+            Spacer(Modifier.width(sideMargin))
+            PieceGraveyard(
+                dead = dead.filter { it.ownedBy(Player.Attacker) },
+                tileSize = sideWidth,
+                modifier = Modifier
+                    .background(MaterialTheme.colors.background)
+                    .border(width = margin, color = HnefataflColors.night)
+                    .width(sideWidth)
+                    .height(boardSize)
+            )
         }
     }
 }
@@ -138,7 +168,14 @@ fun Board(
 @Composable
 @Preview
 private fun EmptyBoardPreview() = PreviewSurface {
-    Board(board = emptyBoard, moves = listOf(), onSelect = {}, selected = null, makePlay = {})
+    Board(
+        board = emptyBoard,
+        moves = listOf(),
+        dead = listOf(),
+        onSelect = {},
+        selected = null,
+        makePlay = {}
+    )
 }
 
 @Composable

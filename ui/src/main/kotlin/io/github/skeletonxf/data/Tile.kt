@@ -3,7 +3,9 @@ package io.github.skeletonxf.data
 import io.github.skeletonxf.bindings.bindings_h
 import io.github.skeletonxf.ffi.KEnum
 
-sealed interface Piece
+sealed interface Piece {
+    fun ownedBy(player: Player): Boolean
+}
 
 sealed interface Tile : KEnum {
     override fun value(): Byte = when (this) {
@@ -19,7 +21,16 @@ sealed interface Tile : KEnum {
     }
 
     object Empty : Tile
-    object Attacker : Tile, Piece
-    object Defender : Tile, Piece
-    object King : Tile, Piece
+
+    object Attacker : Tile, Piece {
+        override fun ownedBy(player: Player) = player == Player.Attacker
+    }
+
+    object Defender : Tile, Piece {
+        override fun ownedBy(player: Player) = player == Player.Defender
+    }
+
+    object King : Tile, Piece {
+        override fun ownedBy(player: Player) = player == Player.Defender
+    }
 }
