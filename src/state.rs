@@ -331,6 +331,18 @@ impl GameState {
             info = info.update(GameStateUpdate::DefenderWin);
         } else {
             self.turn = self.turn.next();
+            if info != GameStateUpdate::DefenderWin &&
+                info != GameStateUpdate::AttackerWin &&
+                self.available_plays().is_empty()
+            {
+                // give victory to the player that just stopped the other from being able to make
+                // any plays (this could be due to capturing all the Attacker's pieces or either
+                // player having pieces but being completely boxed in by the other)
+                match self.turn {
+                    Player::Defender => info = GameStateUpdate::AttackerWin,
+                    Player::Attacker => info = GameStateUpdate::DefenderWin,
+                }
+            }
         }
         match info {
             GameStateUpdate::DefenderWin => self.winner = Some(Player::Defender),
