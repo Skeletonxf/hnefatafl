@@ -20,6 +20,7 @@ pub struct GameState {
     board: Board,
     turn: Player,
     winner: Option<Player>,
+    dead: Vec<Piece>,
 }
 
 #[derive(Debug)]
@@ -233,6 +234,7 @@ impl GameState {
             },
             turn: Player::Defender,
             winner: None,
+            dead: vec![],
         }
     }
 }
@@ -468,6 +470,9 @@ impl GameState {
                             None => false,
                         };
                         if capture {
+                            if let Some(piece) = self.board[next].try_into().ok() {
+                                self.dead.push(piece);
+                            }
                             self.board[next] = Tile::Empty;
                             info = info.update(GameStateUpdate::AttackerCapture);
                         }
@@ -492,6 +497,9 @@ impl GameState {
                             })
                             .all(|c| c == true);
                         if capture {
+                            if let Some(piece) = self.board[next].try_into().ok() {
+                                self.dead.push(piece);
+                            }
                             self.board[next] = Tile::Empty;
                             info = info.update(GameStateUpdate::AttackerWin);
                         }
@@ -515,6 +523,9 @@ impl GameState {
                                 None => false,
                             };
                             if capture {
+                                if let Some(piece) = self.board[next].try_into().ok() {
+                                    self.dead.push(piece);
+                                }
                                 self.board[next] = Tile::Empty;
                                 info = info.update(GameStateUpdate::DefenderCapture);
                             }
@@ -595,5 +606,9 @@ impl GameState {
 
     pub fn turn(&self) -> Player {
         self.turn
+    }
+
+    pub fn dead(&self) -> &Vec<Piece> {
+        &self.dead
     }
 }

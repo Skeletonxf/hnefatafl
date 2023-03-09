@@ -5,6 +5,13 @@ import io.github.skeletonxf.ffi.KEnum
 
 sealed interface Piece {
     fun ownedBy(player: Player): Boolean
+
+    companion object {
+        fun valueOf(tile: Tile): Piece? = when (tile) {
+            is Piece -> tile
+            else -> null
+        }
+    }
 }
 
 sealed interface Tile : KEnum {

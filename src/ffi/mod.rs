@@ -142,6 +142,21 @@ pub extern fn game_state_current_player(handle: *const GameStateHandle) -> *mut 
     }))
 }
 
+/// Returns the dead pieces in row major order (no Empty tiles will actually be in the array, but
+/// the TileArray will still return Empty if indexed out of bounds)
+///
+/// Running out of aliases for the enum variants, so adding a PieceArray type would be problematic
+#[no_mangle]
+pub extern fn game_state_handle_dead(handle: *const GameStateHandle) -> *mut FFIResult<*mut TileArray, ()> {
+    FFIResult::new(with_handle(handle, |handle| {
+        TileArray::new(handle.dead().iter().map(|&piece| piece.into()).collect())
+    }).map_err(|error| {
+        eprint!("Error calling game_state_handle_dead: {:?}", error);
+        ()
+    }))
+}
+
+
 /// Takes an (optionally) aliased handle to the game state, unlocks the mutex and performs
 /// and operation with a non aliased mutable reference to the game state, returning the
 /// result of the operation or an error if there was a failure with the FFI.

@@ -25,7 +25,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.skeletonxf.ui.theme.HnefataflMaterialTheme
 import io.github.skeletonxf.ui.theme.PreviewSurface
-import io.github.skeletonxf.data.BoardData
 import io.github.skeletonxf.data.Play
 import io.github.skeletonxf.data.Player
 import io.github.skeletonxf.data.Winner
@@ -44,10 +43,7 @@ fun App(state: GameState.State, makePlay: (Play) -> Unit) {
             ) {
                 when (state) {
                     is GameState.State.Game -> Content(
-                        board = state.board,
-                        plays = state.plays,
-                        turn = state.turn,
-                        winner = state.winner,
+                        state = state,
                         makePlay = makePlay,
                     )
 
@@ -91,12 +87,15 @@ private fun Title(
 }
 
 @Composable
-fun Content(board: BoardData, plays: List<Play>, turn: Player, winner: Winner, makePlay: (Play) -> Unit) {
+fun Content(
+    state: GameState.State.Game,
+    makePlay: (Play) -> Unit
+) {
     val title: @Composable () -> Unit = {
-        Crossfade(targetState = turn, animationSpec = tween(durationMillis = 500)) { turn ->
+        Crossfade(targetState = state.turn, animationSpec = tween(durationMillis = 500)) { turn ->
             Title(
                 turn = turn,
-                winner = winner,
+                winner = state.winner,
                 modifier = Modifier.fillMaxWidth().padding(start = 8.dp, top = 8.dp, end = 8.dp),
             )
         }
@@ -106,7 +105,12 @@ fun Content(board: BoardData, plays: List<Play>, turn: Player, winner: Winner, m
             Modifier.fillMaxWidth().padding(8.dp),
             contentAlignment = Alignment.Center,
         ) {
-            Board(board, plays, makePlay)
+            Board(
+                board = state.board,
+                plays = state.plays,
+                dead = state.dead,
+                makePlay = makePlay,
+            )
         }
     }
     val header: @Composable () -> Unit = {
@@ -178,10 +182,13 @@ fun Content(board: BoardData, plays: List<Play>, turn: Player, winner: Winner, m
 @Preview
 private fun ContentPreview() = PreviewSurface {
     Content(
-        board = emptyBoard,
-        plays = listOf(),
-        turn = Player.Defender,
-        winner = Winner.None,
+        state = GameState.State.Game(
+            board = emptyBoard,
+            plays = listOf(),
+            winner = Winner.None,
+            turn = Player.Defender,
+            dead = listOf(),
+        ),
         makePlay = {}
     )
 }

@@ -64,6 +64,16 @@ impl PartialEq<Piece> for Tile {
     }
 }
 
+impl From<Piece> for Tile {
+    fn from(piece: Piece) -> Tile {
+        match piece {
+            Piece::Attacker => Tile::Attacker,
+            Piece::Defender => Tile::Defender,
+            Piece::King => Tile::King,
+        }
+    }
+}
+
 impl TryFrom<Tile> for Piece {
     type Error = ();
     fn try_from(tile: Tile) -> Result<Self, Self::Error> {

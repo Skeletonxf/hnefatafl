@@ -3,6 +3,7 @@ package io.github.skeletonxf.ui
 import io.github.skeletonxf.ffi.FFIThrowable
 import androidx.compose.runtime.State as ComposeState
 import io.github.skeletonxf.data.BoardData
+import io.github.skeletonxf.data.Piece
 import io.github.skeletonxf.data.Play
 import io.github.skeletonxf.data.Player
 import io.github.skeletonxf.data.Winner
@@ -20,6 +21,7 @@ interface GameState {
             val plays: List<Play>,
             val winner: Winner,
             val turn: Player,
+            val dead: List<Piece>,
         ) : State()
 
         data class FatalError(

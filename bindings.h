@@ -149,6 +149,14 @@ struct FFIResult_Winner *game_state_handle_winner(const struct GameStateHandle *
 struct FFIResult_TurnPlayer *game_state_current_player(const struct GameStateHandle *handle);
 
 /**
+ * Returns the dead pieces in row major order (no Empty tiles will actually be in the array, but
+ * the TileArray will still return Empty if indexed out of bounds)
+ *
+ * Running out of aliases for the enum variants, so adding a PieceArray type would be problematic
+ */
+struct FFIResult_____TileArray *game_state_handle_dead(const struct GameStateHandle *handle);
+
+/**
  * Safety: calling this on an invalid pointer is undefined behavior
  */
 FFIResultType result_game_state_update_get_type(struct FFIResult_GameStateUpdate *result);

@@ -8,6 +8,7 @@ import io.github.skeletonxf.bindings.bindings_h
 import io.github.skeletonxf.data.BoardData
 import io.github.skeletonxf.data.GameStateUpdate
 import io.github.skeletonxf.data.KResult
+import io.github.skeletonxf.data.Piece
 import io.github.skeletonxf.data.Play
 import io.github.skeletonxf.data.Player
 import io.github.skeletonxf.data.Position
@@ -99,11 +100,18 @@ class GameStateHandle : GameState {
                 "Unable to query turn player", result.err.toThrowable()
             )
         }
+        val dead = when (val result = getDead()) {
+            is KResult.Ok -> result.ok
+            is KResult.Error -> return GameState.State.FatalError(
+                "Unable to query dead pieces", result.err.toThrowable()
+            )
+        }
         return GameState.State.Game(
             board = board,
             plays = plays,
             winner = winner,
             turn = turn,
+            dead = dead,
         )
     }
 
@@ -164,6 +172,24 @@ class GameStateHandle : GameState {
             getOk = bindings_h::result_player_get_ok,
             getError = bindings_h::result_player_get_error,
         ).map { Player.valueOf(it) }
+
+    private fun getDead(): KResult<List<Piece>, FFIError<Unit?>> = KResult
+        .from(
+            handle = bindings_h.game_state_handle_dead(handle),
+            getType = { bindings_h.result_tile_array_get_type(it) },
+            getOk = { bindings_h.result_tile_array_get_ok(it) },
+            getError = { bindings_h.result_tile_array_get_error(it) },
+        ).map(destroy = bindings_h::tile_array_destroy) { pieces ->
+            val length = bindings_h.tile_array_length(pieces).toInt()
+            val dead = List(length) { i ->
+                Piece.valueOf(
+                    Tile.valueOf(
+                        bindings_h.tile_array_get(pieces, i.toLong())
+                    )
+                )
+            }
+            dead.filterNotNull()
+        }
 
     companion object {
         private val bridgeCleaner: Cleaner = Cleaner.create()

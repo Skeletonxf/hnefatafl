@@ -58,13 +58,14 @@ val emptyBoard = BoardData(
 fun Board(
     board: BoardData,
     plays: List<Play>,
+    dead: List<Piece>,
     makePlay: (Play) -> Unit,
 ) {
     var selected by rememberSaveable { mutableStateOf<Position?>(null) }
     Board(
         board,
         moves = plays.filter { play -> play.from == selected }.map { it.to },
-        dead = listOf(), // TODO
+        dead = dead,
         onSelect = {
             selected = if (selected == it) {
                 null
