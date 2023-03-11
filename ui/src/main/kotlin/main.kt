@@ -17,6 +17,7 @@ import io.github.skeletonxf.ffi.GameStateHandle
 import io.github.skeletonxf.ui.App
 import io.github.skeletonxf.ui.MenuContent
 import io.github.skeletonxf.ui.theme.HnefataflMaterialTheme
+import java.awt.Dimension
 
 fun main() {
    application {
@@ -24,6 +25,9 @@ fun main() {
             onCloseRequest = ::exitApplication,
             title = "Hnefatafl",
         ) {
+            SideEffect {
+                window.minimumSize = Dimension(450, 450)
+            }
             IconSideEffect(window)
 
             var handle: GameStateHandle? by remember { mutableStateOf(null) }
