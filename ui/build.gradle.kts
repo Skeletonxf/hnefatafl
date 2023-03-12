@@ -1,3 +1,4 @@
+import org.jetbrains.compose.ExperimentalComposeLibrary
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import java.util.Properties
 
@@ -12,12 +13,14 @@ repositories {
     google()
 }
 
+@OptIn(ExperimentalComposeLibrary::class)
 dependencies {
     // Note, if you develop a library, you should use compose.desktop.common.
     // compose.desktop.currentOs should be used in launcher-sourceSet
     // (in a separate module for demo project and in testMain).
     // With compose.desktop.common you will also lose @Preview functionality
     implementation(compose.desktop.currentOs)
+    implementation(compose.material3)
 }
 
 configure<SourceSetContainer> {
@@ -70,6 +73,12 @@ tasks.withType(JavaCompile::class).all {
     dependsOn.add(generateBindings)
 }
 
+tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile::class).configureEach {
+    kotlinOptions {
+        freeCompilerArgs += "-Xopt-in=kotlin.RequiresOptIn"
+    }
+}
+
 compose.desktop {
     application {
         mainClass = "MainKt"
@@ -86,4 +95,8 @@ compose.desktop {
             packageVersion = "1.0.0"
         }
     }
+}
+
+compose {
+    kotlinCompilerPlugin.set("androidx.compose.compiler:compiler:1.4.2")
 }
