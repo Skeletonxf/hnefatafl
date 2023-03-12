@@ -31,6 +31,7 @@ import io.github.skeletonxf.data.Play
 import io.github.skeletonxf.data.Player
 import io.github.skeletonxf.data.Winner
 import io.github.skeletonxf.ffi.FFIThrowable
+import io.github.skeletonxf.functions.then
 import io.github.skeletonxf.ui.theme.HnefataflColors
 import java.lang.Integer.max
 import java.lang.Integer.min
@@ -116,6 +117,7 @@ private fun Title(
     )
 }
 
+@Suppress("NAME_SHADOWING")
 @Composable
 fun Content(
     state: GameState.State.Game,
@@ -123,6 +125,9 @@ fun Content(
     onRestart: () -> Unit,
     onQuit: () -> Unit,
 ) {
+    val boardState = rememberBoardState()
+    val onRestart = boardState::deselect.then(onRestart)
+    val onQuit = boardState::deselect.then(onQuit)
     val title: @Composable () -> Unit = {
         Crossfade(targetState = state.turn, animationSpec = tween(durationMillis = 500)) { turn ->
             Title(
@@ -139,6 +144,7 @@ fun Content(
         ) {
             Board(
                 board = state.board,
+                boardState = boardState,
                 plays = state.plays,
                 dead = state.dead,
                 makePlay = makePlay,

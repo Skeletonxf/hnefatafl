@@ -57,23 +57,17 @@ val emptyBoard = BoardData(
 @Composable
 fun Board(
     board: BoardData,
+    boardState: BoardState,
     plays: List<Play>,
     dead: List<Piece>,
     makePlay: (Play) -> Unit,
 ) {
-    var selected by rememberSaveable { mutableStateOf<Position?>(null) }
     Board(
         board,
-        moves = plays.filter { play -> play.from == selected }.map { it.to },
+        moves = boardState.filterPlaysToSelected(plays),
         dead = dead,
-        onSelect = {
-            selected = if (selected == it) {
-                null
-            } else {
-                it
-            }
-        },
-        selected = selected,
+        onSelect = boardState::select,
+        selected = boardState.selected,
         makePlay = makePlay,
     )
 }
