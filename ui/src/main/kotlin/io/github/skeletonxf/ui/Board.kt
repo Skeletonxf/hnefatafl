@@ -23,10 +23,7 @@ import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -138,6 +135,14 @@ fun Board(
                                         isMoveForSelected && selectedPiece is Piece -> selectedPiece
                                         else -> null
                                     },
+                                    isSpecial = position.let { (x, y) ->
+                                        (x == board.length / 2 && y == board.length / 2) ||
+                                                (x == 0 && y == 0) ||
+                                                (x == board.length - 1 && y == 0) ||
+                                                (x == 0 && y == board.length - 1) ||
+                                                (x == board.length - 1 && y == board.length - 1)
+
+                                    }
                                 )
                             }
                             Spacer(Modifier.height(margin))
@@ -181,6 +186,7 @@ private fun Tile(
     onClick: () -> Unit,
     isSelected: Boolean,
     isMoveFor: Piece?,
+    isSpecial: Boolean,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
@@ -208,6 +214,14 @@ private fun Tile(
             .background(color.adjust(isLegalMove = isMoveFor != null))
             .size(tileSize)
     ) {
+        if (isSpecial) {
+            Box(
+                modifier = Modifier
+                    .size(tileSize - 2.dp)
+                    .align(Alignment.Center)
+                    .border(width = Dp.Hairline, color = HnefataflColors.night)
+            )
+        }
         val modifier = Modifier.size(tileSize.minus(inset)).align(Alignment.Center)
         when (tile) {
             Tile.Empty -> Unit
