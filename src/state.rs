@@ -21,6 +21,7 @@ pub struct GameState {
     turn: Player,
     winner: Option<Player>,
     dead: Vec<Piece>,
+    turn_count: u32,
 }
 
 #[derive(Debug)]
@@ -235,6 +236,7 @@ impl GameState {
             turn: Player::Defender,
             winner: None,
             dead: vec![],
+            turn_count: 0,
         }
     }
 }
@@ -348,6 +350,13 @@ impl GameState {
             GameStateUpdate::DefenderWin => self.winner = Some(Player::Defender),
             GameStateUpdate::AttackerWin => self.winner = Some(Player::Attacker),
             _ => (),
+        };
+        self.turn_count = match self.turn_count.checked_add(1) {
+            Some(count) => count,
+            None => {
+                eprintln!("Ran out of bits to count the turn with");
+                return Err(());
+            }
         };
         Ok(info)
     }
@@ -622,5 +631,9 @@ impl GameState {
 
     pub fn dead(&self) -> &Vec<Piece> {
         &self.dead
+    }
+
+    pub fn turn_count(&self) -> u32 {
+        self.turn_count
     }
 }
