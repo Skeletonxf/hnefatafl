@@ -6,13 +6,11 @@ import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.material.Button
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -25,7 +23,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.WindowPosition.PlatformDefault.y
 import io.github.skeletonxf.ui.theme.PreviewSurface
 import io.github.skeletonxf.data.Play
 import io.github.skeletonxf.data.Player
@@ -94,17 +91,22 @@ private fun RestartButton(onRestart: () -> Unit) {
 private fun Title(
     turn: Player,
     winner: Winner,
+    turnCount: UInt,
     modifier: Modifier = Modifier,
 ) {
+    val turnsTaken = when (turn) {
+        Player.Defender -> turnCount / 2u
+        Player.Attacker -> (turnCount - 1u) / 2u
+    }
     Text(
         text = when (winner) {
             Winner.None -> when (turn) {
-                Player.Defender -> "Defender's turn"
-                Player.Attacker -> "Attacker's turn"
+                Player.Defender -> "Defender's turn (${turnsTaken + 1u})"
+                Player.Attacker -> "Attacker's turn (${turnsTaken + 1u})"
             }
 
-            Winner.Defenders -> "Defender's victory"
-            Winner.Attackers -> "Attacker's victory"
+            Winner.Defenders -> "Defender's victory (${turnsTaken})"
+            Winner.Attackers -> "Attacker's victory (${turnsTaken})"
         },
         modifier = modifier,
         color = HnefataflColors.night,
@@ -133,6 +135,7 @@ fun Content(
             Title(
                 turn = turn,
                 winner = state.winner,
+                turnCount = state.turnCount,
                 modifier = Modifier.fillMaxWidth().padding(start = 8.dp, top = 8.dp, end = 8.dp),
             )
         }
@@ -247,6 +250,7 @@ private fun ContentPreview() = PreviewSurface {
             winner = Winner.None,
             turn = Player.Defender,
             dead = listOf(),
+            turnCount = 0u,
         ),
         makePlay = {},
         onRestart = {},
@@ -278,6 +282,7 @@ private fun GameOverPreview() = PreviewSurface {
             winner = Winner.Attackers,
             turn = Player.Defender,
             dead = listOf(),
+            turnCount = 0u,
         ),
         makePlay = {},
         onRestart = {},

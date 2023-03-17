@@ -22,6 +22,7 @@ interface GameState {
             val winner: Winner,
             val turn: Player,
             val dead: List<Piece>,
+            val turnCount: UInt,
         ) : State()
 
         data class FatalError(

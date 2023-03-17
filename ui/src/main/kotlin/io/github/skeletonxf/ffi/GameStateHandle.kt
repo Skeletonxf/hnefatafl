@@ -106,12 +106,19 @@ class GameStateHandle : GameState {
                 "Unable to query dead pieces", result.err.toThrowable()
             )
         }
+        val turnCount = when (val result = getTurnCount()) {
+            is KResult.Ok -> result.ok
+            is KResult.Error -> return GameState.State.FatalError(
+                "Unable to query turn count", result.err.toThrowable()
+            )
+        }
         return GameState.State.Game(
             board = board,
             plays = plays,
             winner = winner,
             turn = turn,
             dead = dead,
+            turnCount = turnCount
         )
     }
 
@@ -189,6 +196,18 @@ class GameStateHandle : GameState {
                 )
             }
             dead.filterNotNull()
+        }
+
+    private fun getTurnCount(): KResult<UInt, FFIError<Unit?>> = KResult
+        .from(
+            handle = bindings_h.game_state_handle_turn_count(handle),
+            getType = bindings_h::result_u32_get_type,
+            getOk = bindings_h::result_u32_get_ok,
+            getError = bindings_h::result_u32_get_error,
+        ).map { turnCount ->
+            // Since Rust will saturate the turn count at u32::MAX use UInt to ensure Kotlin represents
+            // the number accurately
+            turnCount.toUInt()
         }
 
     companion object {
