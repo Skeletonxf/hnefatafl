@@ -21,22 +21,30 @@ data class Strings(
     }
 }
 
+private val britishEnglish = Strings(
+    name = "🇬🇧"
+)
+
+private val castilianSpanish = Strings(
+    name = "🇪🇸",
+    menu = Strings.Menu(
+        // this is kinda a different copy but versus computer seems to translate
+        // better as "Jugar contra" so keeping this form for the 2 player option
+        // works nicely. "juego de dos jugadores" would be more literal, but I don't
+        // like the repetition
+        twoPlayerGame = "Jugar contra su amigo",
+        versusComputer = "Jugar contra el ordenador (próximamente)",
+    )
+)
+
 val locales = mapOf(
-    "en-GB" to Strings(
-        name = "🇬🇧"
-    ),
-    "en-US" to Strings(
-        name = "🇺🇸"
-    ),
-    "es" to Strings(
-        name = "🇪🇸",
-        menu = Strings.Menu(
-            // this is kinda a different copy but versus computer seems to translate
-            // better as "Jugar contra" so keeping this form for the 2 player option
-            // works nicely. "juego de dos jugadores" would be more literal, but I don't
-            // like the repetition
-            twoPlayerGame = "Jugar contra su amigo",
-            versusComputer = "Jugar contra el ordenador (próximamente)",
+    "en-GB" to britishEnglish,
+    "en-US" to britishEnglish.copy(name = "🇺🇸"),
+    "es-ES" to castilianSpanish,
+    "es-419" to castilianSpanish.copy(
+        name = "Latinoamérica",
+        menu = castilianSpanish.menu.copy(
+            versusComputer = "Jugar contra el computadora (próximamente)",
         )
     )
 )

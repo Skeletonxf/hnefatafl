@@ -12,8 +12,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Button
+import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.material.TextButton
@@ -32,6 +34,7 @@ import io.github.skeletonxf.functions.then
 import io.github.skeletonxf.ui.strings.LocalChangeStrings
 import io.github.skeletonxf.ui.strings.LocalStrings
 import io.github.skeletonxf.ui.strings.locales
+import io.github.skeletonxf.ui.theme.HnefataflColors
 import io.github.skeletonxf.ui.theme.PreviewSurface
 
 @Composable
@@ -47,7 +50,12 @@ fun MenuContent(
             Column {
                 val changeStrings = LocalChangeStrings.current
                 var dropdown by remember { mutableStateOf(false) }
-                TextButton(onClick = { dropdown = true }) {
+                TextButton(
+                    onClick = { dropdown = true },
+                    colors = ButtonDefaults.textButtonColors(
+                        backgroundColor = MaterialTheme.colors.background,
+                    ),
+                ) {
                     Text(text = strings.name)
                 }
                 DropdownMenu(expanded = dropdown, onDismissRequest = { dropdown = false }) {
