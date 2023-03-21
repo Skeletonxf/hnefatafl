@@ -16,6 +16,7 @@ import androidx.compose.ui.window.application
 import io.github.skeletonxf.ffi.GameStateHandle
 import io.github.skeletonxf.ui.App
 import io.github.skeletonxf.ui.MenuContent
+import io.github.skeletonxf.ui.strings.ProvideStrings
 import io.github.skeletonxf.ui.theme.HnefataflMaterialTheme
 import java.awt.Dimension
 
@@ -46,17 +47,19 @@ fun Root(
     onNewGame: () -> Unit,
     onQuit: () -> Unit,
 ) = HnefataflMaterialTheme {
-    Surface {
-        when (handle) {
-            null -> MenuContent(onNewGame = onNewGame)
-            else -> {
-                val state by handle.state
-                App(
-                    state = state,
-                    makePlay = handle::makePlay,
-                    onQuit = onQuit,
-                    onRestart = onNewGame,
-                )
+    ProvideStrings {
+        Surface {
+            when (handle) {
+                null -> MenuContent(onNewGame = onNewGame)
+                else -> {
+                    val state by handle.state
+                    App(
+                        state = state,
+                        makePlay = handle::makePlay,
+                        onQuit = onQuit,
+                        onRestart = onNewGame,
+                    )
+                }
             }
         }
     }
