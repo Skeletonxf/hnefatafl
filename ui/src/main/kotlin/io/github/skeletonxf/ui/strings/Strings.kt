@@ -12,13 +12,24 @@ import androidx.compose.runtime.staticCompositionLocalOf
 data class Strings(
     val name: String,
     val menu: Menu = Menu(),
+    val game: Game = Game(),
 ) {
     data class Menu(
         val twoPlayerGame: String = "Two player game",
         val versusComputer: String = "Versus computer (coming soon)",
+        val appIcon: String = "App icon",
     ) {
         val title: String = "Hnefatafl"
     }
+
+    data class Game(
+        val quit: String = "Quit",
+        val restart: String = "Restart",
+        val defendersTurn: (UInt) -> String = { turnsTaken -> "Defender's turn (${turnsTaken + 1u})" },
+        val attackersTurn: (UInt) -> String = { turnsTaken -> "Attacker's turn (${turnsTaken + 1u})" },
+        val defendersVictory: (UInt) -> String = { turnsTaken -> "Defender's victory ($turnsTaken)" },
+        val attackersVictory: (UInt) -> String = { turnsTaken -> "Attacker's victory ($turnsTaken)" },
+    )
 }
 
 private val britishEnglish = Strings(
@@ -34,6 +45,15 @@ private val castilianSpanish = Strings(
         // like the repetition
         twoPlayerGame = "Jugar contra su amigo",
         versusComputer = "Jugar contra el ordenador (próximamente)",
+        appIcon = "Icono de la aplicación",
+    ),
+    game = Strings.Game(
+        quit = "Abandonar",
+        restart = "Reiniciar",
+        defendersTurn = { turnsTaken -> "El turno de los defensores (${turnsTaken + 1u})" },
+        attackersTurn = { turnsTaken -> "El turno de los atacantes (${turnsTaken + 1u})" },
+        defendersVictory = { turnsTaken -> "La victoria de los defensores ($turnsTaken)" },
+        attackersVictory = { turnsTaken -> "La victoria de los atacantes ($turnsTaken)" }
     )
 )
 

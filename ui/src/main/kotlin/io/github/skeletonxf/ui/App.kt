@@ -29,6 +29,7 @@ import io.github.skeletonxf.data.Player
 import io.github.skeletonxf.data.Winner
 import io.github.skeletonxf.ffi.FFIThrowable
 import io.github.skeletonxf.functions.then
+import io.github.skeletonxf.ui.strings.LocalStrings
 import io.github.skeletonxf.ui.theme.HnefataflColors
 import java.lang.Integer.max
 import java.lang.Integer.min
@@ -43,6 +44,7 @@ fun App(
     modifier = Modifier.fillMaxSize(),
     contentAlignment = Alignment.Center,
 ) {
+    val strings = LocalStrings.current.game
     when (state) {
         is GameState.State.Game -> Content(
             state = state,
@@ -61,7 +63,7 @@ fun App(
             Button(
                 onClick = onRestart,
             ) {
-                Text(text = "Restart")
+                Text(text = strings.restart)
             }
             Spacer(Modifier.height(16.dp))
             Button(
@@ -76,14 +78,14 @@ fun App(
 @Composable
 private fun QuitButton(onQuit: () -> Unit) {
     Button(onClick = onQuit, modifier = Modifier.padding(horizontal = 12.dp)) {
-        Text(text = "Quit")
+        Text(text = LocalStrings.current.game.quit)
     }
 }
 
 @Composable
 private fun RestartButton(onRestart: () -> Unit) {
     Button(onClick = onRestart, modifier = Modifier.padding(horizontal = 12.dp)) {
-        Text(text = "Restart")
+        Text(text = LocalStrings.current.game.restart)
     }
 }
 
@@ -94,6 +96,7 @@ private fun Title(
     turnCount: UInt,
     modifier: Modifier = Modifier,
 ) {
+    val strings = LocalStrings.current.game
     val turnsTaken = when (turn) {
         Player.Defender -> turnCount / 2u
         Player.Attacker -> (turnCount - 1u) / 2u
@@ -101,12 +104,12 @@ private fun Title(
     Text(
         text = when (winner) {
             Winner.None -> when (turn) {
-                Player.Defender -> "Defender's turn (${turnsTaken + 1u})"
-                Player.Attacker -> "Attacker's turn (${turnsTaken + 1u})"
+                Player.Defender -> strings.defendersTurn(turnsTaken)
+                Player.Attacker -> strings.attackersTurn(turnsTaken)
             }
 
-            Winner.Defenders -> "Defender's victory (${turnsTaken})"
-            Winner.Attackers -> "Attacker's victory (${turnsTaken})"
+            Winner.Defenders -> strings.defendersVictory(turnsTaken)
+            Winner.Attackers -> strings.attackersVictory(turnsTaken)
         },
         modifier = modifier,
         color = HnefataflColors.night,
