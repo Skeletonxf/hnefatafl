@@ -42,6 +42,7 @@ import io.github.skeletonxf.data.Player
 import io.github.skeletonxf.data.Position
 import io.github.skeletonxf.data.Tile
 import io.github.skeletonxf.data.TileColor
+import io.github.skeletonxf.ui.strings.LocalStrings
 import io.github.skeletonxf.ui.theme.HnefataflColors
 import io.github.skeletonxf.ui.theme.PreviewSurface
 import kotlin.math.max
@@ -234,27 +235,30 @@ private fun Tile(
 @Composable
 private fun Piece.Icon(
     modifier: Modifier
-) = when (this) {
-    Tile.Attacker -> Icon(
-        painter = painterResource("images/piece.svg"),
-        contentDescription = "Attacker",
-        modifier = modifier,
-        tint = HnefataflColors.brown,
-    )
+) {
+    val strings = LocalStrings.current.game.piece
+    when (this) {
+        Tile.Attacker -> Icon(
+            painter = painterResource("images/piece.svg"),
+            contentDescription = strings.attacker,
+            modifier = modifier,
+            tint = HnefataflColors.brown,
+        )
 
-    Tile.Defender -> Icon(
-        painter = painterResource("images/piece.svg"),
-        contentDescription = "Defender",
-        modifier = modifier,
-        tint = HnefataflColors.night,
-    )
+        Tile.Defender -> Icon(
+            painter = painterResource("images/piece.svg"),
+            contentDescription = strings.defender,
+            modifier = modifier,
+            tint = HnefataflColors.night,
+        )
 
-    Tile.King -> Icon(
-        painter = painterResource("images/king.svg"),
-        contentDescription = "King",
-        modifier = modifier,
-        tint = HnefataflColors.night,
-    )
+        Tile.King -> Icon(
+            painter = painterResource("images/king.svg"),
+            contentDescription = strings.king,
+            modifier = modifier,
+            tint = HnefataflColors.night,
+        )
+    }
 }
 
 @Composable

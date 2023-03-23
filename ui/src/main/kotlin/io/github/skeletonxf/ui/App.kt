@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Button
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.Layout
@@ -30,6 +31,7 @@ import io.github.skeletonxf.data.Winner
 import io.github.skeletonxf.ffi.FFIThrowable
 import io.github.skeletonxf.functions.then
 import io.github.skeletonxf.ui.strings.LocalStrings
+import io.github.skeletonxf.ui.strings.locales
 import io.github.skeletonxf.ui.theme.HnefataflColors
 import java.lang.Integer.max
 import java.lang.Integer.min
@@ -54,7 +56,7 @@ fun App(
         )
 
         is GameState.State.FatalError -> Column {
-            Text("Something went horribly wrong 😭")
+            Text(text = strings.failure)
             Spacer(Modifier.height(16.dp))
             Text(state.message)
             Spacer(Modifier.height(8.dp))
@@ -69,7 +71,7 @@ fun App(
             Button(
                 onClick = onQuit,
             ) {
-                Text(text = "Main menu")
+                Text(text = strings.mainMenu)
             }
         }
     }
@@ -273,6 +275,22 @@ private fun FatalErrorPreview() = PreviewSurface {
         onRestart = {},
         onQuit = {},
     )
+}
+
+@Composable
+@Preview
+private fun FatalErrorSpanishPreview() = PreviewSurface {
+    CompositionLocalProvider(LocalStrings provides locales["es-ES"]!!) {
+        App(
+            state = GameState.State.FatalError(
+                message = "Contextual message here",
+                cause = FFIThrowable("Problem here", null, Void::class)
+            ),
+            makePlay = {},
+            onRestart = {},
+            onQuit = {},
+        )
+    }
 }
 
 @Composable

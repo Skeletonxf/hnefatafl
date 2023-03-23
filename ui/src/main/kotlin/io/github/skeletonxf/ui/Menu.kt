@@ -4,6 +4,8 @@ import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -41,31 +43,13 @@ import io.github.skeletonxf.ui.theme.PreviewSurface
 fun MenuContent(
     onNewGame: () -> Unit,
 ) = Surface {
-    val strings = LocalStrings.current
+    val strings = LocalStrings.current.menu
     Column {
         Box(
             modifier = Modifier.fillMaxWidth().padding(8.dp),
             contentAlignment = Alignment.TopEnd
         ) {
-            Column {
-                val changeStrings = LocalChangeStrings.current
-                var dropdown by remember { mutableStateOf(false) }
-                TextButton(
-                    onClick = { dropdown = true },
-                    colors = ButtonDefaults.textButtonColors(
-                        backgroundColor = MaterialTheme.colors.background,
-                    ),
-                ) {
-                    Text(text = strings.name)
-                }
-                DropdownMenu(expanded = dropdown, onDismissRequest = { dropdown = false }) {
-                    locales.forEach { (locale, strings) ->
-                        DropdownMenuItem(onClick = { changeStrings(locale) }.then { dropdown = false }) {
-                            Text(text = strings.name)
-                        }
-                    }
-                }
-            }
+            LanguagePicker()
         }
         Box(modifier = Modifier.fillMaxSize()) {
             Column(
@@ -76,27 +60,62 @@ fun MenuContent(
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Text(
-                    text = strings.menu.title,
+                    text = strings.title,
                     fontWeight = FontWeight.Bold,
                     fontSize = 48.sp,
                     letterSpacing = 0.sp
                 )
                 Image(
                     painter = painterResource("images/icon.svg"),
-                    contentDescription = "App icon",
+                    contentDescription = strings.appIcon,
                 )
                 Spacer(Modifier.height(16.dp))
                 Button(
                     onClick = onNewGame,
                 ) {
-                    Text(text = strings.menu.twoPlayerGame)
+                    Text(text = strings.twoPlayerGame)
                 }
                 Spacer(Modifier.height(16.dp))
                 Button(
                     onClick = {},
                     enabled = false,
                 ) {
-                    Text(text = strings.menu.versusComputer)
+                    Text(text = strings.versusComputer)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun LanguagePicker() {
+    var dropdown by remember { mutableStateOf(false) }
+    LanguagePicker(
+        dropdown = dropdown,
+        onSetDropdown = { dropdown = it },
+    )
+}
+
+@Composable
+fun LanguagePicker(
+    dropdown: Boolean,
+    onSetDropdown: (Boolean) -> Unit,
+) {
+    val strings = LocalStrings.current
+    Column {
+        val changeStrings = LocalChangeStrings.current
+        TextButton(
+            onClick = { onSetDropdown(true) },
+            colors = ButtonDefaults.textButtonColors(
+                backgroundColor = MaterialTheme.colors.background,
+            ),
+        ) {
+            Text(text = strings.name)
+        }
+        DropdownMenu(expanded = dropdown, onDismissRequest = { onSetDropdown(false) }) {
+            locales.forEach { (locale, strings) ->
+                DropdownMenuItem(onClick = { changeStrings(locale) }.then { onSetDropdown(false) }) {
+                    Text(text = strings.name)
                 }
             }
         }

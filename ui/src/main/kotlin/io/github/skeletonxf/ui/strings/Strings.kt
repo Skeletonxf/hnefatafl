@@ -29,15 +29,24 @@ data class Strings(
         val attackersTurn: (UInt) -> String = { turnsTaken -> "Attacker's turn (${turnsTaken + 1u})" },
         val defendersVictory: (UInt) -> String = { turnsTaken -> "Defender's victory ($turnsTaken)" },
         val attackersVictory: (UInt) -> String = { turnsTaken -> "Attacker's victory ($turnsTaken)" },
-    )
+        val mainMenu: String = "Main menu",
+        val failure: String = "Something went horribly wrong 😭",
+        val piece: Piece = Piece(),
+    ) {
+        data class Piece(
+            val attacker: String = "Attacker",
+            val defender: String = "Defender",
+            val king: String = "King",
+        )
+    }
 }
 
 private val britishEnglish = Strings(
-    name = "🇬🇧"
+    name = "English 🇬🇧"
 )
 
 private val castilianSpanish = Strings(
-    name = "🇪🇸",
+    name = "Español 🇪🇸",
     menu = Strings.Menu(
         // this is kinda a different copy but versus computer seems to translate
         // better as "Jugar contra" so keeping this form for the 2 player option
@@ -53,16 +62,23 @@ private val castilianSpanish = Strings(
         defendersTurn = { turnsTaken -> "El turno de los defensores (${turnsTaken + 1u})" },
         attackersTurn = { turnsTaken -> "El turno de los atacantes (${turnsTaken + 1u})" },
         defendersVictory = { turnsTaken -> "La victoria de los defensores ($turnsTaken)" },
-        attackersVictory = { turnsTaken -> "La victoria de los atacantes ($turnsTaken)" }
+        attackersVictory = { turnsTaken -> "La victoria de los atacantes ($turnsTaken)" },
+        mainMenu = "Menú principal",
+        failure = "Algo terriblemente malo pasó 😭",
+        piece = Strings.Game.Piece(
+            attacker = "Atacante",
+            defender = "Defensor",
+            king = "Rey",
+        )
     )
 )
 
 val locales = mapOf(
     "en-GB" to britishEnglish,
-    "en-US" to britishEnglish.copy(name = "🇺🇸"),
+    "en-US" to britishEnglish.copy(name = "English 🇺🇸"),
     "es-ES" to castilianSpanish,
     "es-419" to castilianSpanish.copy(
-        name = "Latinoamérica",
+        name = "Español latinoaméricano",
         menu = castilianSpanish.menu.copy(
             versusComputer = "Jugar contra el computadora (próximamente)",
         )
