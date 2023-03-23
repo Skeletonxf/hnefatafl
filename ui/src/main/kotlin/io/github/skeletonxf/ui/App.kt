@@ -187,34 +187,44 @@ fun Content(
 
         val quitPlaceable = quitButton.measure(constraints.copy(minHeight = 0, minWidth = 0))
         val restartPlaceable = restartButton.measure(constraints.copy(minHeight = 0, minWidth = 0))
+
         val titleMargin = max(quitPlaceable.width, restartPlaceable.width)
 
-        // TODO: If we have more height than width available we should consider placing the title under
-        // the quit and restart buttons instead of centered between them, which will free up a bunch of space
-        // for the title text without shrinking the board
+        // Ideally each button goes in the top left and top right, but when horizontal space is
+        // tight switch to both buttons on the left to give the main text more room
+        val centerAlignTitle = quitPlaceable.width + restartPlaceable.width < constraints.maxWidth * 0.25
+
+        val titleMargins = when (centerAlignTitle) {
+            true -> 2 * titleMargin
+            false -> titleMargin
+        }
         val titlePlaceable = titleMeasurable.measure(
             constraints.copy(
                 minHeight = 0,
-                minWidth = constraints.maxWidth - (2 * titleMargin),
-                maxWidth = constraints.maxWidth - (2 * titleMargin),
+                minWidth = constraints.maxWidth - titleMargins,
+                maxWidth = constraints.maxWidth - titleMargins,
             )
         )
+        val titleHeaderHeight = when (centerAlignTitle) {
+            true -> max(titlePlaceable.height, max(quitPlaceable.height, restartPlaceable.height))
+            false -> max(titlePlaceable.height, quitPlaceable.height + restartPlaceable.height)
+        }
 
         val mainContentPlaceable = mainContentMeasurable.measure(
             Constraints(
                 minWidth = constraints.minWidth,
                 maxWidth = constraints.maxWidth,
                 minHeight = 0,
-                maxHeight = constraints.maxHeight - (titlePlaceable.height),
+                maxHeight = constraints.maxHeight - (titleHeaderHeight),
             )
         )
 
         val desiredVerticalPadding = constraints.maxHeight - mainContentPlaceable.height
-        val usedHeight = mainContentPlaceable.height + titlePlaceable.height
+        val usedHeight = mainContentPlaceable.height + titleHeaderHeight
         val emptyHeight = constraints.maxHeight - usedHeight
-        val verticalPadding = min(max((desiredVerticalPadding / 2) - titlePlaceable.height, 0), emptyHeight)
+        val verticalPadding = min(max((desiredVerticalPadding / 2) - titleHeaderHeight, 0), emptyHeight)
 
-        val headerHeight = verticalPadding + titlePlaceable.height
+        val headerHeight = verticalPadding + titleHeaderHeight
         val headerPlaceable = headerMeasurable.measure(
             Constraints(
                 minWidth = constraints.maxWidth,
@@ -227,20 +237,38 @@ fun Content(
         layout(constraints.maxWidth, constraints.maxHeight) {
             // Header sits at the top behind everything else
             headerPlaceable.placeRelative(x = 0, y = 0)
-            // Title sits above board, centered between the two buttons
             titlePlaceable.placeRelative(
-                x = (constraints.maxWidth - titlePlaceable.width) / 2,
-                y = verticalPadding
+                x = when (centerAlignTitle) {
+                    // Title sits above board, centered between the two buttons
+                    true -> (constraints.maxWidth - titlePlaceable.width) / 2
+                    // Title header is left aligned, placed after the two buttons
+                    false -> titleMargin
+                },
+                // On very portrait layouts, top align the title instead of sitting above
+                // the board, to keep it aligned with the buttons
+                y = when (constraints.maxHeight > constraints.maxWidth * 1.1) {
+                    true -> 0
+                    false -> verticalPadding
+                }
             )
             // Main content varies based on available space for vertical alignment, but always starts just below
             // title
             mainContentPlaceable.placeRelative(
                 x = 0,
-                y = verticalPadding + titlePlaceable.height
+                y = verticalPadding + titleHeaderHeight
             )
-            // Quit and restart buttons are pinned to the top corners
-            quitPlaceable.placeRelative(x = 0, y = 0)
-            restartPlaceable.placeRelative(x = constraints.maxWidth - restartPlaceable.width, y = 0)
+            when (centerAlignTitle) {
+                true -> {
+                    // Quit and restart buttons are pinned to the top corners
+                    quitPlaceable.placeRelative(x = 0, y = 0)
+                    restartPlaceable.placeRelative(x = constraints.maxWidth - restartPlaceable.width, y = 0)
+                }
+                false -> {
+                    // Quit and restart buttons are left aligned in a column
+                    quitPlaceable.placeRelative(x = 0, y = 0)
+                    restartPlaceable.placeRelative(x = 0, y = quitPlaceable.height)
+                }
+            }
         }
     }
 }
