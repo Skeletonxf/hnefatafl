@@ -7,6 +7,7 @@ use crate::ffi::player::{Winner, TurnPlayer};
 use std::sync::Mutex;
 
 pub mod array;
+pub mod config;
 pub mod results;
 pub mod tile_array;
 pub mod play_array;

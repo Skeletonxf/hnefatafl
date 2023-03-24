@@ -50,6 +50,8 @@ typedef struct Array_Play Array_Play;
  */
 typedef struct Array_Tile Array_Tile;
 
+typedef struct ConfigHandle ConfigHandle;
+
 /**
  * A wrapper around a result
  */
@@ -68,12 +70,22 @@ typedef struct FFIResult_Winner FFIResult_Winner;
 /**
  * A wrapper around a result
  */
+typedef struct FFIResult_____ConfigHandle FFIResult_____ConfigHandle;
+
+/**
+ * A wrapper around a result
+ */
 typedef struct FFIResult_____PlayArray FFIResult_____PlayArray;
 
 /**
  * A wrapper around a result
  */
 typedef struct FFIResult_____TileArray FFIResult_____TileArray;
+
+/**
+ * A wrapper around a result
+ */
+typedef struct FFIResult______ConfigHandle FFIResult______ConfigHandle;
 
 /**
  * A wrapper around a result
@@ -196,6 +208,38 @@ uint32_t result_u32_get_ok(struct FFIResult_u32 *result);
  * Safety: calling this on an invalid pointer or an Ok variant is undefined behavior
  */
 void result_u32_get_error(struct FFIResult_u32 *result);
+
+/**
+ * Creates a new ConfigHandle from a UTF-16 toml file
+ */
+struct FFIResult_____ConfigHandle *config_handle_new(const uint16_t *chars, uintptr_t length);
+
+/**
+ * Destroys the data owned by the pointer
+ * The caller is responsible for ensuring there are no aliased references elsewhere in the
+ * program
+ */
+void config_handle_destroy(struct ConfigHandle *handle);
+
+/**
+ * Prints the config handle
+ */
+void config_handle_debug(const struct ConfigHandle *handle);
+
+/**
+ * Safety: calling this on an invalid pointer is undefined behavior
+ */
+FFIResultType result_config_handle_get_type(struct FFIResult______ConfigHandle *result);
+
+/**
+ * Safety: calling this on an invalid pointer or an Err variant is undefined behavior
+ */
+const struct ConfigHandle *result_config_handle_get_ok(struct FFIResult______ConfigHandle *result);
+
+/**
+ * Safety: calling this on an invalid pointer or an Ok variant is undefined behavior
+ */
+void result_config_handle_get_error(struct FFIResult______ConfigHandle *result);
 
 /**
  * Returns a value from the array, or Empty if out of bounds
