@@ -22,6 +22,8 @@ import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.material.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -32,6 +34,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import io.github.skeletonxf.ffi.ConfigHandle
+import io.github.skeletonxf.ffi.GameStateHandle
 import io.github.skeletonxf.functions.then
 import io.github.skeletonxf.ui.strings.LocalChangeStrings
 import io.github.skeletonxf.ui.strings.LocalStrings
@@ -102,6 +106,12 @@ fun LanguagePicker(
     onSetDropdown: (Boolean) -> Unit,
 ) {
     val strings = LocalStrings.current
+    // TODO: File IO and proper config handle creation
+    var handle: ConfigHandle? by remember { mutableStateOf(null) }
+    LaunchedEffect(Unit) {
+        ConfigHandle.new("""locale = 'en-GB'""").map { it.debug() }
+    }
+
     Column {
         val changeStrings = LocalChangeStrings.current
         TextButton(
