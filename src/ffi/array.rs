@@ -25,6 +25,23 @@ where
     })
 }
 
+/// Copies over all values from the array into the buffer
+/// Safety: The caller is responsible for ensuring the buffer is at least as many bytes long as
+/// the array and not aliased anywhere.
+pub unsafe fn array_copy_to<T>(array: *const Array<T>, buffer: *mut T) -> Result<(), FFIError>
+where
+    T: Clone,
+    T: std::panic::RefUnwindSafe,
+{
+    if buffer.is_null() {
+        return Err(FFIError::NullPointer);
+    }
+    with_array(array, |array| {
+        let buffer = std::slice::from_raw_parts_mut(buffer, array.data.len());
+        buffer.clone_from_slice(&array.data)
+    })
+}
+
 /// Returns the length of the array
 pub fn array_length<T>(array: *const Array<T>) -> usize
 where

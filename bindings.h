@@ -50,6 +50,11 @@ typedef struct Array_Play Array_Play;
  */
 typedef struct Array_Tile Array_Tile;
 
+/**
+ * An array of something
+ */
+typedef struct Array_u16 Array_u16;
+
 typedef struct ConfigHandle ConfigHandle;
 
 /**
@@ -85,6 +90,11 @@ typedef struct FFIResult_____TileArray FFIResult_____TileArray;
 /**
  * A wrapper around a result
  */
+typedef struct FFIResult_____UTF16Array FFIResult_____UTF16Array;
+
+/**
+ * A wrapper around a result
+ */
 typedef struct FFIResult______ConfigHandle FFIResult______ConfigHandle;
 
 /**
@@ -93,6 +103,8 @@ typedef struct FFIResult______ConfigHandle FFIResult______ConfigHandle;
 typedef struct FFIResult_u32 FFIResult_u32;
 
 typedef struct GameStateHandle GameStateHandle;
+
+typedef struct Vec_u16 Vec_u16;
 
 /**
  * An array of tiles.
@@ -113,6 +125,11 @@ typedef struct FlatPlay {
  * An array of plays.
  */
 typedef struct Array_Play PlayArray;
+
+/**
+ * An array of UTF-16 characters.
+ */
+typedef struct Array_u16 UTF16Array;
 
 /**
  * Creates a new GameStateHandle
@@ -227,6 +244,11 @@ void config_handle_destroy(struct ConfigHandle *handle);
 void config_handle_debug(const struct ConfigHandle *handle);
 
 /**
+ * Returns a vec of UTF-16 chars of the locale value
+ */
+struct FFIResult_____UTF16Array *config_handle_locale(const struct ConfigHandle *handle);
+
+/**
  * Safety: calling this on an invalid pointer is undefined behavior
  */
 FFIResultType result_config_handle_get_type(struct FFIResult______ConfigHandle *result);
@@ -334,3 +356,44 @@ TurnPlayer result_player_get_ok(struct FFIResult_TurnPlayer *result);
  * Safety: calling this on an invalid pointer or an Ok variant is undefined behavior
  */
 void result_player_get_error(struct FFIResult_TurnPlayer *result);
+
+/**
+ * Destroys the data owned by the pointer
+ * The caller is responsible for ensuring there are no aliased references elsewhere in the
+ * program
+ */
+void utf16_destroy(struct Vec_u16 *handle);
+
+/**
+ * Returns the length of the array
+ */
+uintptr_t utf16_array_length(const UTF16Array *array);
+
+/**
+ * Copies over all values from the array into the buffer
+ * Safety: The caller is responsible for ensuring the buffer is at least as many bytes long as
+ * the array and not aliased anywhere.
+ */
+void utf16_array_copy_to(const UTF16Array *array, uint16_t *buffer);
+
+/**
+ * Destroys the data owned by the UTF16Array
+ * The caller is responsible for ensuring there are no aliased references elsewhere in the
+ * program
+ */
+void utf16_array_destroy(UTF16Array *array);
+
+/**
+ * Safety: calling this on an invalid pointer is undefined behavior
+ */
+FFIResultType result_utf16_array_get_type(struct FFIResult_____UTF16Array *result);
+
+/**
+ * Safety: calling this on an invalid pointer or an Err variant is undefined behavior
+ */
+UTF16Array *result_utf16_array_get_ok(struct FFIResult_____UTF16Array *result);
+
+/**
+ * Safety: calling this on an invalid pointer or an Ok variant is undefined behavior
+ */
+void result_utf16_array_get_error(struct FFIResult_____UTF16Array *result);

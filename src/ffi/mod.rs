@@ -12,6 +12,7 @@ pub mod results;
 pub mod tile_array;
 pub mod play_array;
 pub mod player;
+pub mod strings;
 
 #[derive(Clone, Debug)]
 pub enum FFIError {

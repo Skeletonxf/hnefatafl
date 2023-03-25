@@ -1,7 +1,8 @@
 use crate::config::Config;
 use crate::ffi::FFIError;
 use crate::ffi::results::{FFIResult, FFIResultType, get_type, get_ok, get_error};
-use widestring::Utf16Str;
+use crate::ffi::strings;
+use crate::ffi::strings::UTF16Array;
 
 #[derive(Debug)]
 pub struct ConfigHandle {
@@ -19,13 +20,14 @@ impl ConfigHandle {
 pub unsafe extern fn config_handle_new(
     chars: *const u16, length: usize
 ) -> *mut FFIResult<*mut ConfigHandle, ()> {
-    if chars.is_null() {
-        return FFIResult::new(Err(()));
-    }
+    let toml_utf8 = match strings::utf16_to_string(chars, length) {
+        Ok(toml_utf8) => toml_utf8,
+        Err(error) => {
+            eprintln!("Error calling config_handle_new: {:?}", error);
+            return FFIResult::new(Err(()));
+        }
+    };
     FFIResult::new(match std::panic::catch_unwind(|| {
-        let slice = unsafe { std::slice::from_raw_parts(chars, length) };
-        let toml_utf16 = Utf16Str::from_slice_unchecked(slice);
-        let toml_utf8: String = toml_utf16.into();
         ConfigHandle::from(&toml_utf8)
     }) {
         Err(panic) => {
@@ -63,6 +65,19 @@ pub extern fn config_handle_debug(handle: *const ConfigHandle) {
     }) {
         eprint!("Error calling config_handle_debug: {:?}", error);
     }
+}
+
+/// Returns a vec of UTF-16 chars of the locale value
+#[no_mangle]
+pub extern fn config_handle_locale(
+    handle: *const ConfigHandle
+) -> *mut FFIResult<*mut UTF16Array, ()> {
+    FFIResult::new(with_handle(handle, |handle| {
+        strings::string_to_utf16(&handle.config.locale)
+    }).map_err(|error| {
+        eprintln!("Error calling config_handle_locale: {:?}", error);
+        ()
+    }))
 }
 
 fn with_handle<F, R>(handle: *const ConfigHandle, op: F) -> Result<R, FFIError>

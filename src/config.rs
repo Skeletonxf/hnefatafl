@@ -2,7 +2,7 @@ use serde::{Serialize, Deserialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Config {
-    locale: String,
+    pub locale: String,
 }
 
 impl Config {
