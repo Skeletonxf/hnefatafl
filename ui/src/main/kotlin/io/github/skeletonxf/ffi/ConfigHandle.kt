@@ -1,13 +1,10 @@
 package io.github.skeletonxf.ffi
 
+import androidx.compose.runtime.mutableStateOf
 import io.github.skeletonxf.bindings.bindings_h
 import io.github.skeletonxf.data.KResult
 import io.github.skeletonxf.settings.Config
 import java.lang.foreign.MemoryAddress
-import java.lang.foreign.MemorySegment
-import java.lang.foreign.MemorySession
-import java.lang.foreign.SegmentAllocator
-import java.lang.foreign.ValueLayout.JAVA_CHAR
 import java.lang.ref.Cleaner
 
 class ConfigHandle private constructor(private val handle: MemoryAddress) : Config {
@@ -19,19 +16,8 @@ class ConfigHandle private constructor(private val handle: MemoryAddress) : Conf
             }
             return KResult
                 .from(
-                    handle = MemorySession.openConfined().use { memorySession ->
-                        val chars = config.length
-                        val bytes = chars * 2L
-                        val allocator = SegmentAllocator.newNativeArena(bytes, memorySession)
-                        val charArray = config.toCharArray()
-                        lateinit var firstMemorySegment: MemorySegment
-                        charArray.forEachIndexed { index, char ->
-                            val memorySegment = allocator.allocate(JAVA_CHAR, char)
-                            if (index == 0) {
-                                firstMemorySegment = memorySegment
-                            }
-                        }
-                        bindings_h.config_handle_new(firstMemorySegment, chars.toLong())
+                    handle = withStringToUTF16Array(config) { memorySegment ->
+                        bindings_h.config_handle_new(memorySegment, config.length.toLong())
                     },
                     getType = bindings_h::result_config_handle_get_type,
                     getOk = bindings_h::result_config_handle_get_ok,
@@ -56,9 +42,30 @@ class ConfigHandle private constructor(private val handle: MemoryAddress) : Conf
         bridgeCleaner.register(this, ConfigHandleCleaner(handle))
     }
 
+    override val state = mutableStateOf(getConfigState())
+
     override fun debug() {
         bindings_h.config_handle_debug(handle)
     }
+
+    private fun getConfigState(): Config.State {
+        val locale = when (val result = getConfigLocale()) {
+            is KResult.Ok -> result.ok
+            is KResult.Error -> return Config.State.FatalError(
+                "Unable to query locale", result.err.toThrowable()
+            )
+        }
+        return Config.State.Config(
+            locale = locale,
+        )
+    }
+
+    private fun getConfigLocale(): KResult<String, FFIError<Unit?>> = KResult.from(
+        handle = bindings_h.config_handle_locale(handle),
+        getType = bindings_h::result_config_handle_get_type,
+        getOk = bindings_h::result_config_handle_get_ok,
+        getError = bindings_h::result_config_handle_get_error,
+    ).map(::utf16ArrayToString)
 }
 
 private data class ConfigHandleCleaner(private val handle: MemoryAddress) : Runnable {

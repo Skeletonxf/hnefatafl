@@ -8,6 +8,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
+import io.github.skeletonxf.settings.Config
 
 data class Strings(
     val name: String,
@@ -90,8 +91,15 @@ val LocalStrings = compositionLocalOf { locales["en-GB"]!! }
 val LocalChangeStrings = staticCompositionLocalOf<(String) -> Unit> { {} }
 
 @Composable
-fun ProvideStrings(content: @Composable () -> Unit) {
-    var strings by remember { mutableStateOf(locales["en-GB"]!!) }
+fun ProvideStrings(config: Config?, content: @Composable () -> Unit) {
+    val defaultLocale = when (config) {
+        null -> "en-GB"
+        else -> when (val state = config.state.value) {
+            is Config.State.Config -> state.locale
+            is Config.State.FatalError -> "en-GB"
+        }
+    }
+    var strings by remember { mutableStateOf(locales[defaultLocale]!!) }
     CompositionLocalProvider(
         LocalStrings provides strings,
         LocalChangeStrings provides { locale -> locales[locale]?.let { strings = it } }

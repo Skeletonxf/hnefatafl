@@ -13,7 +13,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
+import io.github.skeletonxf.ffi.ConfigHandle
 import io.github.skeletonxf.ffi.GameStateHandle
+import io.github.skeletonxf.settings.Config
 import io.github.skeletonxf.ui.App
 import io.github.skeletonxf.ui.MenuContent
 import io.github.skeletonxf.ui.strings.ProvideStrings
@@ -32,8 +34,12 @@ fun main() {
             IconSideEffect(window)
 
             var handle: GameStateHandle? by remember { mutableStateOf(null) }
+            // TODO: File IO and proper config handle creation, maybe wrap this in a settings handle?
+            // Should have graceful way to fall back to sensible defaults if file IO fails
+            val config: ConfigHandle? by remember { mutableStateOf(ConfigHandle.new("""locale = 'en-GB'""").okOrNull()) }
             Root(
                 handle = handle,
+                config = config,
                 onNewGame = { handle = GameStateHandle() },
                 onQuit = { handle = null },
             )
@@ -44,10 +50,11 @@ fun main() {
 @Composable
 fun Root(
     handle: GameStateHandle?,
+    config: Config?,
     onNewGame: () -> Unit,
     onQuit: () -> Unit,
 ) = HnefataflMaterialTheme {
-    ProvideStrings {
+    ProvideStrings(config = config) {
         Surface {
             when (handle) {
                 null -> MenuContent(onNewGame = onNewGame)

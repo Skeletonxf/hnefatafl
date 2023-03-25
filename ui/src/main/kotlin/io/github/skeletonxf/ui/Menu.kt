@@ -106,12 +106,6 @@ fun LanguagePicker(
     onSetDropdown: (Boolean) -> Unit,
 ) {
     val strings = LocalStrings.current
-    // TODO: File IO and proper config handle creation
-    var handle: ConfigHandle? by remember { mutableStateOf(null) }
-    LaunchedEffect(Unit) {
-        ConfigHandle.new("""locale = 'en-GB'""").map { it.debug() }
-    }
-
     Column {
         val changeStrings = LocalChangeStrings.current
         TextButton(
