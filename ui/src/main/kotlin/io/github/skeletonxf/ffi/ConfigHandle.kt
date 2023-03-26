@@ -10,21 +10,16 @@ import java.lang.ref.Cleaner
 class ConfigHandle private constructor(private val handle: MemoryAddress) : Config {
 
     companion object {
-        fun new(config: String): KResult<ConfigHandle, FFIError<Unit?>> {
-            if (config.isEmpty()) {
-                return KResult.Error(FFIError(message = "Empty string input", Unit));
-            }
-            return KResult
-                .from(
-                    handle = withStringToUTF16Array(config) { memorySegment ->
-                        bindings_h.config_handle_new(memorySegment, config.length.toLong())
-                    },
-                    getType = bindings_h::result_config_handle_get_type,
-                    getOk = bindings_h::result_config_handle_get_ok,
-                    getError = bindings_h::result_config_handle_get_error,
-                )
-                .map(::ConfigHandle)
-        }
+        fun new(config: String): KResult<ConfigHandle, FFIError<Unit?>> = KResult
+            .from(
+                handle = withStringToUTF16Array(config) { memorySegment ->
+                    bindings_h.config_handle_new(memorySegment, config.length.toLong())
+                },
+                getType = bindings_h::result_config_handle_get_type,
+                getOk = bindings_h::result_config_handle_get_ok,
+                getError = bindings_h::result_config_handle_get_error,
+            )
+            .map(::ConfigHandle)
 
         private val bridgeCleaner: Cleaner = Cleaner.create()
     }

@@ -17,7 +17,13 @@ pub unsafe fn utf16_to_string(
     chars: *const u16, length: usize
 ) -> Result<String, StringConversionError> {
     if chars.is_null() {
-        return Err(StringConversionError::NullPointer);
+        return if length == 0 {
+            // can't allocate 0 length char arrays easily on the Java side so treat null pointer as
+            // empty string
+            Ok("".to_string())
+        } else {
+            Err(StringConversionError::NullPointer)
+        };
     }
     std::panic::catch_unwind(|| {
         let slice = unsafe { std::slice::from_raw_parts(chars, length) };
