@@ -24,7 +24,7 @@ interface Settings {
     val locale: Setting<String>
 
     companion object {
-        fun new(): Settings = ConfigFileSettings(Paths.get("."))
+        fun new(): Settings = ConfigFileSettings(Paths.get("./settings.toml"))
     }
 }
 
