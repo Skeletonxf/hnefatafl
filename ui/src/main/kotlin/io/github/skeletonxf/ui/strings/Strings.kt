@@ -3,12 +3,14 @@ package io.github.skeletonxf.ui.strings
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import io.github.skeletonxf.settings.Config
+import io.github.skeletonxf.settings.LocalSettings
 
 data class Strings(
     val name: String,
@@ -87,22 +89,16 @@ val locales = mapOf(
 )
 
 val LocalStrings = compositionLocalOf { locales["en-GB"]!! }
-
 val LocalChangeStrings = staticCompositionLocalOf<(String) -> Unit> { {} }
 
 @Composable
-fun ProvideStrings(config: Config?, content: @Composable () -> Unit) {
-    val defaultLocale = when (config) {
-        null -> "en-GB"
-        else -> when (val state = config.state.value) {
-            is Config.State.Config -> state.locale
-            is Config.State.FatalError -> "en-GB"
-        }
-    }
-    var strings by remember { mutableStateOf(locales[defaultLocale]!!) }
+fun ProvideStrings(content: @Composable () -> Unit) {
+    val settings = LocalSettings.current
+    val locale by settings.locale.value
+    val strings by derivedStateOf { locales[locale]!! }
     CompositionLocalProvider(
         LocalStrings provides strings,
-        LocalChangeStrings provides { locale -> locales[locale]?.let { strings = it } }
+        LocalChangeStrings provides { settings.locale.set(it) }
     ) {
         content()
     }

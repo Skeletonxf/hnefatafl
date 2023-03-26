@@ -1,6 +1,5 @@
 package io.github.skeletonxf.ffi
 
-import androidx.compose.runtime.mutableStateOf
 import io.github.skeletonxf.bindings.bindings_h
 import io.github.skeletonxf.data.KResult
 import io.github.skeletonxf.settings.Config
@@ -37,30 +36,18 @@ class ConfigHandle private constructor(private val handle: MemoryAddress) : Conf
         bridgeCleaner.register(this, ConfigHandleCleaner(handle))
     }
 
-    override val state = mutableStateOf(getConfigState())
-
     override fun debug() {
         bindings_h.config_handle_debug(handle)
     }
 
-    private fun getConfigState(): Config.State {
-        val locale = when (val result = getConfigLocale()) {
-            is KResult.Ok -> result.ok
-            is KResult.Error -> return Config.State.FatalError(
-                "Unable to query locale", result.err.toThrowable()
-            )
-        }
-        return Config.State.Config(
-            locale = locale,
-        )
-    }
-
-    private fun getConfigLocale(): KResult<String, FFIError<Unit?>> = KResult.from(
+    override fun getLocale(): KResult<String, FFIError<Unit?>> = KResult.from(
         handle = bindings_h.config_handle_locale(handle),
         getType = bindings_h::result_config_handle_get_type,
         getOk = bindings_h::result_config_handle_get_ok,
         getError = bindings_h::result_config_handle_get_error,
     ).map(::utf16ArrayToString)
+
+    // some kind of setLocale here?
 }
 
 private data class ConfigHandleCleaner(private val handle: MemoryAddress) : Runnable {
