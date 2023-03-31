@@ -4,8 +4,6 @@ import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -22,33 +20,38 @@ import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.material.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ShaderBrush
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import io.github.skeletonxf.ffi.ConfigHandle
-import io.github.skeletonxf.ffi.GameStateHandle
 import io.github.skeletonxf.functions.then
 import io.github.skeletonxf.ui.strings.LocalChangeStrings
 import io.github.skeletonxf.ui.strings.LocalStrings
 import io.github.skeletonxf.ui.strings.locales
 import io.github.skeletonxf.ui.theme.HnefataflColors
 import io.github.skeletonxf.ui.theme.PreviewSurface
+import org.jetbrains.skia.Data
+import org.jetbrains.skia.RuntimeEffect
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 
 @Composable
 fun MenuContent(
     onNewGame: () -> Unit,
 ) = Surface {
     val strings = LocalStrings.current.menu
-    Column {
+    Column(
+        modifier = Modifier.fillMaxSize().shaderGradient(color1 = HnefataflColors.grey, color2 = Color.White)
+    ) {
         Box(
             modifier = Modifier.fillMaxWidth().padding(8.dp),
             contentAlignment = Alignment.TopEnd
@@ -130,4 +133,52 @@ fun LanguagePicker(
 @Preview
 private fun MenuContentPreview() = PreviewSurface {
     MenuContent(onNewGame = {})
+}
+
+
+private fun Modifier.shaderGradient(color1: Color, color2: Color) = drawWithCache {
+    val effect = RuntimeEffect.makeForShader(
+        """
+        uniform float2 resolution;
+        layout(color) uniform half4 color1;
+        layout(color) uniform half4 color2;
+    
+        half4 main(in float2 coord) {
+            float2 fraction = coord / resolution.xy;
+    
+            float mixValue = distance(fraction, vec2(0.2, 1.2));
+            return mix(color1, color2, mixValue);
+        }
+        """.trimIndent()
+    )
+    val width = size.width
+    val height = size.height
+    val inputs = arrayOf(
+        width,
+        height,
+        color1.red,
+        color1.blue,
+        color1.green,
+        color1.alpha,
+        color2.red,
+        color2.blue,
+        color2.green,
+        color2.alpha
+    )
+    val bytes = ByteBuffer.allocate(inputs.size * 4).order(ByteOrder.LITTLE_ENDIAN).apply {
+        inputs.forEachIndexed { index, float ->
+            putFloat(4 * index, float)
+        }
+    }.array()
+    val shader = effect.makeShader(
+        uniforms = Data.makeFromBytes(bytes),
+        children = null,
+        localMatrix = null,
+    )
+    val shaderBrush = ShaderBrush(shader)
+    onDrawBehind {
+        drawRect(
+            shaderBrush,
+        )
+    }
 }
