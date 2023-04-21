@@ -7,4 +7,5 @@ interface Config {
     fun debug()
 
     fun getLocale(): KResult<String, FFIError<Unit?>>
+    fun setLocale(locale: String): KResult<Unit, FFIError<Unit?>>
 }

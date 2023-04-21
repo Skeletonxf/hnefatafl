@@ -3,6 +3,11 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+enum ConfigStringKey {
+  Locale = 0,
+};
+typedef uint8_t ConfigStringKey;
+
 enum FFIResultType {
   Ok = 0,
   Err = 1,
@@ -244,9 +249,18 @@ void config_handle_destroy(struct ConfigHandle *handle);
 void config_handle_debug(const struct ConfigHandle *handle);
 
 /**
- * Returns a vec of UTF-16 chars of the locale value
+ * Returns a vec of UTF-16 chars of the string key value
  */
-struct FFIResult_____UTF16Array *config_handle_locale(const struct ConfigHandle *handle);
+struct FFIResult_____UTF16Array *config_handle_get_string_key(const struct ConfigHandle *handle,
+                                                              ConfigStringKey key);
+
+/**
+ * Sets a UTF-16 string to the string key value
+ */
+bool config_handle_set_string_key(const struct ConfigHandle *handle,
+                                  ConfigStringKey key,
+                                  const uint16_t *chars,
+                                  uintptr_t length);
 
 /**
  * Safety: calling this on an invalid pointer is undefined behavior

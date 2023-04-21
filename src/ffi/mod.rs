@@ -3,6 +3,7 @@ use crate::state::{GameState, GameStateUpdate, Play};
 use crate::ffi::tile_array::TileArray;
 use crate::ffi::play_array::PlayArray;
 use crate::ffi::player::{Winner, TurnPlayer};
+use crate::ffi::handle::MutexHandle;
 
 use std::sync::Mutex;
 
@@ -13,6 +14,7 @@ pub mod tile_array;
 pub mod play_array;
 pub mod player;
 pub mod strings;
+pub(crate) mod handle;
 
 #[derive(Clone, Debug)]
 pub enum FFIError {
@@ -30,6 +32,12 @@ impl GameStateHandle {
         GameStateHandle {
             state: Mutex::new(GameState::default()),
         }
+    }
+}
+
+impl AsRef<Mutex<GameState>> for GameStateHandle {
+    fn as_ref(&self) -> &Mutex<GameState> {
+        &self.state
     }
 }
 
@@ -55,7 +63,7 @@ pub unsafe extern fn game_state_handle_destroy(handle: *mut GameStateHandle) {
 /// Prints the game state
 #[no_mangle]
 pub extern fn game_state_handle_debug(handle: *const GameStateHandle) {
-    if let Err(error) = with_handle(handle, |handle| {
+    if let Err(error) = GameStateHandle::with_handle(handle, |handle| {
         println!("Game state handle:\n{:?}", handle);
     }) {
         eprint!("Error calling game_state_handle_debug: {:?}", error);
@@ -65,7 +73,7 @@ pub extern fn game_state_handle_debug(handle: *const GameStateHandle) {
 /// Returns the tiles in row major order
 #[no_mangle]
 pub extern fn game_state_handle_tiles(handle: *const GameStateHandle) -> *mut FFIResult<*mut TileArray, ()> {
-    FFIResult::new(with_handle(handle, |handle| {
+    FFIResult::new(GameStateHandle::with_handle(handle, |handle| {
         TileArray::new(handle.tiles())
     }).map_err(|error| {
         eprint!("Error calling game_state_handle_tiles: {:?}", error);
@@ -77,7 +85,7 @@ pub extern fn game_state_handle_tiles(handle: *const GameStateHandle) -> *mut FF
 #[no_mangle]
 pub extern fn game_state_handle_grid_size(handle: *const GameStateHandle) -> u8 {
     // TODO: use FFIResult
-    with_handle(handle, |handle| {
+    GameStateHandle::with_handle(handle, |handle| {
         handle.size().0
     }).unwrap_or_else(|error| {
         eprint!("Error calling game_state_handle_grid_size: {:?}", error);
@@ -88,7 +96,7 @@ pub extern fn game_state_handle_grid_size(handle: *const GameStateHandle) -> u8 
 /// Returns the available plays
 #[no_mangle]
 pub extern fn game_state_available_plays(handle: *const GameStateHandle) -> *mut FFIResult<*mut PlayArray, ()> {
-    FFIResult::new(with_handle(handle, |handle| {
+    FFIResult::new(GameStateHandle::with_handle(handle, |handle| {
         PlayArray::new(handle.available_plays())
     }).map_err(|error| {
         eprint!("Error calling game_state_handle_tiles: {:?}", error);
@@ -106,7 +114,7 @@ pub extern fn game_state_handle_make_play(
     to_y: u8,
 ) -> *mut FFIResult<GameStateUpdate, ()> {
     FFIResult::new(
-        match with_handle(handle, |handle| {
+        match GameStateHandle::with_handle(handle, |handle| {
             handle.make_play(&Play {
                 from: (from_x, from_y),
                 to: (to_x, to_y),
@@ -125,7 +133,7 @@ pub extern fn game_state_handle_make_play(
 /// Returns the winner, if any
 #[no_mangle]
 pub extern fn game_state_handle_winner(handle: *const GameStateHandle) -> *mut FFIResult<Winner, ()> {
-    FFIResult::new(with_handle(handle, |handle| {
+    FFIResult::new(GameStateHandle::with_handle(handle, |handle| {
         Winner::from(handle.winner())
     }).map_err(|error| {
         eprint!("Error calling game_state_handle_winner: {:?}", error);
@@ -136,7 +144,7 @@ pub extern fn game_state_handle_winner(handle: *const GameStateHandle) -> *mut F
 /// Returns the player that is making the current turn
 #[no_mangle]
 pub extern fn game_state_current_player(handle: *const GameStateHandle) -> *mut FFIResult<TurnPlayer, ()> {
-    FFIResult::new(with_handle(handle, |handle| {
+    FFIResult::new(GameStateHandle::with_handle(handle, |handle| {
         TurnPlayer::from(handle.turn())
     }).map_err(|error| {
         eprint!("Error calling game_state_current_player: {:?}", error);
@@ -148,7 +156,7 @@ pub extern fn game_state_current_player(handle: *const GameStateHandle) -> *mut 
 /// turns.
 #[no_mangle]
 pub extern fn game_state_handle_turn_count(handle: *const GameStateHandle) -> *mut FFIResult<u32, ()> {
-    FFIResult::new(with_handle(handle, |handle| {
+    FFIResult::new(GameStateHandle::with_handle(handle, |handle| {
         handle.turn_count()
     }).map_err(|error| {
         eprint!("Error calling game_state_handle_turn_count: {:?}", error);
@@ -162,43 +170,12 @@ pub extern fn game_state_handle_turn_count(handle: *const GameStateHandle) -> *m
 /// Running out of aliases for the enum variants, so adding a PieceArray type would be problematic
 #[no_mangle]
 pub extern fn game_state_handle_dead(handle: *const GameStateHandle) -> *mut FFIResult<*mut TileArray, ()> {
-    FFIResult::new(with_handle(handle, |handle| {
+    FFIResult::new(GameStateHandle::with_handle(handle, |handle| {
         TileArray::new(handle.dead().iter().map(|&piece| piece.into()).collect())
     }).map_err(|error| {
         eprint!("Error calling game_state_handle_dead: {:?}", error);
         ()
     }))
-}
-
-
-/// Takes an (optionally) aliased handle to the game state, unlocks the mutex and performs
-/// and operation with a non aliased mutable reference to the game state, returning the
-/// result of the operation or an error if there was a failure with the FFI.
-fn with_handle<F, R>(handle: *const GameStateHandle, op: F) -> Result<R, FFIError>
-where
-    F: FnOnce(&mut GameState) -> R + std::panic::UnwindSafe,
-{
-    if handle.is_null() {
-        return Err(FFIError::NullPointer)
-    }
-    std::panic::catch_unwind(|| {
-        // SAFETY: We only give out valid pointers, and are trusting that the Kotlin code
-        // does not invalidate them.
-        let handle = unsafe {
-            &*handle
-        };
-        // Since the Kotlin side can freely alias as much as it likes, we put the aliased handle
-        // around a Mutex so we can ensure no aliasing for the actual game state
-        let mut guard = match handle.state.lock() {
-            Ok(guard) => guard,
-            Err(poison_error) => {
-                eprintln!("Poisoned mutex: {}", poison_error);
-                poison_error.into_inner()
-            },
-        };
-        op(&mut guard)
-        // drop mutex guard
-    }).map_err(|_| FFIError::Panic)
 }
 
 /// Safety: calling this on an invalid pointer is undefined behavior

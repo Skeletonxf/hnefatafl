@@ -1,17 +1,30 @@
 use crate::config::Config;
-use crate::ffi::FFIError;
 use crate::ffi::results::{FFIResult, FFIResultType, get_type, get_ok, get_error};
 use crate::ffi::strings;
 use crate::ffi::strings::UTF16Array;
+use crate::ffi::handle::MutexHandle;
+
+use std::sync::Mutex;
 
 #[derive(Debug)]
 pub struct ConfigHandle {
-    config: Config,
+    config: Mutex<Config>,
+}
+
+#[repr(u8)]
+pub enum ConfigStringKey {
+    Locale = 0
 }
 
 impl ConfigHandle {
     fn from(toml: &str) -> Result<ConfigHandle, toml::de::Error> {
-        Config::from(toml).map(|config| ConfigHandle { config })
+        Config::from(toml).map(|config| ConfigHandle { config: Mutex::new(config) })
+    }
+}
+
+impl AsRef<Mutex<Config>> for ConfigHandle {
+    fn as_ref(&self) -> &Mutex<Config> {
+        &self.config
     }
 }
 
@@ -60,42 +73,59 @@ pub unsafe extern fn config_handle_destroy(handle: *mut ConfigHandle) {
 /// Prints the config handle
 #[no_mangle]
 pub extern fn config_handle_debug(handle: *const ConfigHandle) {
-    if let Err(error) = with_handle(handle, |handle| {
-        println!("Config handle:\n{:?}", handle);
+    if let Err(error) = ConfigHandle::with_handle(handle, |config| {
+        println!("Config:\n{:?}", config);
     }) {
         eprint!("Error calling config_handle_debug: {:?}", error);
     }
 }
 
-/// Returns a vec of UTF-16 chars of the locale value
+/// Returns a vec of UTF-16 chars of the string key value
 #[no_mangle]
-pub extern fn config_handle_locale(
-    handle: *const ConfigHandle
+pub extern fn config_handle_get_string_key(
+    handle: *const ConfigHandle,
+    key: ConfigStringKey,
 ) -> *mut FFIResult<*mut UTF16Array, ()> {
-    FFIResult::new(with_handle(handle, |handle| {
-        strings::string_to_utf16(&handle.config.locale)
+    FFIResult::new(ConfigHandle::with_handle(handle, |config| {
+        match key {
+            ConfigStringKey::Locale => strings::string_to_utf16(&config.locale)
+        }
     }).map_err(|error| {
         eprintln!("Error calling config_handle_locale: {:?}", error);
         ()
     }))
 }
 
-fn with_handle<F, R>(handle: *const ConfigHandle, op: F) -> Result<R, FFIError>
-where
-    F: FnOnce(&ConfigHandle) -> R + std::panic::UnwindSafe,
-{
-    if handle.is_null() {
-        return Err(FFIError::NullPointer)
-    }
-    std::panic::catch_unwind(|| {
-        // SAFETY: We only give out valid pointers, and are trusting that the Kotlin code
-        // does not invalidate them.
-        let handle = unsafe {
-            &*handle
-        };
-        op(handle)
-    }).map_err(|_| FFIError::Panic)
+/// Sets a UTF-16 string to the string key value
+#[no_mangle]
+pub unsafe extern fn config_handle_set_string_key(
+    handle: *const ConfigHandle,
+    key: ConfigStringKey,
+    chars: *const u16,
+    length: usize,
+    // return a boolean for now because JExtract/bindgen can't handle an FFI result where both
+    // generic types are (), this problem should go away once proper error types are returned
+) -> bool {
+    let utf8 = match strings::utf16_to_string(chars, length) {
+        Ok(toml_utf8) => toml_utf8,
+        Err(error) => {
+            eprintln!("Error calling config_handle_set_string_key: {:?}", error);
+            return false;
+        }
+    };
+    ConfigHandle::with_handle(handle, |config| {
+        match key {
+            ConfigStringKey::Locale => {
+                config.locale = utf8;
+            }
+        }
+    }).map_err(|error| {
+        eprintln!("Error calling config_handle_set_string_key: {:?}", error);
+        ()
+    }).is_ok()
 }
+
+// TODO: Get entire TOML file as string for saving
 
 /// Safety: calling this on an invalid pointer is undefined behavior
 #[no_mangle]
