@@ -40,22 +40,25 @@ class ConfigHandle private constructor(private val handle: MemoryAddress) : Conf
         bindings_h.config_handle_debug(handle)
     }
 
-    override fun getLocale(): KResult<String, FFIError<Unit?>> = KResult.from(
-        handle = bindings_h.config_handle_get_string_key(handle, bindings_h.Locale().toByte()),
+    override fun get(key: Config.StringKey): KResult<String, FFIError<Unit?>> = KResult.from(
+        handle = bindings_h.config_handle_get_string_key(handle, key.value()),
         getType = bindings_h::result_config_handle_get_type,
         getOk = bindings_h::result_config_handle_get_ok,
         getError = bindings_h::result_config_handle_get_error,
     ).map(::utf16ArrayToString)
 
-    override fun setLocale(locale: String): KResult<Unit, FFIError<Unit?>> = withStringToUTF16Array(locale) { memorySegment ->
+    override fun set(
+        key: Config.StringKey,
+        value: String
+    ): KResult<Unit, FFIError<Unit?>> = withStringToUTF16Array(value) { memorySegment ->
         when (bindings_h.config_handle_set_string_key(
             handle,
             bindings_h.Locale().toByte(),
             memorySegment,
-            locale.length.toLong())
+            value.length.toLong())
         ) {
             true -> KResult.Ok(Unit)
-            false -> KResult.Error(FFIError("error in setLocale", null))
+            false -> KResult.Error(FFIError("error in set", null))
         }
     }
 }

@@ -88,17 +88,17 @@ val locales = mapOf(
     )
 )
 
-val LocalStrings = compositionLocalOf { locales["en-GB"]!! }
+val LocalStrings = compositionLocalOf { britishEnglish }
 val LocalChangeStrings = staticCompositionLocalOf<(String) -> Unit> { {} }
 
 @Composable
 fun ProvideStrings(content: @Composable () -> Unit) {
     val settings = LocalSettings.current
     val locale by settings.locale.value
-    val strings by derivedStateOf { locales[locale]!! }
+    val strings by derivedStateOf { locales[locale] ?: britishEnglish }
     CompositionLocalProvider(
         LocalStrings provides strings,
-        LocalChangeStrings provides { settings.locale.set(it) }
+        LocalChangeStrings provides { settings.locale.set(it) /* TODO: Save updated settings to file */ }
     ) {
         content()
     }

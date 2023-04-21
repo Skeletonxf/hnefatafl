@@ -6,7 +6,6 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import io.github.skeletonxf.data.KResult
 import io.github.skeletonxf.data.andThen
 import io.github.skeletonxf.ffi.ConfigHandle
-import io.github.skeletonxf.ffi.FFIError
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -35,23 +34,26 @@ private class ConfigFileSettings(private val path: Path) : Settings {
         .runCatching { Files.readAllLines(path).joinToString(separator = "\n") }
         .andThen { config -> ConfigHandle.new(config).mapError { it.toThrowable() } }
 
+    override fun toString(): String = "ConfigFileSettings(locale = $locale)"
+
     init {
         val config = readConfig()
-        locale = ConfigSetting(config = config, get = Config::getLocale, default = "en-GB")
+        locale = ConfigSetting(config = config, key = Config.StringKey.Locale, default = "en-GB")
     }
 }
 
 private data class ConfigSetting<T: Any>(
     val config: KResult<Config, Throwable>,
-    private val get: (Config) -> KResult<T, FFIError<Unit?>>,
+    val key: ConfigKey<T>,
     override val default: T,
 ): Setting<T> {
-    private val result = config.andThen { config -> get(config).mapError { it.toThrowable() } }
+    private val result = config.andThen { config -> config.get(key).mapError { it.toThrowable() } }
     override val value = mutableStateOf(result.okOrNull() ?: default)
     override val initializationError = result.errorOrNull()
     override fun set(value: T): KResult<Unit, Throwable> {
         this.value.value = value
-        // TODO: Try to update config file
-        return KResult.Ok(Unit)
+        return config.andThen { config -> config.set(key, value).mapError { it.toThrowable() } }
     }
+
+    override fun toString(): String = "ConfigSetting(value=${value.value}, config=$config, key=$key, default=$default)"
 }
