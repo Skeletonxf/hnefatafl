@@ -3,6 +3,7 @@ use crate::ffi::results::{FFIResult, FFIResultType, get_type, get_ok, get_error}
 use crate::ffi::strings;
 use crate::ffi::strings::UTF16Array;
 use crate::ffi::handle::MutexHandle;
+use std::convert::{TryFrom, TryInto};
 
 use std::sync::Mutex;
 
@@ -18,7 +19,7 @@ pub enum ConfigStringKey {
 
 impl ConfigHandle {
     fn from(toml: &str) -> Result<ConfigHandle, toml::de::Error> {
-        Config::from(toml).map(|config| ConfigHandle { config: Mutex::new(config) })
+        Config::try_from(toml).map(|config| ConfigHandle { config: Mutex::new(config) })
     }
 }
 
@@ -125,7 +126,25 @@ pub unsafe extern fn config_handle_set_string_key(
     }).is_ok()
 }
 
-// TODO: Get entire TOML file as string for saving
+/// Returns a vec of UTF-16 chars of the entire TOML data
+#[no_mangle]
+pub extern fn config_handle_get_file(
+    handle: *const ConfigHandle,
+) -> *mut FFIResult<*mut UTF16Array, ()> {
+    match ConfigHandle::with_handle(handle, |config| {
+        let c: &Config = config;
+        c.try_into().map(|utf8: String| strings::string_to_utf16(&utf8))
+    }) {
+        Err(error) => {
+            eprintln!("Error calling config_handle_get_file: {:?}", error);
+            FFIResult::new(Err(()))
+        },
+        Ok(result) => FFIResult::new(result.map_err(|error| {
+            eprintln!("Error parsing config into string for config_handle_get_file: {:?}", error);
+            ()
+        })),
+    }
+}
 
 /// Safety: calling this on an invalid pointer is undefined behavior
 #[no_mangle]

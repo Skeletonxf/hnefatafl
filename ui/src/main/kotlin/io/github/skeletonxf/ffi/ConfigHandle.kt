@@ -42,9 +42,9 @@ class ConfigHandle private constructor(private val handle: MemoryAddress) : Conf
 
     override fun get(key: Config.StringKey): KResult<String, FFIError<Unit?>> = KResult.from(
         handle = bindings_h.config_handle_get_string_key(handle, key.value()),
-        getType = bindings_h::result_config_handle_get_type,
-        getOk = bindings_h::result_config_handle_get_ok,
-        getError = bindings_h::result_config_handle_get_error,
+        getType = bindings_h::result_utf16_array_get_type,
+        getOk = bindings_h::result_utf16_array_get_ok,
+        getError = bindings_h::result_utf16_array_get_error,
     ).map(::utf16ArrayToString)
 
     override fun set(
@@ -61,6 +61,13 @@ class ConfigHandle private constructor(private val handle: MemoryAddress) : Conf
             false -> KResult.Error(FFIError("error in set", null))
         }
     }
+
+    override fun getAll(): KResult<String, FFIError<Unit?>> = KResult.from(
+        handle = bindings_h.config_handle_get_file(handle),
+        getType = bindings_h::result_utf16_array_get_type,
+        getOk = bindings_h::result_utf16_array_get_ok,
+        getError = bindings_h::result_utf16_array_get_error,
+    ).map(::utf16ArrayToString)
 }
 
 private data class ConfigHandleCleaner(private val handle: MemoryAddress) : Runnable {

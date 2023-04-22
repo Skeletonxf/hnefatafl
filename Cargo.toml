@@ -12,6 +12,7 @@ easy-ml = "1.9"
 clap = { version = "4", features = [ "derive" ] }
 rustyline = "9.0"
 serde = { version = "1.0", features = ["derive"] }
+# This is way out of date, should migrate to latest
 toml = "0.4.2"
 widestring = "1.0.2"
 

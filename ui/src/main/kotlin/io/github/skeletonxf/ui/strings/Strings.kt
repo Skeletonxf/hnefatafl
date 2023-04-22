@@ -98,7 +98,11 @@ fun ProvideStrings(content: @Composable () -> Unit) {
     val strings by derivedStateOf { locales[locale] ?: britishEnglish }
     CompositionLocalProvider(
         LocalStrings provides strings,
-        LocalChangeStrings provides { settings.locale.set(it) /* TODO: Save updated settings to file */ }
+        LocalChangeStrings provides { value ->
+            settings.locale.set(value)
+            // TODO: Propagate errors to UI
+            settings.save { throwable -> println("Error saving $throwable") }
+        }
     ) {
         content()
     }

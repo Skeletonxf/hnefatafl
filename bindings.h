@@ -263,6 +263,11 @@ bool config_handle_set_string_key(const struct ConfigHandle *handle,
                                   uintptr_t length);
 
 /**
+ * Returns a vec of UTF-16 chars of the entire TOML data
+ */
+struct FFIResult_____UTF16Array *config_handle_get_file(const struct ConfigHandle *handle);
+
+/**
  * Safety: calling this on an invalid pointer is undefined behavior
  */
 FFIResultType result_config_handle_get_type(struct FFIResult______ConfigHandle *result);

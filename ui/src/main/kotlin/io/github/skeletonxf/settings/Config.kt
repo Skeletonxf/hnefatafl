@@ -25,6 +25,8 @@ interface Config {
     fun get(key: StringKey): KResult<String, FFIError<Unit?>>
     fun set(key: StringKey, value: String): KResult<Unit, FFIError<Unit?>>
 
+    fun getAll(): KResult<String, FFIError<Unit?>>
+
     @Suppress("UNCHECKED_CAST")
     fun <V> get(key: ConfigKey<V>): KResult<V, FFIError<Unit?>> = when (key) {
         is StringKey -> get(key).map { it as V }

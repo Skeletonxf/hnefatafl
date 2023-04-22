@@ -5,6 +5,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.awt.ComposeWindow
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.toAwtImage
@@ -13,20 +14,27 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
-import io.github.skeletonxf.ffi.ConfigHandle
 import io.github.skeletonxf.ffi.GameStateHandle
-import io.github.skeletonxf.settings.Config
+import io.github.skeletonxf.settings.LocalSettings
 import io.github.skeletonxf.settings.Settings
 import io.github.skeletonxf.ui.App
 import io.github.skeletonxf.ui.MenuContent
 import io.github.skeletonxf.ui.strings.ProvideStrings
 import io.github.skeletonxf.ui.theme.HnefataflMaterialTheme
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import java.awt.Dimension
 
+val localBackgroundScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
 fun main() {
-   application {
+    application {
         Window(
-            onCloseRequest = ::exitApplication,
+            onCloseRequest = {
+                Settings.instance.save(immediate = true) { throwable -> println("Error saving $throwable") }
+                exitApplication()
+            },
             title = "Hnefatafl",
         ) {
             SideEffect {
