@@ -20,7 +20,17 @@ fun <T, E> KResult.Companion.from(
     else -> KResult.Error(FFIError("Unrecognised FFI result type", null))
 }
 
+/**
+ * A Kotlin memory address for a Rust type of the form `*mut FFIResult<T, *mut FFIError>` where the Ok type in Rust
+ * will be mapped to a Kotlin type after calling `toResult`. The error description of the FFIError type will be
+ * converted to a String.
+ */
 interface ResultError<T> : TypedMemoryAddress {
+    /**
+     * Converts from the memory address to Kotlin types. Note that in 99% of cases this consumes the Rust memory
+     * that the `address` was referring to, so after calling `toResult` this instance of ResultError should no longer
+     * be held in memory either.
+     */
     fun toResult(): KResult<T, FFIError<String>>
 }
 
