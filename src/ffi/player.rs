@@ -1,4 +1,4 @@
-use crate::ffi::results::{FFIResult, FFIResultType, get_type, get_ok, get_error};
+use crate::ffi::results::{FFIResult, FFIResultType};
 use crate::state::Player;
 
 #[repr(u8)]
@@ -22,19 +22,19 @@ impl Winner {
 /// Safety: calling this on an invalid pointer is undefined behavior
 #[no_mangle]
 pub unsafe extern fn result_winner_get_type(result: *mut FFIResult<Winner, ()>) -> FFIResultType {
-    get_type(result)
+    FFIResult::get_type(result)
 }
 
 /// Safety: calling this on an invalid pointer or an Err variant is undefined behavior
 #[no_mangle]
 pub unsafe extern fn result_winner_get_ok(result: *mut FFIResult<Winner, ()>) -> Winner {
-    get_ok(result)
+    FFIResult::get_ok(result)
 }
 
 /// Safety: calling this on an invalid pointer or an Ok variant is undefined behavior
 #[no_mangle]
 pub unsafe extern fn result_winner_get_error(result: *mut FFIResult<Winner, ()>) -> () {
-    get_error(result)
+    FFIResult::get_error(result)
 }
 
 #[repr(u8)]
@@ -57,17 +57,17 @@ impl TurnPlayer {
 /// Safety: calling this on an invalid pointer is undefined behavior
 #[no_mangle]
 pub unsafe extern fn result_player_get_type(result: *mut FFIResult<TurnPlayer, ()>) -> FFIResultType {
-    get_type(result)
+    FFIResult::get_type(result)
 }
 
 /// Safety: calling this on an invalid pointer or an Err variant is undefined behavior
 #[no_mangle]
 pub unsafe extern fn result_player_get_ok(result: *mut FFIResult<TurnPlayer, ()>) -> TurnPlayer {
-    get_ok(result)
+    FFIResult::get_ok(result)
 }
 
 /// Safety: calling this on an invalid pointer or an Ok variant is undefined behavior
 #[no_mangle]
 pub unsafe extern fn result_player_get_error(result: *mut FFIResult<TurnPlayer, ()>) -> () {
-    get_error(result)
+    FFIResult::get_error(result)
 }

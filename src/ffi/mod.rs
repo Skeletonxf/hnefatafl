@@ -1,4 +1,4 @@
-use crate::ffi::results::{FFIResult, FFIResultType, get_type, get_ok, get_error};
+use crate::ffi::results::{FFIResult, FFIResultType};
 use crate::state::{GameState, GameStateUpdate, Play};
 use crate::ffi::tile_array::TileArray;
 use crate::ffi::play_array::PlayArray;
@@ -15,12 +15,6 @@ pub mod play_array;
 pub mod player;
 pub mod strings;
 pub(crate) mod handle;
-
-#[derive(Clone, Debug)]
-pub enum FFIError {
-    NullPointer,
-    Panic,
-}
 
 #[derive(Debug)]
 pub struct GameStateHandle {
@@ -44,6 +38,7 @@ impl AsRef<Mutex<GameState>> for GameStateHandle {
 /// Creates a new GameStateHandle
 #[no_mangle]
 pub extern fn game_state_handle_new() -> *mut GameStateHandle {
+    crate::initalize();
     let boxed = Box::new(GameStateHandle::new());
     // let the caller be responsible for managing this memory now
     Box::into_raw(boxed)
@@ -63,7 +58,7 @@ pub unsafe extern fn game_state_handle_destroy(handle: *mut GameStateHandle) {
 /// Prints the game state
 #[no_mangle]
 pub extern fn game_state_handle_debug(handle: *const GameStateHandle) {
-    if let Err(error) = GameStateHandle::with_handle(handle, |handle| {
+    if let Err(error) = GameStateHandle::with_handle(handle, "game_state_handle_debug", |handle| {
         println!("Game state handle:\n{:?}", handle);
     }) {
         eprint!("Error calling game_state_handle_debug: {:?}", error);
@@ -73,7 +68,7 @@ pub extern fn game_state_handle_debug(handle: *const GameStateHandle) {
 /// Returns the tiles in row major order
 #[no_mangle]
 pub extern fn game_state_handle_tiles(handle: *const GameStateHandle) -> *mut FFIResult<*mut TileArray, ()> {
-    FFIResult::new(GameStateHandle::with_handle(handle, |handle| {
+    FFIResult::new(GameStateHandle::with_handle(handle, "game_state_handle_tiles", |handle| {
         TileArray::new(handle.tiles())
     }).map_err(|error| {
         eprint!("Error calling game_state_handle_tiles: {:?}", error);
@@ -85,7 +80,7 @@ pub extern fn game_state_handle_tiles(handle: *const GameStateHandle) -> *mut FF
 #[no_mangle]
 pub extern fn game_state_handle_grid_size(handle: *const GameStateHandle) -> u8 {
     // TODO: use FFIResult
-    GameStateHandle::with_handle(handle, |handle| {
+    GameStateHandle::with_handle(handle, "game_state_handle_grid_size", |handle| {
         handle.size().0
     }).unwrap_or_else(|error| {
         eprint!("Error calling game_state_handle_grid_size: {:?}", error);
@@ -96,7 +91,7 @@ pub extern fn game_state_handle_grid_size(handle: *const GameStateHandle) -> u8 
 /// Returns the available plays
 #[no_mangle]
 pub extern fn game_state_available_plays(handle: *const GameStateHandle) -> *mut FFIResult<*mut PlayArray, ()> {
-    FFIResult::new(GameStateHandle::with_handle(handle, |handle| {
+    FFIResult::new(GameStateHandle::with_handle(handle, "game_state_available_plays", |handle| {
         PlayArray::new(handle.available_plays())
     }).map_err(|error| {
         eprint!("Error calling game_state_handle_tiles: {:?}", error);
@@ -114,7 +109,7 @@ pub extern fn game_state_handle_make_play(
     to_y: u8,
 ) -> *mut FFIResult<GameStateUpdate, ()> {
     FFIResult::new(
-        match GameStateHandle::with_handle(handle, |handle| {
+        match GameStateHandle::with_handle(handle, "game_state_handle_make_play", |handle| {
             handle.make_play(&Play {
                 from: (from_x, from_y),
                 to: (to_x, to_y),
@@ -133,7 +128,7 @@ pub extern fn game_state_handle_make_play(
 /// Returns the winner, if any
 #[no_mangle]
 pub extern fn game_state_handle_winner(handle: *const GameStateHandle) -> *mut FFIResult<Winner, ()> {
-    FFIResult::new(GameStateHandle::with_handle(handle, |handle| {
+    FFIResult::new(GameStateHandle::with_handle(handle, "game_state_handle_winner", |handle| {
         Winner::from(handle.winner())
     }).map_err(|error| {
         eprint!("Error calling game_state_handle_winner: {:?}", error);
@@ -144,7 +139,7 @@ pub extern fn game_state_handle_winner(handle: *const GameStateHandle) -> *mut F
 /// Returns the player that is making the current turn
 #[no_mangle]
 pub extern fn game_state_current_player(handle: *const GameStateHandle) -> *mut FFIResult<TurnPlayer, ()> {
-    FFIResult::new(GameStateHandle::with_handle(handle, |handle| {
+    FFIResult::new(GameStateHandle::with_handle(handle, "game_state_current_player", |handle| {
         TurnPlayer::from(handle.turn())
     }).map_err(|error| {
         eprint!("Error calling game_state_current_player: {:?}", error);
@@ -156,7 +151,7 @@ pub extern fn game_state_current_player(handle: *const GameStateHandle) -> *mut 
 /// turns.
 #[no_mangle]
 pub extern fn game_state_handle_turn_count(handle: *const GameStateHandle) -> *mut FFIResult<u32, ()> {
-    FFIResult::new(GameStateHandle::with_handle(handle, |handle| {
+    FFIResult::new(GameStateHandle::with_handle(handle, "game_state_handle_turn_count", |handle| {
         handle.turn_count()
     }).map_err(|error| {
         eprint!("Error calling game_state_handle_turn_count: {:?}", error);
@@ -170,7 +165,7 @@ pub extern fn game_state_handle_turn_count(handle: *const GameStateHandle) -> *m
 /// Running out of aliases for the enum variants, so adding a PieceArray type would be problematic
 #[no_mangle]
 pub extern fn game_state_handle_dead(handle: *const GameStateHandle) -> *mut FFIResult<*mut TileArray, ()> {
-    FFIResult::new(GameStateHandle::with_handle(handle, |handle| {
+    FFIResult::new(GameStateHandle::with_handle(handle, "game_state_handle_dead", |handle| {
         TileArray::new(handle.dead().iter().map(|&piece| piece.into()).collect())
     }).map_err(|error| {
         eprint!("Error calling game_state_handle_dead: {:?}", error);
@@ -181,35 +176,35 @@ pub extern fn game_state_handle_dead(handle: *const GameStateHandle) -> *mut FFI
 /// Safety: calling this on an invalid pointer is undefined behavior
 #[no_mangle]
 pub unsafe extern fn result_game_state_update_get_type(result: *mut FFIResult<GameStateUpdate, ()>) -> FFIResultType {
-    get_type(result)
+    FFIResult::get_type(result)
 }
 
 /// Safety: calling this on an invalid pointer or an Err variant is undefined behavior
 #[no_mangle]
 pub unsafe extern fn result_game_state_update_get_ok(result: *mut FFIResult<GameStateUpdate, ()>) -> GameStateUpdate {
-    get_ok(result)
+    FFIResult::get_ok(result)
 }
 
 /// Safety: calling this on an invalid pointer or an Ok variant is undefined behavior
 #[no_mangle]
 pub unsafe extern fn result_game_state_update_get_error(result: *mut FFIResult<GameStateUpdate, ()>) -> () {
-    get_error(result)
+    FFIResult::get_error(result)
 }
 
 /// Safety: calling this on an invalid pointer is undefined behavior
 #[no_mangle]
 pub unsafe extern fn result_u32_get_type(result: *mut FFIResult<u32, ()>) -> FFIResultType {
-    get_type(result)
+    FFIResult::get_type(result)
 }
 
 /// Safety: calling this on an invalid pointer or an Err variant is undefined behavior
 #[no_mangle]
 pub unsafe extern fn result_u32_get_ok(result: *mut FFIResult<u32, ()>) -> u32 {
-    get_ok(result)
+    FFIResult::get_ok(result)
 }
 
 /// Safety: calling this on an invalid pointer or an Ok variant is undefined behavior
 #[no_mangle]
 pub unsafe extern fn result_u32_get_error(result: *mut FFIResult<u32, ()>) -> () {
-    get_error(result)
+    FFIResult::get_error(result)
 }

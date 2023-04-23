@@ -1,4 +1,4 @@
-use crate::ffi::FFIError;
+use crate::ffi::results::FFIError;
 
 use std::sync::Mutex;
 use std::panic::RefUnwindSafe;
@@ -7,12 +7,16 @@ pub(crate) trait MutexHandle<T>: AsRef<Mutex<T>> + RefUnwindSafe {
     /// Takes an (optionally) aliased handle to the inner type, unlocks the mutex and performs
     /// an operation with a non aliased mutable reference to the game state, returning the
     /// result of the operation or an error if there was a failure with the FFI.
-    fn with_handle<F, R>(handle: *const Self, op: F) -> Result<R, FFIError>
+    fn with_handle<F, R>(
+        handle: *const Self,
+        context: &'static str,
+        op: F
+    ) -> Result<R, FFIError>
     where
         F: FnOnce(&mut T) -> R + std::panic::UnwindSafe,
     {
         if handle.is_null() {
-            return Err(FFIError::NullPointer)
+            return Err(FFIError::from_null_pointer(context, None));
         }
         std::panic::catch_unwind(|| {
             // SAFETY: We only give out valid pointers, and are trusting that the Kotlin code
@@ -31,7 +35,7 @@ pub(crate) trait MutexHandle<T>: AsRef<Mutex<T>> + RefUnwindSafe {
             };
             op(&mut guard)
             // drop mutex guard
-        }).map_err(|_| FFIError::Panic)
+        }).map_err(|panic| FFIError::from_panic(panic, context))
     }
 }
 
@@ -41,12 +45,16 @@ pub(crate) trait ReferenceHandle<T>: AsRef<T> + RefUnwindSafe {
     /// Takes an (optionally) aliased handle to the inner type and performs
     /// an operation with an immutable reference to it, returning the
     /// result of the operation or an error if there was a failure with the FFI.
-    fn with_handle<F, R>(reference: *const Self, op: F) -> Result<R, FFIError>
+    fn with_handle<F, R>(
+        reference: *const Self,
+        context: &'static str,
+        op: F
+    ) -> Result<R, FFIError>
     where
         F: FnOnce(&T) -> R + std::panic::UnwindSafe,
     {
         if reference.is_null() {
-            return Err(FFIError::NullPointer)
+            return Err(FFIError::from_null_pointer(context, None));
         }
         std::panic::catch_unwind(|| {
             // SAFETY: We only give out valid pointers, and are trusting that the Kotlin code
@@ -55,7 +63,7 @@ pub(crate) trait ReferenceHandle<T>: AsRef<T> + RefUnwindSafe {
                 &*reference
             };
             op(reference.as_ref())
-        }).map_err(|_| FFIError::Panic)
+        }).map_err(|panic| FFIError::from_panic(panic, context))
     }
 }
 

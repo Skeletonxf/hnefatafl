@@ -1,5 +1,5 @@
 use crate::config::Config;
-use crate::ffi::results::{FFIResult, FFIResultType, get_type, get_ok, get_error};
+use crate::ffi::results::{FFIResult, FFIResultType};
 use crate::ffi::strings;
 use crate::ffi::strings::UTF16Array;
 use crate::ffi::handle::MutexHandle;
@@ -34,7 +34,7 @@ impl AsRef<Mutex<Config>> for ConfigHandle {
 pub unsafe extern fn config_handle_new(
     chars: *const u16, length: usize
 ) -> *mut FFIResult<*mut ConfigHandle, ()> {
-    let toml_utf8 = match strings::utf16_to_string(chars, length) {
+    let toml_utf8 = match strings::utf16_to_string(chars, length, "config_handle_new") {
         Ok(toml_utf8) => toml_utf8,
         Err(error) => {
             eprintln!("Error calling config_handle_new: {:?}", error);
@@ -74,7 +74,7 @@ pub unsafe extern fn config_handle_destroy(handle: *mut ConfigHandle) {
 /// Prints the config handle
 #[no_mangle]
 pub extern fn config_handle_debug(handle: *const ConfigHandle) {
-    if let Err(error) = ConfigHandle::with_handle(handle, |config| {
+    if let Err(error) = ConfigHandle::with_handle(handle, "config_handle_debug", |config| {
         println!("Config:\n{:?}", config);
     }) {
         eprint!("Error calling config_handle_debug: {:?}", error);
@@ -87,7 +87,7 @@ pub extern fn config_handle_get_string_key(
     handle: *const ConfigHandle,
     key: ConfigStringKey,
 ) -> *mut FFIResult<*mut UTF16Array, ()> {
-    FFIResult::new(ConfigHandle::with_handle(handle, |config| {
+    FFIResult::new(ConfigHandle::with_handle(handle, "config_handle_get_string_key", |config| {
         match key {
             ConfigStringKey::Locale => strings::string_to_utf16(&config.locale)
         }
@@ -107,14 +107,14 @@ pub unsafe extern fn config_handle_set_string_key(
     // return a boolean for now because JExtract/bindgen can't handle an FFI result where both
     // generic types are (), this problem should go away once proper error types are returned
 ) -> bool {
-    let utf8 = match strings::utf16_to_string(chars, length) {
+    let utf8 = match strings::utf16_to_string(chars, length, "config_handle_set_string_key") {
         Ok(toml_utf8) => toml_utf8,
         Err(error) => {
             eprintln!("Error calling config_handle_set_string_key: {:?}", error);
             return false;
         }
     };
-    ConfigHandle::with_handle(handle, |config| {
+    ConfigHandle::with_handle(handle, "config_handle_set_string_key", |config| {
         match key {
             ConfigStringKey::Locale => {
                 config.locale = utf8;
@@ -131,7 +131,7 @@ pub unsafe extern fn config_handle_set_string_key(
 pub extern fn config_handle_get_file(
     handle: *const ConfigHandle,
 ) -> *mut FFIResult<*mut UTF16Array, ()> {
-    match ConfigHandle::with_handle(handle, |config| {
+    match ConfigHandle::with_handle(handle, "config_handle_get_file", |config| {
         let c: &Config = config;
         c.try_into().map(|utf8: String| strings::string_to_utf16(&utf8))
     }) {
@@ -149,17 +149,17 @@ pub extern fn config_handle_get_file(
 /// Safety: calling this on an invalid pointer is undefined behavior
 #[no_mangle]
 pub unsafe extern fn result_config_handle_get_type(result: *mut FFIResult<*const ConfigHandle, ()>) -> FFIResultType {
-    get_type(result)
+    FFIResult::get_type(result)
 }
 
 /// Safety: calling this on an invalid pointer or an Err variant is undefined behavior
 #[no_mangle]
 pub unsafe extern fn result_config_handle_get_ok(result: *mut FFIResult<*const ConfigHandle, ()>) -> *const ConfigHandle {
-    get_ok(result)
+    FFIResult::get_ok(result)
 }
 
 /// Safety: calling this on an invalid pointer or an Ok variant is undefined behavior
 #[no_mangle]
 pub unsafe extern fn result_config_handle_get_error(result: *mut FFIResult<*const ConfigHandle, ()>) -> () {
-    get_error(result)
+    FFIResult::get_error(result)
 }
