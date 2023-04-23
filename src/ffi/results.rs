@@ -1,8 +1,14 @@
-use crate::ffi::FFIError;
+use crate::ffi::handle::ReferenceHandle;
 
 /// A wrapper around a result
 pub struct FFIResult<T, E> {
     result: Result<T, E>
+}
+
+impl<T, E> AsRef<Result<T, E>> for FFIResult<T, E> {
+    fn as_ref(&self) -> &Result<T, E> {
+        &self.result
+    }
 }
 
 #[repr(u8)]
@@ -28,8 +34,8 @@ where
     T: std::panic::RefUnwindSafe,
     E: std::panic::RefUnwindSafe,
 {
-    with_result(result, |result| {
-        match result.result {
+    FFIResult::with_handle(result, |result| {
+        match result {
             Ok(_) => FFIResultType::Ok,
             Err(_) => FFIResultType::Err,
         }
@@ -59,26 +65,4 @@ where
     }
     let owned = Box::from_raw(result);
     owned.result.unwrap_err()
-}
-
-/// Takes an (optionally) aliased handle to the result and performs
-/// an operation with an immutable reference to it, returning the
-/// result of the operation or an error if there was a failure with the FFI.
-fn with_result<F, R, T, E>(result: *const FFIResult<T, E>, op: F) -> Result<R, FFIError>
-where
-    F: FnOnce(&FFIResult<T, E>) -> R + std::panic::UnwindSafe,
-    T: std::panic::RefUnwindSafe,
-    E: std::panic::RefUnwindSafe,
-{
-    if result.is_null() {
-        return Err(FFIError::NullPointer)
-    }
-    std::panic::catch_unwind(|| {
-        // SAFETY: We only give out valid pointers, and are trusting that the Kotlin code
-        // does not invalidate them.
-        let result = unsafe {
-            &*result
-        };
-        op(result)
-    }).map_err(|_| FFIError::Panic)
 }

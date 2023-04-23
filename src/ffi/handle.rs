@@ -36,3 +36,27 @@ pub(crate) trait MutexHandle<T>: AsRef<Mutex<T>> + RefUnwindSafe {
 }
 
 impl <T, H: AsRef<Mutex<T>> + RefUnwindSafe> MutexHandle<T> for H {}
+
+pub(crate) trait ReferenceHandle<T>: AsRef<T> + RefUnwindSafe {
+    /// Takes an (optionally) aliased handle to the inner type and performs
+    /// an operation with an immutable reference to it, returning the
+    /// result of the operation or an error if there was a failure with the FFI.
+    fn with_handle<F, R>(reference: *const Self, op: F) -> Result<R, FFIError>
+    where
+        F: FnOnce(&T) -> R + std::panic::UnwindSafe,
+    {
+        if reference.is_null() {
+            return Err(FFIError::NullPointer)
+        }
+        std::panic::catch_unwind(|| {
+            // SAFETY: We only give out valid pointers, and are trusting that the Kotlin code
+            // does not invalidate them.
+            let reference = unsafe {
+                &*reference
+            };
+            op(reference.as_ref())
+        }).map_err(|_| FFIError::Panic)
+    }
+}
+
+impl <T, H: AsRef<T> + RefUnwindSafe> ReferenceHandle<T> for H {}
