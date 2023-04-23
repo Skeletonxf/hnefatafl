@@ -63,30 +63,17 @@ pub unsafe extern fn config_handle_destroy(handle: *mut ConfigHandle) {
     std::mem::drop(Box::from_raw(handle));
 }
 
-/// Prints the config handle
-#[no_mangle]
-pub extern fn config_handle_debug(handle: *const ConfigHandle) {
-    if let Err(error) = ConfigHandle::with_handle(handle, "config_handle_debug", |config| {
-        println!("Config:\n{:?}", config);
-    }) {
-        eprint!("Error calling config_handle_debug: {:?}", error);
-    }
-}
-
 /// Returns a vec of UTF-16 chars of the string key value
 #[no_mangle]
 pub extern fn config_handle_get_string_key(
     handle: *const ConfigHandle,
     key: ConfigStringKey,
-) -> *mut FFIResult<*mut UTF16Array, ()> {
+) -> *mut FFIResult<*mut UTF16Array, *mut FFIError> {
     FFIResult::new(ConfigHandle::with_handle(handle, "config_handle_get_string_key", |config| {
         match key {
             ConfigStringKey::Locale => strings::string_to_utf16(&config.locale)
         }
-    }).map_err(|error| {
-        eprintln!("Error calling config_handle_locale: {:?}", error);
-        ()
-    }))
+    }).map_err(|error| error.leak()))
 }
 
 /// Sets a UTF-16 string to the string key value
@@ -96,45 +83,40 @@ pub unsafe extern fn config_handle_set_string_key(
     key: ConfigStringKey,
     chars: *const u16,
     length: usize,
-    // return a boolean for now because JExtract/bindgen can't handle an FFI result where both
-    // generic types are (), this problem should go away once proper error types are returned
-) -> bool {
+) -> *mut FFIResult<(), *mut FFIError> {
     let utf8 = match strings::utf16_to_string(chars, length, "config_handle_set_string_key") {
         Ok(toml_utf8) => toml_utf8,
-        Err(error) => {
-            eprintln!("Error calling config_handle_set_string_key: {:?}", error);
-            return false;
-        }
+        Err(error) => return FFIResult::new(Err(error.leak())),
     };
-    ConfigHandle::with_handle(handle, "config_handle_set_string_key", |config| {
+    FFIResult::new(ConfigHandle::with_handle(handle, "config_handle_set_string_key", |config| {
         match key {
             ConfigStringKey::Locale => {
                 config.locale = utf8;
             }
         }
-    }).map_err(|error| {
-        eprintln!("Error calling config_handle_set_string_key: {:?}", error);
-        ()
-    }).is_ok()
+    }).map_err(|error| error.leak()))
 }
 
 /// Returns a vec of UTF-16 chars of the entire TOML data
 #[no_mangle]
 pub extern fn config_handle_get_file(
     handle: *const ConfigHandle,
-) -> *mut FFIResult<*mut UTF16Array, ()> {
-    match ConfigHandle::with_handle(handle, "config_handle_get_file", |config| {
+) -> *mut FFIResult<*mut UTF16Array, *mut FFIError> {
+    let context = "config_handle_get_file";
+    match ConfigHandle::with_handle(handle, context, |config| {
         let c: &Config = config;
         c.try_into().map(|utf8: String| strings::string_to_utf16(&utf8))
     }) {
-        Err(error) => {
-            eprintln!("Error calling config_handle_get_file: {:?}", error);
-            FFIResult::new(Err(()))
-        },
-        Ok(result) => FFIResult::new(result.map_err(|error| {
-            eprintln!("Error parsing config into string for config_handle_get_file: {:?}", error);
-            ()
-        })),
+        Err(error) => FFIResult::new(Err(error.leak())),
+        Ok(result) => FFIResult::new(
+            result.map_err(
+                |error| FFIError::new(
+                    Box::new(error),
+                    context,
+                    Some("Unable to convert data to TOML".to_string())
+                ).leak()
+            )
+        ),
     }
 }
 

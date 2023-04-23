@@ -87,6 +87,11 @@ typedef struct FFIResult_____ConfigHandle______FFIError FFIResult_____ConfigHand
 /**
  * A wrapper around a result
  */
+typedef struct FFIResult_____FFIError FFIResult_____FFIError;
+
+/**
+ * A wrapper around a result
+ */
 typedef struct FFIResult_____PlayArray FFIResult_____PlayArray;
 
 /**
@@ -98,6 +103,11 @@ typedef struct FFIResult_____TileArray FFIResult_____TileArray;
  * A wrapper around a result
  */
 typedef struct FFIResult_____UTF16Array FFIResult_____UTF16Array;
+
+/**
+ * A wrapper around a result
+ */
+typedef struct FFIResult_____UTF16Array______FFIError FFIResult_____UTF16Array______FFIError;
 
 /**
  * A wrapper around a result
@@ -247,28 +257,23 @@ struct FFIResult_____ConfigHandle______FFIError *config_handle_new(const uint16_
 void config_handle_destroy(struct ConfigHandle *handle);
 
 /**
- * Prints the config handle
- */
-void config_handle_debug(const struct ConfigHandle *handle);
-
-/**
  * Returns a vec of UTF-16 chars of the string key value
  */
-struct FFIResult_____UTF16Array *config_handle_get_string_key(const struct ConfigHandle *handle,
-                                                              ConfigStringKey key);
+struct FFIResult_____UTF16Array______FFIError *config_handle_get_string_key(const struct ConfigHandle *handle,
+                                                                            ConfigStringKey key);
 
 /**
  * Sets a UTF-16 string to the string key value
  */
-bool config_handle_set_string_key(const struct ConfigHandle *handle,
-                                  ConfigStringKey key,
-                                  const uint16_t *chars,
-                                  uintptr_t length);
+struct FFIResult_____FFIError *config_handle_set_string_key(const struct ConfigHandle *handle,
+                                                            ConfigStringKey key,
+                                                            const uint16_t *chars,
+                                                            uintptr_t length);
 
 /**
  * Returns a vec of UTF-16 chars of the entire TOML data
  */
-struct FFIResult_____UTF16Array *config_handle_get_file(const struct ConfigHandle *handle);
+struct FFIResult_____UTF16Array______FFIError *config_handle_get_file(const struct ConfigHandle *handle);
 
 /**
  * Safety: calling this on an invalid pointer is undefined behavior
@@ -290,6 +295,21 @@ struct FFIError *result_config_handle_get_error(struct FFIResult______ConfigHand
  * Safety: calling this on an invalid or aliased pointer is undefined behavior
  */
 struct Array_u16 *error_consume_info(struct FFIError *error);
+
+/**
+ * Safety: calling this on an invalid pointer is undefined behavior
+ */
+FFIResultType result_void_get_type(struct FFIResult_____FFIError *result);
+
+/**
+ * Safety: calling this on an invalid pointer or an Err variant is undefined behavior
+ */
+void result_void_get_ok(struct FFIResult_____FFIError *result);
+
+/**
+ * Safety: calling this on an invalid pointer or an Ok variant is undefined behavior
+ */
+struct FFIError *result_void_get_error(struct FFIResult_____FFIError *result);
 
 /**
  * Returns a value from the array, or Empty if out of bounds
@@ -425,3 +445,18 @@ UTF16Array *result_utf16_array_get_ok(struct FFIResult_____UTF16Array *result);
  * Safety: calling this on an invalid pointer or an Ok variant is undefined behavior
  */
 void result_utf16_array_get_error(struct FFIResult_____UTF16Array *result);
+
+/**
+ * Safety: calling this on an invalid pointer is undefined behavior
+ */
+FFIResultType result_utf16_array_error_get_type(struct FFIResult_____UTF16Array______FFIError *result);
+
+/**
+ * Safety: calling this on an invalid pointer or an Err variant is undefined behavior
+ */
+UTF16Array *result_utf16_array_error_get_ok(struct FFIResult_____UTF16Array______FFIError *result);
+
+/**
+ * Safety: calling this on an invalid pointer or an Ok variant is undefined behavior
+ */
+struct FFIError *result_utf16_array_error_get_error(struct FFIResult_____UTF16Array______FFIError *result);

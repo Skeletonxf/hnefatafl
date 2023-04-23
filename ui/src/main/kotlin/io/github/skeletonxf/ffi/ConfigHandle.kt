@@ -33,38 +33,25 @@ class ConfigHandle private constructor(private val handle: ConfigHandleAddress) 
         bridgeCleaner.register(this, ConfigHandleCleaner(handle.address))
     }
 
-    override fun debug() {
-        bindings_h.config_handle_debug(handle.address)
-    }
-
-    override fun get(key: Config.StringKey): KResult<String, FFIError<Unit?>> = KResult.from(
-        handle = bindings_h.config_handle_get_string_key(handle.address, key.value()),
-        getType = bindings_h::result_utf16_array_get_type,
-        getOk = bindings_h::result_utf16_array_get_ok,
-        getError = bindings_h::result_utf16_array_get_error,
-    ).map { utf16ArrayToString(UTF16ArrayHandle(it)) }
+    override fun get(key: Config.StringKey): KResult<String, FFIError<String>> = UTF16ArrayHandleResult(
+        bindings_h.config_handle_get_string_key(handle.address, key.value())
+    ).toResult()
 
     override fun set(
         key: Config.StringKey,
         value: String
-    ): KResult<Unit, FFIError<Unit?>> = withStringToUTF16Array(value) { memorySegment ->
-        when (bindings_h.config_handle_set_string_key(
+    ): KResult<Unit, FFIError<String>> = withStringToUTF16Array(value) { memorySegment ->
+        VoidResult(bindings_h.config_handle_set_string_key(
             handle.address,
             bindings_h.Locale().toByte(),
             memorySegment,
             value.length.toLong())
-        ) {
-            true -> KResult.Ok(Unit)
-            false -> KResult.Error(FFIError("error in set", null))
-        }
+        ).toResult()
     }
 
-    override fun getAll(): KResult<String, FFIError<Unit?>> = KResult.from(
-        handle = bindings_h.config_handle_get_file(handle.address),
-        getType = bindings_h::result_utf16_array_get_type,
-        getOk = bindings_h::result_utf16_array_get_ok,
-        getError = bindings_h::result_utf16_array_get_error,
-    ).map { utf16ArrayToString(UTF16ArrayHandle(it)) }
+    override fun getAll(): KResult<String, FFIError<String>> = UTF16ArrayHandleResult(
+        bindings_h.config_handle_get_file(handle.address)
+    ).toResult()
 }
 
 private data class ConfigHandleCleaner(private val handle: MemoryAddress) : Runnable {

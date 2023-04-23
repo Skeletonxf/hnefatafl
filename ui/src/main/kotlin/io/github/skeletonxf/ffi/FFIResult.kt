@@ -65,8 +65,37 @@ value class ConfigHandleResult(
         getOk = bindings_h::result_config_handle_get_ok.andWrap(::ConfigHandleAddress),
         getError = bindings_h::result_config_handle_get_error
             .andWrap(::RustFFIError)
-            .andThen(::consumeRustError)
+            .andThen(::consumeRustError),
+    )
+}
+
+@JvmInline
+value class UTF16ArrayHandleResult(
+    override val address: MemoryAddress
+): ResultError<String> {
+    override fun toResult(): KResult<String, FFIError<String>> = KResult.from2(
+        handle = address,
+        getType = bindings_h::result_utf16_array_error_get_type,
+        getOk = bindings_h::result_utf16_array_error_get_ok
+            .andWrap(::UTF16ArrayHandle)
             .andThen(::utf16ArrayToString),
+        getError = bindings_h::result_utf16_array_error_get_error
+            .andWrap(::RustFFIError)
+            .andThen(::consumeRustError),
+    )
+}
+
+@JvmInline
+value class VoidResult(
+    override val address: MemoryAddress
+): ResultError<Unit> {
+    override fun toResult(): KResult<Unit, FFIError<String>> = KResult.from2(
+        handle = address,
+        getType = bindings_h::result_void_get_type,
+        getOk = bindings_h::result_void_get_ok,
+        getError = bindings_h::result_void_get_error
+            .andWrap(::RustFFIError)
+            .andThen(::consumeRustError),
     )
 }
 
@@ -75,4 +104,4 @@ value class RustFFIError(override val address: MemoryAddress) : TypedMemoryAddre
 
 private fun consumeRustError(
     error: RustFFIError
-): UTF16ArrayHandle = UTF16ArrayHandle(bindings_h.error_consume_info(error.address))
+): String = utf16ArrayToString(UTF16ArrayHandle(bindings_h.error_consume_info(error.address)))

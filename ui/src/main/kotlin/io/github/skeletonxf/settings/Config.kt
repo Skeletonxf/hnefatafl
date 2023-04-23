@@ -7,8 +7,6 @@ import io.github.skeletonxf.ffi.FFIError
 import io.github.skeletonxf.ffi.KEnum
 
 interface Config {
-    fun debug()
-
     enum class StringKey : ConfigKey<String> {
         Locale;
 
@@ -22,17 +20,17 @@ interface Config {
         }
     }
 
-    fun get(key: StringKey): KResult<String, FFIError<Unit?>>
-    fun set(key: StringKey, value: String): KResult<Unit, FFIError<Unit?>>
+    fun get(key: StringKey): KResult<String, FFIError<String>>
+    fun set(key: StringKey, value: String): KResult<Unit, FFIError<String>>
 
-    fun getAll(): KResult<String, FFIError<Unit?>>
+    fun getAll(): KResult<String, FFIError<String>>
 
     @Suppress("UNCHECKED_CAST")
-    fun <V> get(key: ConfigKey<V>): KResult<V, FFIError<Unit?>> = when (key) {
+    fun <V> get(key: ConfigKey<V>): KResult<V, FFIError<String>> = when (key) {
         is StringKey -> get(key).map { it as V }
     }
 
-    fun <V> set(key: ConfigKey<V>, value: V): KResult<Unit, FFIError<Unit?>> = when (key) {
+    fun <V> set(key: ConfigKey<V>, value: V): KResult<Unit, FFIError<String>> = when (key) {
         is StringKey -> set(key, value as String)
     }
 }

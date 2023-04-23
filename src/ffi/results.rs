@@ -153,3 +153,21 @@ impl<T, E> FFIResult<T, E> {
         owned.result.unwrap_err()
     }
 }
+
+/// Safety: calling this on an invalid pointer is undefined behavior
+#[no_mangle]
+pub unsafe extern fn result_void_get_type(result: *mut FFIResult<(), *mut FFIError>) -> FFIResultType {
+    FFIResult::get_type(result)
+}
+
+/// Safety: calling this on an invalid pointer or an Err variant is undefined behavior
+#[no_mangle]
+pub unsafe extern fn result_void_get_ok(result: *mut FFIResult<(), *mut FFIError>) -> () {
+    FFIResult::get_ok(result)
+}
+
+/// Safety: calling this on an invalid pointer or an Ok variant is undefined behavior
+#[no_mangle]
+pub unsafe extern fn result_void_get_error(result: *mut FFIResult<(), *mut FFIError>) -> *mut FFIError {
+    FFIResult::get_error(result)
+}

@@ -88,3 +88,21 @@ pub unsafe extern fn result_utf16_array_get_ok(result: *mut FFIResult<*mut UTF16
 pub unsafe extern fn result_utf16_array_get_error(result: *mut FFIResult<*mut UTF16Array, ()>) -> () {
     FFIResult::get_error(result)
 }
+
+/// Safety: calling this on an invalid pointer is undefined behavior
+#[no_mangle]
+pub unsafe extern fn result_utf16_array_error_get_type(result: *mut FFIResult<*mut UTF16Array, *mut FFIError>) -> FFIResultType {
+    FFIResult::get_type(result)
+}
+
+/// Safety: calling this on an invalid pointer or an Err variant is undefined behavior
+#[no_mangle]
+pub unsafe extern fn result_utf16_array_error_get_ok(result: *mut FFIResult<*mut UTF16Array, *mut FFIError>) -> *mut UTF16Array {
+    FFIResult::get_ok(result)
+}
+
+/// Safety: calling this on an invalid pointer or an Ok variant is undefined behavior
+#[no_mangle]
+pub unsafe extern fn result_utf16_array_error_get_error(result: *mut FFIResult<*mut UTF16Array, *mut FFIError>) -> *mut FFIError {
+    FFIResult::get_error(result)
+}
