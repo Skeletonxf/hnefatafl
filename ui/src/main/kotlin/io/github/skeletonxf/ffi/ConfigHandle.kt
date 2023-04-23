@@ -6,18 +6,15 @@ import io.github.skeletonxf.settings.Config
 import java.lang.foreign.MemoryAddress
 import java.lang.ref.Cleaner
 
-class ConfigHandle private constructor(private val handle: MemoryAddress) : Config {
+class ConfigHandle private constructor(private val handle: ConfigHandleAddress) : Config {
 
     companion object {
-        fun new(config: String): KResult<ConfigHandle, FFIError<Unit?>> = KResult
-            .from(
-                handle = withStringToUTF16Array(config) { memorySegment ->
-                    bindings_h.config_handle_new(memorySegment, config.length.toLong())
-                },
-                getType = bindings_h::result_config_handle_get_type,
-                getOk = bindings_h::result_config_handle_get_ok,
-                getError = bindings_h::result_config_handle_get_error,
-            )
+        fun new(config: String): KResult<ConfigHandle, FFIError<String>> = ConfigHandleResult(
+            withStringToUTF16Array(config) { memorySegment ->
+                bindings_h.config_handle_new(memorySegment, config.length.toLong())
+            }
+        )
+            .toResult()
             .map(::ConfigHandle)
 
         private val bridgeCleaner: Cleaner = Cleaner.create()
@@ -33,26 +30,26 @@ class ConfigHandle private constructor(private val handle: MemoryAddress) : Conf
         // have other aliases to it that think it's still in use. Instead, the *only* way
         // to tell Rust it's time to call the destructor is when the cleaner determines there are
         // no more references to our ConfigHandle.
-        bridgeCleaner.register(this, ConfigHandleCleaner(handle))
+        bridgeCleaner.register(this, ConfigHandleCleaner(handle.address))
     }
 
     override fun debug() {
-        bindings_h.config_handle_debug(handle)
+        bindings_h.config_handle_debug(handle.address)
     }
 
     override fun get(key: Config.StringKey): KResult<String, FFIError<Unit?>> = KResult.from(
-        handle = bindings_h.config_handle_get_string_key(handle, key.value()),
+        handle = bindings_h.config_handle_get_string_key(handle.address, key.value()),
         getType = bindings_h::result_utf16_array_get_type,
         getOk = bindings_h::result_utf16_array_get_ok,
         getError = bindings_h::result_utf16_array_get_error,
-    ).map(::utf16ArrayToString)
+    ).map { utf16ArrayToString(UTF16ArrayHandle(it)) }
 
     override fun set(
         key: Config.StringKey,
         value: String
     ): KResult<Unit, FFIError<Unit?>> = withStringToUTF16Array(value) { memorySegment ->
         when (bindings_h.config_handle_set_string_key(
-            handle,
+            handle.address,
             bindings_h.Locale().toByte(),
             memorySegment,
             value.length.toLong())
@@ -63,11 +60,11 @@ class ConfigHandle private constructor(private val handle: MemoryAddress) : Conf
     }
 
     override fun getAll(): KResult<String, FFIError<Unit?>> = KResult.from(
-        handle = bindings_h.config_handle_get_file(handle),
+        handle = bindings_h.config_handle_get_file(handle.address),
         getType = bindings_h::result_utf16_array_get_type,
         getOk = bindings_h::result_utf16_array_get_ok,
         getError = bindings_h::result_utf16_array_get_error,
-    ).map(::utf16ArrayToString)
+    ).map { utf16ArrayToString(UTF16ArrayHandle(it)) }
 }
 
 private data class ConfigHandleCleaner(private val handle: MemoryAddress) : Runnable {

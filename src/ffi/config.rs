@@ -1,5 +1,5 @@
 use crate::config::Config;
-use crate::ffi::results::{FFIResult, FFIResultType};
+use crate::ffi::results::{FFIResult, FFIError, FFIResultType};
 use crate::ffi::strings;
 use crate::ffi::strings::UTF16Array;
 use crate::ffi::handle::MutexHandle;
@@ -33,30 +33,22 @@ impl AsRef<Mutex<Config>> for ConfigHandle {
 #[no_mangle]
 pub unsafe extern fn config_handle_new(
     chars: *const u16, length: usize
-) -> *mut FFIResult<*mut ConfigHandle, ()> {
-    let toml_utf8 = match strings::utf16_to_string(chars, length, "config_handle_new") {
+) -> *mut FFIResult<*mut ConfigHandle, *mut FFIError> {
+    let context = "config_handle_new";
+    let toml_utf8 = match strings::utf16_to_string(chars, length, context) {
         Ok(toml_utf8) => toml_utf8,
-        Err(error) => {
-            eprintln!("Error calling config_handle_new: {:?}", error);
-            return FFIResult::new(Err(()));
-        }
+        Err(error) => return FFIResult::new(Err(error.leak())),
     };
     FFIResult::new(match std::panic::catch_unwind(|| {
         ConfigHandle::from(&toml_utf8)
     }) {
-        Err(panic) => {
-            eprintln!("Error calling config_handle_new, panic: {:?}", panic);
-            Err(())
-        },
+        Err(panic) => Err(FFIError::from_panic(panic, context).leak()),
         Ok(Ok(handle)) => {
             let boxed = Box::new(handle);
             // let the caller be responsible for managing this memory now
             Ok(Box::into_raw(boxed))
         },
-        Ok(Err(parse_error)) => {
-            eprintln!("Error calling config_handle_new, parse error: {:?}", parse_error);
-            Err(())
-        }
+        Ok(Err(parse_error)) => Err(FFIError::new(Box::new(parse_error), context, None).leak()),
     })
 }
 
@@ -148,18 +140,18 @@ pub extern fn config_handle_get_file(
 
 /// Safety: calling this on an invalid pointer is undefined behavior
 #[no_mangle]
-pub unsafe extern fn result_config_handle_get_type(result: *mut FFIResult<*const ConfigHandle, ()>) -> FFIResultType {
+pub unsafe extern fn result_config_handle_get_type(result: *mut FFIResult<*const ConfigHandle, *mut FFIError>) -> FFIResultType {
     FFIResult::get_type(result)
 }
 
 /// Safety: calling this on an invalid pointer or an Err variant is undefined behavior
 #[no_mangle]
-pub unsafe extern fn result_config_handle_get_ok(result: *mut FFIResult<*const ConfigHandle, ()>) -> *const ConfigHandle {
+pub unsafe extern fn result_config_handle_get_ok(result: *mut FFIResult<*const ConfigHandle, *mut FFIError>) -> *const ConfigHandle {
     FFIResult::get_ok(result)
 }
 
 /// Safety: calling this on an invalid pointer or an Ok variant is undefined behavior
 #[no_mangle]
-pub unsafe extern fn result_config_handle_get_error(result: *mut FFIResult<*const ConfigHandle, ()>) -> () {
+pub unsafe extern fn result_config_handle_get_error(result: *mut FFIResult<*const ConfigHandle, *mut FFIError>) -> *mut FFIError {
     FFIResult::get_error(result)
 }

@@ -1,4 +1,6 @@
 use crate::ffi::handle::ReferenceHandle;
+use crate::ffi::strings;
+use crate::ffi::array::Array;
 use backtrace::Backtrace;
 use std::error::Error;
 
@@ -32,7 +34,7 @@ pub struct FFIError {
 pub enum FFIErrorType {
     NullPointer,
     Panic(Option<Backtrace>),
-    Other(Box<dyn Error>),
+    Other(Box<dyn Error + std::panic::RefUnwindSafe>),
 }
 
 impl std::fmt::Display for FFIError {
@@ -48,7 +50,11 @@ impl std::fmt::Display for FFIError {
 impl Error for FFIError {}
 
 impl FFIError {
-    pub fn new(error: Box<dyn Error>, context: &'static str, other_info: Option<String>) -> FFIError {
+    pub fn new(
+        error: Box<dyn Error + std::panic::RefUnwindSafe>,
+        context: &'static str,
+        other_info: Option<String>
+    ) -> FFIError {
         FFIError {
             error_type: FFIErrorType::Other(error),
             context,
@@ -78,6 +84,23 @@ impl FFIError {
         // let the caller be responsible for managing this memory now
         Box::into_raw(boxed)
     }
+}
+
+/// Returns a vec of UTF-16 chars of the error info, reclaiming the memory for the FFIError.
+/// Safety: calling this on an invalid or aliased pointer is undefined behavior
+#[no_mangle]
+pub unsafe extern fn error_consume_info(
+    error: *mut FFIError,
+) -> *mut Array<u16> {
+    let error_description = if error.is_null() {
+        "Error pointer was null".to_string()
+    } else {
+        let owned = Box::from_raw(error);
+        let error: &FFIError = owned.as_ref();
+        error.to_string()
+        // drop error
+    };
+    strings::string_to_utf16(&error_description)
 }
 
 impl<T, E> FFIResult<T, E> {

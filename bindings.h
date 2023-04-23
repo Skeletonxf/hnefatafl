@@ -62,6 +62,8 @@ typedef struct Array_u16 Array_u16;
 
 typedef struct ConfigHandle ConfigHandle;
 
+typedef struct FFIError FFIError;
+
 /**
  * A wrapper around a result
  */
@@ -80,7 +82,7 @@ typedef struct FFIResult_Winner FFIResult_Winner;
 /**
  * A wrapper around a result
  */
-typedef struct FFIResult_____ConfigHandle FFIResult_____ConfigHandle;
+typedef struct FFIResult_____ConfigHandle______FFIError FFIResult_____ConfigHandle______FFIError;
 
 /**
  * A wrapper around a result
@@ -100,7 +102,7 @@ typedef struct FFIResult_____UTF16Array FFIResult_____UTF16Array;
 /**
  * A wrapper around a result
  */
-typedef struct FFIResult______ConfigHandle FFIResult______ConfigHandle;
+typedef struct FFIResult______ConfigHandle______FFIError FFIResult______ConfigHandle______FFIError;
 
 /**
  * A wrapper around a result
@@ -234,7 +236,8 @@ void result_u32_get_error(struct FFIResult_u32 *result);
 /**
  * Creates a new ConfigHandle from a UTF-16 toml file
  */
-struct FFIResult_____ConfigHandle *config_handle_new(const uint16_t *chars, uintptr_t length);
+struct FFIResult_____ConfigHandle______FFIError *config_handle_new(const uint16_t *chars,
+                                                                   uintptr_t length);
 
 /**
  * Destroys the data owned by the pointer
@@ -270,17 +273,23 @@ struct FFIResult_____UTF16Array *config_handle_get_file(const struct ConfigHandl
 /**
  * Safety: calling this on an invalid pointer is undefined behavior
  */
-FFIResultType result_config_handle_get_type(struct FFIResult______ConfigHandle *result);
+FFIResultType result_config_handle_get_type(struct FFIResult______ConfigHandle______FFIError *result);
 
 /**
  * Safety: calling this on an invalid pointer or an Err variant is undefined behavior
  */
-const struct ConfigHandle *result_config_handle_get_ok(struct FFIResult______ConfigHandle *result);
+const struct ConfigHandle *result_config_handle_get_ok(struct FFIResult______ConfigHandle______FFIError *result);
 
 /**
  * Safety: calling this on an invalid pointer or an Ok variant is undefined behavior
  */
-void result_config_handle_get_error(struct FFIResult______ConfigHandle *result);
+struct FFIError *result_config_handle_get_error(struct FFIResult______ConfigHandle______FFIError *result);
+
+/**
+ * Returns a vec of UTF-16 chars of the error info, reclaiming the memory for the FFIError.
+ * Safety: calling this on an invalid or aliased pointer is undefined behavior
+ */
+struct Array_u16 *error_consume_info(struct FFIError *error);
 
 /**
  * Returns a value from the array, or Empty if out of bounds

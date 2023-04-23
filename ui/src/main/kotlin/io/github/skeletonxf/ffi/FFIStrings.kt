@@ -7,23 +7,26 @@ import java.lang.foreign.MemorySession
 import java.lang.foreign.SegmentAllocator
 import java.lang.foreign.ValueLayout
 
+@JvmInline
+value class UTF16ArrayHandle(override val address: MemoryAddress) : TypedMemoryAddress
+
 /**
  * Converts a memory address of a character array back to a string and deallocates
  * the character array memory.
  */
-fun utf16ArrayToString(charsArrayHandle: MemoryAddress): String {
+fun utf16ArrayToString(charsArrayHandle: UTF16ArrayHandle): String {
     val string = MemorySession.openConfined().use { memorySession ->
-        val chars = bindings_h.utf16_array_length(charsArrayHandle).toInt()
+        val chars = bindings_h.utf16_array_length(charsArrayHandle.address).toInt()
         if (chars == 0) {
             return ""
         }
         val bytes = chars * 2L
         val allocator = SegmentAllocator.newNativeArena(bytes, memorySession)
         val memorySegment = allocator.allocate(bytes)
-        bindings_h.utf16_array_copy_to(charsArrayHandle, memorySegment)
+        bindings_h.utf16_array_copy_to(charsArrayHandle.address, memorySegment)
         String(CharArray(chars).apply { copyFrom(memorySegment, chars) })
     }
-    bindings_h.utf16_array_destroy(charsArrayHandle)
+    bindings_h.utf16_array_destroy(charsArrayHandle.address)
     return string
 }
 
