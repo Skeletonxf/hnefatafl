@@ -7,6 +7,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.staticCompositionLocalOf
+import io.github.skeletonxf.logging.Log
 import io.github.skeletonxf.settings.LocalSettings
 import java.util.Locale
 
@@ -102,7 +103,7 @@ fun getDefaultLocale(): String {
         language == english -> "en-GB"
         language == spanish -> "es-419"
         else -> "en-GB"
-    }.also { println("Picking $it for user's localisation: $language-$region") }
+    }.also { Log.debug("Picking $it for user's localisation: $language-$region") }
 }
 
 val LocalStrings = compositionLocalOf { britishEnglish }
@@ -117,15 +118,17 @@ fun ProvideStrings(content: @Composable () -> Unit) {
         null -> mutableStateOf(britishEnglish)
         else -> {
             val locale by settings.locale.value
-            derivedStateOf { locales[locale] ?: britishEnglish }
+            derivedStateOf {
+                locales[locale]
+                    ?: britishEnglish.also { Log.warn("Unable to match $locale to a supported set of strings") }
+            }
         }
     }
     CompositionLocalProvider(
         LocalStrings provides strings,
         LocalChangeStrings provides { value ->
             settings?.locale?.set(value)
-            // TODO: Propagate errors to UI
-            settings?.save { throwable -> println("Error saving $throwable") }
+            settings?.save()
         }
     ) {
         content()

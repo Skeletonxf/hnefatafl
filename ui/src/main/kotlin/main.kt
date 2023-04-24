@@ -15,6 +15,9 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import io.github.skeletonxf.ffi.GameStateHandle
+import io.github.skeletonxf.logging.ForestLogger
+import io.github.skeletonxf.logging.Log
+import io.github.skeletonxf.logging.PrintLogger
 import io.github.skeletonxf.settings.LocalSettings
 import io.github.skeletonxf.settings.Settings
 import io.github.skeletonxf.ui.App
@@ -29,10 +32,13 @@ import java.awt.Dimension
 val localBackgroundScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
 fun main() {
+    Log.add(PrintLogger())
+    Log.add(ForestLogger()) // TODO: Should expose these logs in application UI
+
     application {
         Window(
             onCloseRequest = {
-                Settings.instance?.save(immediate = true) { throwable -> println("Error saving $throwable") }
+                Settings.instance?.save(immediate = true)
                 exitApplication()
             },
             title = "Hnefatafl",

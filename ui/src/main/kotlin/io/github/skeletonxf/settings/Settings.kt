@@ -7,6 +7,7 @@ import io.github.skeletonxf.data.KResult
 import io.github.skeletonxf.data.andThen
 import io.github.skeletonxf.data.okOrThrow
 import io.github.skeletonxf.ffi.ConfigHandle
+import io.github.skeletonxf.logging.Log
 import io.github.skeletonxf.ui.strings.getDefaultLocale
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -27,7 +28,7 @@ interface Setting<T : Any> {
 interface Settings {
     val locale: Setting<String>
 
-    fun save(immediate: Boolean = false, onError: (Throwable) -> Unit)
+    fun save(immediate: Boolean = false)
 
     companion object {
         // TODO: Need to look into setting up proper DI instead of making the background scope and this
@@ -52,7 +53,7 @@ private class ConfigFileSettings private constructor(
         config = readConfig().fold(
             ok = { it },
             error = { error ->
-                println(error) // TODO: Need to send this error somewhere
+                Log.debug("Unable to parse or find config file", error)
                 doSetup = true
                 ConfigHandle.default()
             },
@@ -84,20 +85,20 @@ private class ConfigFileSettings private constructor(
     override fun toString(): String = "ConfigFileSettings(locale = $locale)"
 
     private var saveJob: Job? = null
-    override fun save(immediate: Boolean, onError: (Throwable) -> Unit) = synchronized(this) {
+    override fun save(immediate: Boolean) = synchronized(this) {
         saveJob?.cancel()
         saveJob = if (immediate) {
-            saveConfig().mapError { onError(it) }
+            saveConfig().mapError { Log.error("Unable to save", it) }
             null
         } else {
             // Delay the save for a few seconds so that we can batch updates if the user is changing multiple settings
-            saveJob(onError)
+            saveJob()
         }
     }
 
-    private fun saveJob(onError: (Throwable) -> Unit) = ioScope.launch {
+    private fun saveJob() = ioScope.launch {
         delay(timeMillis = 5000)
-        saveConfig().mapError { onError(it) }
+        saveConfig().mapError { Log.error("Unable to save", it) }
     }
 }
 
@@ -108,7 +109,7 @@ private class ConfigSetting<T: Any> private constructor(
     override val value = mutableStateOf(config.get(key).mapError { it.toThrowable() }.okOrThrow())
     override fun set(value: T) {
         this.value.value = value
-        config.set(key, value).mapError { println(it.toThrowable()) }
+        config.set(key, value).mapError { Log.error("Unable to set $key to $value", it.toThrowable()) }
     }
     override fun toString(): String = "ConfigSetting(value=${value.value}, config=$config, key=$key)"
 
