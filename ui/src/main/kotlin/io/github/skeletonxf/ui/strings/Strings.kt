@@ -6,11 +6,9 @@ import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
-import io.github.skeletonxf.settings.Config
 import io.github.skeletonxf.settings.LocalSettings
+import java.util.Locale
 
 data class Strings(
     val name: String,
@@ -88,20 +86,46 @@ val locales = mapOf(
     )
 )
 
+fun getDefaultLocale(): String {
+    val locale = Locale.getDefault()
+    val language = locale.language
+    val region = locale.country
+    val english = "en"
+    val spanish = "es"
+    val britain = "GB"
+    val america = "US"
+    val spain = "ES"
+    return when {
+        language == english && region == britain -> "en-GB"
+        language == english && region == america -> "en-US"
+        language == spanish && region == spain -> "es-ES"
+        language == english -> "en-GB"
+        language == spanish -> "es-419"
+        else -> "en-GB"
+    }.also { println("Picking $it for user's localisation: $language-$region") }
+}
+
 val LocalStrings = compositionLocalOf { britishEnglish }
 val LocalChangeStrings = staticCompositionLocalOf<(String) -> Unit> { {} }
 
 @Composable
 fun ProvideStrings(content: @Composable () -> Unit) {
     val settings = LocalSettings.current
-    val locale by settings.locale.value
-    val strings by derivedStateOf { locales[locale] ?: britishEnglish }
+    // TODO: Should just trap user on an error screen if Settings doesn't initialise, trying to continue with FFI
+    // failures will just mean loads of boilerplate
+    val strings by when (settings) {
+        null -> mutableStateOf(britishEnglish)
+        else -> {
+            val locale by settings.locale.value
+            derivedStateOf { locales[locale] ?: britishEnglish }
+        }
+    }
     CompositionLocalProvider(
         LocalStrings provides strings,
         LocalChangeStrings provides { value ->
-            settings.locale.set(value)
+            settings?.locale?.set(value)
             // TODO: Propagate errors to UI
-            settings.save { throwable -> println("Error saving $throwable") }
+            settings?.save { throwable -> println("Error saving $throwable") }
         }
     ) {
         content()

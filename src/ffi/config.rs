@@ -52,6 +52,14 @@ pub unsafe extern fn config_handle_new(
     })
 }
 
+/// Creates a default ConfigHandle
+#[no_mangle]
+pub unsafe extern fn config_handle_default() -> *mut ConfigHandle {
+    let boxed = Box::new(ConfigHandle { config: Mutex::new(Config::default()) });
+    // let the caller be responsible for managing this memory now
+    Box::into_raw(boxed)
+}
+
 /// Destroys the data owned by the pointer
 /// The caller is responsible for ensuring there are no aliased references elsewhere in the
 /// program

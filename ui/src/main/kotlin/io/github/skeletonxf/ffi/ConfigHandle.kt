@@ -17,6 +17,8 @@ class ConfigHandle private constructor(private val handle: ConfigHandleAddress) 
             .toResult()
             .map(::ConfigHandle)
 
+        fun default(): ConfigHandle = ConfigHandle(ConfigHandleAddress(bindings_h.config_handle_default()))
+
         private val bridgeCleaner: Cleaner = Cleaner.create()
     }
 

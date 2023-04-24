@@ -5,7 +5,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.staticCompositionLocalOf
 import io.github.skeletonxf.data.KResult
 import io.github.skeletonxf.data.andThen
+import io.github.skeletonxf.data.okOrThrow
 import io.github.skeletonxf.ffi.ConfigHandle
+import io.github.skeletonxf.ui.strings.getDefaultLocale
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -19,9 +21,7 @@ val LocalSettings = staticCompositionLocalOf { Settings.instance }
 
 interface Setting<T : Any> {
     val value: State<T>
-    val default: T
-    val initializationError: Throwable?
-    fun set(value: T): KResult<Unit, Throwable>
+    fun set(value: T)
 }
 
 interface Settings {
@@ -30,19 +30,45 @@ interface Settings {
     fun save(immediate: Boolean = false, onError: (Throwable) -> Unit)
 
     companion object {
-        // TODO: Probably need to look into setting up proper DI instead of making the background scope and this
+        // TODO: Need to look into setting up proper DI instead of making the background scope and this
         // static objects
-        internal val instance = new(localBackgroundScope)
-        fun new(ioScope: CoroutineScope): Settings = ConfigFileSettings(Paths.get("./settings.toml"), ioScope)
+        internal val instance: Settings? = new(localBackgroundScope)
+        // TODO: Better error handling
+        fun new(ioScope: CoroutineScope): Settings? = ConfigFileSettings
+            .create(Paths.get("./settings.toml"), ioScope)
+            .okOrNull()
     }
 }
 
-private class ConfigFileSettings(
+private class ConfigFileSettings private constructor(
     private val path: Path,
     private val ioScope: CoroutineScope,
 ) : Settings {
     override val locale: Setting<String>
-    private val config: KResult<Config, Throwable>
+    private val config: Config
+
+    init {
+        var doSetup = false
+        config = readConfig().fold(
+            ok = { it },
+            error = { error ->
+                println(error) // TODO: Need to send this error somewhere
+                doSetup = true
+                ConfigHandle.default()
+            },
+        )
+        locale = ConfigSetting.create(config = config, key = Config.StringKey.Locale).okOrThrow()
+        if (doSetup) {
+            locale.set(getDefaultLocale())
+        }
+    }
+
+    companion object {
+        fun create(
+            path: Path,
+            ioScope: CoroutineScope,
+        ): KResult<ConfigFileSettings, Throwable> = KResult.runCatching { ConfigFileSettings(path, ioScope) }
+    }
 
     private fun readConfig(): KResult<Config, Throwable> = KResult
         .runCatching { Files.readAllLines(path).joinToString(separator = "\n") }
@@ -52,7 +78,7 @@ private class ConfigFileSettings(
         .runCatching { Files.writeString(path, contents) }
 
     private fun saveConfig(): KResult<Unit, Throwable> = config
-        .andThen { config -> config.getAll().mapError { it.toThrowable() } }
+        .getAll().mapError { it.toThrowable() }
         .andThen { toml -> writeConfig(toml) }
 
     override fun toString(): String = "ConfigFileSettings(locale = $locale)"
@@ -73,27 +99,23 @@ private class ConfigFileSettings(
         delay(timeMillis = 5000)
         saveConfig().mapError { onError(it) }
     }
-
-    init {
-        // actually need to handle file not existing, add method on Rust side to create default ConfigHandle?
-        // can move definitions for defaults to Rust then
-        config = readConfig()
-        locale = ConfigSetting(config = config, key = Config.StringKey.Locale, default = "en-GB")
-    }
 }
 
-private data class ConfigSetting<T: Any>(
-    val config: KResult<Config, Throwable>,
+private class ConfigSetting<T: Any> private constructor(
+    val config: Config,
     val key: ConfigKey<T>,
-    override val default: T,
 ): Setting<T> {
-    private val result = config.andThen { config -> config.get(key).mapError { it.toThrowable() } }
-    override val value = mutableStateOf(result.okOrNull() ?: default)
-    override val initializationError = result.errorOrNull()
-    override fun set(value: T): KResult<Unit, Throwable> {
+    override val value = mutableStateOf(config.get(key).mapError { it.toThrowable() }.okOrThrow())
+    override fun set(value: T) {
         this.value.value = value
-        return config.andThen { config -> config.set(key, value).mapError { it.toThrowable() } }
+        config.set(key, value).mapError { println(it.toThrowable()) }
     }
+    override fun toString(): String = "ConfigSetting(value=${value.value}, config=$config, key=$key)"
 
-    override fun toString(): String = "ConfigSetting(value=${value.value}, config=$config, key=$key, default=$default)"
+    companion object {
+        fun <T : Any> create(
+            config: Config,
+            key: ConfigKey<T>
+        ): KResult<ConfigSetting<T>, Throwable> = KResult.runCatching { ConfigSetting(config, key) }
+    }
 }

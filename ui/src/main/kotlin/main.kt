@@ -32,7 +32,7 @@ fun main() {
     application {
         Window(
             onCloseRequest = {
-                Settings.instance.save(immediate = true) { throwable -> println("Error saving $throwable") }
+                Settings.instance?.save(immediate = true) { throwable -> println("Error saving $throwable") }
                 exitApplication()
             },
             title = "Hnefatafl",

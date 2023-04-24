@@ -250,6 +250,11 @@ struct FFIResult_____ConfigHandle______FFIError *config_handle_new(const uint16_
                                                                    uintptr_t length);
 
 /**
+ * Creates a default ConfigHandle
+ */
+struct ConfigHandle *config_handle_default(void);
+
+/**
  * Destroys the data owned by the pointer
  * The caller is responsible for ensuring there are no aliased references elsewhere in the
  * program

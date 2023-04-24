@@ -1,5 +1,6 @@
 use serde::{Serialize, Deserialize};
 use std::convert::TryFrom;
+use std::default::Default;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Config {
@@ -19,5 +20,13 @@ impl TryFrom<&Config> for String {
 
     fn try_from(config: &Config) -> Result<String, Self::Error> {
         toml::to_string(config)
+    }
+}
+
+impl Default for Config {
+    fn default() -> Self {
+        Config {
+            locale: "en-GB".to_string(),
+        }
     }
 }

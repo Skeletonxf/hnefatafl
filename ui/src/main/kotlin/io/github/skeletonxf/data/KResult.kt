@@ -47,3 +47,9 @@ fun <T, T2, E> KResult<T, E>.andThen(op: (T) -> KResult<T2, E>): KResult<T2, E> 
     is KResult.Ok -> op(this.ok)
     is KResult.Error -> this
 }
+
+@Throws
+fun <T, E: Throwable> KResult<T, E>.okOrThrow(): T = when (this) {
+    is KResult.Ok -> ok
+    is KResult.Error -> throw err
+}
