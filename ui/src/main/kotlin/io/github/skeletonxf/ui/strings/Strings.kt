@@ -13,8 +13,10 @@ import java.util.Locale
 
 data class Strings(
     val name: String,
+    val type: Type,
     val menu: Menu = Menu(),
     val game: Game = Game(),
+    val component: Component = Component(),
 ) {
     data class Menu(
         val twoPlayerGame: String = "Two player game",
@@ -41,14 +43,24 @@ data class Strings(
             val king: String = "King",
         )
     }
+
+    data class Component(
+        val ok: String = "OK",
+    )
+
+    enum class Type {
+        British, American, CastilianSpanish, LatinAmericanSpanish,
+    }
 }
 
 private val britishEnglish = Strings(
-    name = "English 🇬🇧"
+    name = "English 🇬🇧",
+    type = Strings.Type.British,
 )
 
 private val castilianSpanish = Strings(
     name = "Español 🇪🇸",
+    type = Strings.Type.CastilianSpanish,
     menu = Strings.Menu(
         // this is kinda a different copy but versus computer seems to translate
         // better as "Jugar contra" so keeping this form for the 2 player option
@@ -72,15 +84,20 @@ private val castilianSpanish = Strings(
             defender = "Defensor",
             king = "Rey",
         )
+    ),
+    component = Strings.Component(
+        // pronunciation is different but this word seems regularly used in spanish for computing contexts?
+        ok = "OK",
     )
 )
 
 val locales = mapOf(
     "en-GB" to britishEnglish,
-    "en-US" to britishEnglish.copy(name = "English 🇺🇸"),
+    "en-US" to britishEnglish.copy(name = "English 🇺🇸", type = Strings.Type.American),
     "es-ES" to castilianSpanish,
     "es-419" to castilianSpanish.copy(
         name = "Español latinoaméricano",
+        type = Strings.Type.LatinAmericanSpanish,
         menu = castilianSpanish.menu.copy(
             versusComputer = "Jugar contra el computadora (próximamente)",
         )
