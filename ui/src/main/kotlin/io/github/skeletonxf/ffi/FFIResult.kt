@@ -3,6 +3,7 @@ package io.github.skeletonxf.ffi
 import io.github.skeletonxf.bindings.bindings_h
 import io.github.skeletonxf.data.KResult
 import io.github.skeletonxf.data.Player
+import io.github.skeletonxf.data.Winner
 import java.lang.foreign.MemoryAddress
 
 private val FFI_RESULT_TYPE_OK: Byte = bindings_h.Ok().toByte()
@@ -137,6 +138,21 @@ value class PlayerResult(
             .andThen(::consumeRustError),
     )
         .map { Player.valueOf(it) }
+}
+
+@JvmInline
+value class WinnerResult(
+    override val address: MemoryAddress
+): ResultError<Winner> {
+    override fun toResult(): KResult<Winner, FFIError<String>> = KResult.from2(
+        handle = address,
+        getType = bindings_h::result_winner_get_type,
+        getOk = bindings_h::result_winner_get_ok,
+        getError = bindings_h::result_winner_get_error
+            .andWrap(::RustFFIError)
+            .andThen(::consumeRustError),
+    )
+        .map { Winner.valueOf(it) }
 }
 
 @JvmInline

@@ -162,13 +162,9 @@ class GameStateHandle : GameState {
         }
     }
 
-    private fun getWinner(): KResult<Winner, FFIError<Unit?>> = KResult
-        .from(
-            handle = bindings_h.game_state_handle_winner(handle),
-            getType = bindings_h::result_winner_get_type,
-            getOk = bindings_h::result_winner_get_ok,
-            getError = bindings_h::result_winner_get_error
-        ).map { Winner.valueOf(it) }
+    private fun getWinner(): KResult<Winner, FFIError<String>> = WinnerResult(
+        bindings_h.game_state_handle_winner(handle)
+    ).toResult()
 
     private fun getTurnPlayer(): KResult<Player, FFIError<String>> = PlayerResult(
         bindings_h.game_state_current_player(handle)

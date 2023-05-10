@@ -77,7 +77,7 @@ typedef struct FFIResult_TurnPlayer______FFIError FFIResult_TurnPlayer______FFIE
 /**
  * A wrapper around a result
  */
-typedef struct FFIResult_Winner FFIResult_Winner;
+typedef struct FFIResult_Winner______FFIError FFIResult_Winner______FFIError;
 
 /**
  * A wrapper around a result
@@ -192,7 +192,7 @@ struct FFIResult_GameStateUpdate *game_state_handle_make_play(const struct GameS
 /**
  * Returns the winner, if any
  */
-struct FFIResult_Winner *game_state_handle_winner(const struct GameStateHandle *handle);
+struct FFIResult_Winner______FFIError *game_state_handle_winner(const struct GameStateHandle *handle);
 
 /**
  * Returns the player that is making the current turn
@@ -383,17 +383,17 @@ void result_play_array_get_error(struct FFIResult_____PlayArray *result);
 /**
  * Safety: calling this on an invalid pointer is undefined behavior
  */
-FFIResultType result_winner_get_type(struct FFIResult_Winner *result);
+FFIResultType result_winner_get_type(struct FFIResult_Winner______FFIError *result);
 
 /**
  * Safety: calling this on an invalid pointer or an Err variant is undefined behavior
  */
-Winner result_winner_get_ok(struct FFIResult_Winner *result);
+Winner result_winner_get_ok(struct FFIResult_Winner______FFIError *result);
 
 /**
  * Safety: calling this on an invalid pointer or an Ok variant is undefined behavior
  */
-void result_winner_get_error(struct FFIResult_Winner *result);
+struct FFIError *result_winner_get_error(struct FFIResult_Winner______FFIError *result);
 
 /**
  * Safety: calling this on an invalid pointer is undefined behavior

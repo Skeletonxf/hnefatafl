@@ -21,19 +21,19 @@ impl Winner {
 
 /// Safety: calling this on an invalid pointer is undefined behavior
 #[no_mangle]
-pub unsafe extern fn result_winner_get_type(result: *mut FFIResult<Winner, ()>) -> FFIResultType {
+pub unsafe extern fn result_winner_get_type(result: *mut FFIResult<Winner, *mut FFIError>) -> FFIResultType {
     FFIResult::get_type(result)
 }
 
 /// Safety: calling this on an invalid pointer or an Err variant is undefined behavior
 #[no_mangle]
-pub unsafe extern fn result_winner_get_ok(result: *mut FFIResult<Winner, ()>) -> Winner {
+pub unsafe extern fn result_winner_get_ok(result: *mut FFIResult<Winner, *mut FFIError>) -> Winner {
     FFIResult::get_ok(result)
 }
 
 /// Safety: calling this on an invalid pointer or an Ok variant is undefined behavior
 #[no_mangle]
-pub unsafe extern fn result_winner_get_error(result: *mut FFIResult<Winner, ()>) -> () {
+pub unsafe extern fn result_winner_get_error(result: *mut FFIResult<Winner, *mut FFIError>) -> *mut FFIError {
     FFIResult::get_error(result)
 }
 

@@ -129,13 +129,10 @@ pub extern fn game_state_handle_make_play(
 
 /// Returns the winner, if any
 #[no_mangle]
-pub extern fn game_state_handle_winner(handle: *const GameStateHandle) -> *mut FFIResult<Winner, ()> {
+pub extern fn game_state_handle_winner(handle: *const GameStateHandle) -> *mut FFIResult<Winner, *mut FFIError> {
     FFIResult::new(GameStateHandle::with_handle(handle, "game_state_handle_winner", |handle| {
         Winner::from(handle.winner())
-    }).map_err(|error| {
-        eprint!("Error calling game_state_handle_winner: {:?}", error);
-        ()
-    }))
+    }).map_err(|error| error.leak()))
 }
 
 /// Returns the player that is making the current turn
