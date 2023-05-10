@@ -110,6 +110,20 @@ value class VoidResult(
 }
 
 @JvmInline
+value class TileArrayResult(
+    override val address: MemoryAddress
+): ResultError<TileArrayAddress> {
+    override fun toResult(): KResult<TileArrayAddress, FFIError<String>> = KResult.from2(
+        handle = address,
+        getType = bindings_h::result_tile_array_error_get_type,
+        getOk = bindings_h::result_tile_array_error_get_ok.andWrap(::TileArrayAddress),
+        getError = bindings_h::result_tile_array_error_get_error
+            .andWrap(::RustFFIError)
+            .andThen(::consumeRustError),
+    )
+}
+
+@JvmInline
 value class RustFFIError(override val address: MemoryAddress) : TypedMemoryAddress
 
 private fun consumeRustError(

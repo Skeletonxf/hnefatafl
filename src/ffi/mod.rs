@@ -1,4 +1,4 @@
-use crate::ffi::results::{FFIResult, FFIResultType};
+use crate::ffi::results::{FFIResult, FFIError, FFIResultType};
 use crate::state::{GameState, GameStateUpdate, Play};
 use crate::ffi::tile_array::TileArray;
 use crate::ffi::play_array::PlayArray;
@@ -67,16 +67,18 @@ pub extern fn game_state_handle_debug(handle: *const GameStateHandle) {
 
 /// Returns the tiles in row major order
 #[no_mangle]
-pub extern fn game_state_handle_tiles(handle: *const GameStateHandle) -> *mut FFIResult<*mut TileArray, ()> {
-    FFIResult::new(GameStateHandle::with_handle(handle, "game_state_handle_tiles", |handle| {
-        TileArray::new(handle.tiles())
-    }).map_err(|error| {
-        eprint!("Error calling game_state_handle_tiles: {:?}", error);
-        ()
-    }))
+pub extern fn game_state_handle_tiles(
+    handle: *const GameStateHandle
+) -> *mut FFIResult<*mut TileArray, *mut FFIError> {
+    FFIResult::new(
+        GameStateHandle::with_handle(handle, "game_state_handle_tiles", |handle| {
+            TileArray::new(handle.tiles())
+        })
+            .map_err(|error| error.leak())
+    )
 }
 
-/// Returns the length of one side of the grid
+/// Returns the length of one side of the square grid
 #[no_mangle]
 pub extern fn game_state_handle_grid_size(handle: *const GameStateHandle) -> u8 {
     // TODO: use FFIResult

@@ -122,18 +122,16 @@ class GameStateHandle : GameState {
         )
     }
 
-    private fun getBoard(): KResult<BoardData, FFIError<Unit?>> = KResult.from(
-        handle = bindings_h.game_state_handle_tiles(handle),
-        getType = { bindings_h.result_tile_array_get_type(it) },
-        getOk = { bindings_h.result_tile_array_get_ok(it) },
-        getError = { bindings_h.result_tile_array_get_error(it) },
-    ).map(destroy = bindings_h::tile_array_destroy) { tiles ->
-        val length = bindings_h.tile_array_length(tiles).toInt()
-        BoardData(
-            tiles = List(length) { i -> Tile.valueOf(bindings_h.tile_array_get(tiles, i.toLong())) },
-            length = bindings_h.game_state_handle_grid_size(handle).toInt()
-        )
-    }
+    private fun getBoard(): KResult<BoardData, FFIError<String>> = TileArrayResult(
+        bindings_h.game_state_handle_tiles(handle)
+    )
+        .toResult()
+        .map { tileArrayAddress ->
+            tileArrayToBoard(
+                tileArrayAddress,
+                bindings_h.game_state_handle_grid_size(handle).toInt()
+            )
+        }
 
     private fun getAvailablePlays(): KResult<List<Play>, FFIError<Unit?>> = KResult.from(
         handle = bindings_h.game_state_available_plays(handle),

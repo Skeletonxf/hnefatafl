@@ -102,6 +102,11 @@ typedef struct FFIResult_____TileArray FFIResult_____TileArray;
 /**
  * A wrapper around a result
  */
+typedef struct FFIResult_____TileArray______FFIError FFIResult_____TileArray______FFIError;
+
+/**
+ * A wrapper around a result
+ */
 typedef struct FFIResult_____UTF16Array FFIResult_____UTF16Array;
 
 /**
@@ -168,10 +173,10 @@ void game_state_handle_debug(const struct GameStateHandle *handle);
 /**
  * Returns the tiles in row major order
  */
-struct FFIResult_____TileArray *game_state_handle_tiles(const struct GameStateHandle *handle);
+struct FFIResult_____TileArray______FFIError *game_state_handle_tiles(const struct GameStateHandle *handle);
 
 /**
- * Returns the length of one side of the grid
+ * Returns the length of one side of the square grid
  */
 uint8_t game_state_handle_grid_size(const struct GameStateHandle *handle);
 
@@ -347,6 +352,21 @@ TileArray *result_tile_array_get_ok(struct FFIResult_____TileArray *result);
  * Safety: calling this on an invalid pointer or an Ok variant is undefined behavior
  */
 void result_tile_array_get_error(struct FFIResult_____TileArray *result);
+
+/**
+ * Safety: calling this on an invalid pointer is undefined behavior
+ */
+FFIResultType result_tile_array_error_get_type(struct FFIResult_____TileArray______FFIError *result);
+
+/**
+ * Safety: calling this on an invalid pointer or an Err variant is undefined behavior
+ */
+TileArray *result_tile_array_error_get_ok(struct FFIResult_____TileArray______FFIError *result);
+
+/**
+ * Safety: calling this on an invalid pointer or an Ok variant is undefined behavior
+ */
+struct FFIError *result_tile_array_error_get_error(struct FFIResult_____TileArray______FFIError *result);
 
 /**
  * Returns a value from the array, or a dummy all 0s Play if out of bounds
