@@ -156,6 +156,21 @@ value class WinnerResult(
 }
 
 @JvmInline
+value class UIntResult(
+    override val address: MemoryAddress
+): ResultError<UInt> {
+    override fun toResult(): KResult<UInt, FFIError<String>> = KResult.from2(
+        handle = address,
+        getType = bindings_h::result_u32_get_type,
+        getOk = bindings_h::result_u32_get_ok,
+        getError = bindings_h::result_u32_get_error
+            .andWrap(::RustFFIError)
+            .andThen(::consumeRustError),
+    )
+        .map { int -> int.toUInt() }
+}
+
+@JvmInline
 value class RustFFIError(override val address: MemoryAddress) : TypedMemoryAddress
 
 private fun consumeRustError(

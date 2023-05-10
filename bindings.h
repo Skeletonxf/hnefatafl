@@ -117,7 +117,7 @@ typedef struct FFIResult______ConfigHandle______FFIError FFIResult______ConfigHa
 /**
  * A wrapper around a result
  */
-typedef struct FFIResult_u32 FFIResult_u32;
+typedef struct FFIResult_u32______FFIError FFIResult_u32______FFIError;
 
 typedef struct GameStateHandle GameStateHandle;
 
@@ -203,7 +203,7 @@ struct FFIResult_TurnPlayer______FFIError *game_state_current_player(const struc
  * Returns the turn count. Starts at 0 with Defenders going first, odd turn counts are Attackers'
  * turns.
  */
-struct FFIResult_u32 *game_state_handle_turn_count(const struct GameStateHandle *handle);
+struct FFIResult_u32______FFIError *game_state_handle_turn_count(const struct GameStateHandle *handle);
 
 /**
  * Returns the dead pieces in row major order (no Empty tiles will actually be in the array, but
@@ -231,17 +231,17 @@ void result_game_state_update_get_error(struct FFIResult_GameStateUpdate *result
 /**
  * Safety: calling this on an invalid pointer is undefined behavior
  */
-FFIResultType result_u32_get_type(struct FFIResult_u32 *result);
+FFIResultType result_u32_get_type(struct FFIResult_u32______FFIError *result);
 
 /**
  * Safety: calling this on an invalid pointer or an Err variant is undefined behavior
  */
-uint32_t result_u32_get_ok(struct FFIResult_u32 *result);
+uint32_t result_u32_get_ok(struct FFIResult_u32______FFIError *result);
 
 /**
  * Safety: calling this on an invalid pointer or an Ok variant is undefined behavior
  */
-void result_u32_get_error(struct FFIResult_u32 *result);
+struct FFIError *result_u32_get_error(struct FFIResult_u32______FFIError *result);
 
 /**
  * Creates a new ConfigHandle from a UTF-16 toml file

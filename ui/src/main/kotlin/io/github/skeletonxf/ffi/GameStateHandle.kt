@@ -188,17 +188,9 @@ class GameStateHandle : GameState {
             }
         }
 
-    private fun getTurnCount(): KResult<UInt, FFIError<Unit?>> = KResult
-        .from(
-            handle = bindings_h.game_state_handle_turn_count(handle),
-            getType = bindings_h::result_u32_get_type,
-            getOk = bindings_h::result_u32_get_ok,
-            getError = bindings_h::result_u32_get_error,
-        ).map { turnCount ->
-            // Since Rust will saturate the turn count at u32::MAX use UInt to ensure Kotlin represents
-            // the number accurately
-            turnCount.toUInt()
-        }
+    private fun getTurnCount(): KResult<UInt, FFIError<String>> = UIntResult(
+        bindings_h.game_state_handle_turn_count(handle)
+    ).toResult()
 
     companion object {
         private val bridgeCleaner: Cleaner = Cleaner.create()

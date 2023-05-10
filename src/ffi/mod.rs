@@ -146,13 +146,10 @@ pub extern fn game_state_current_player(handle: *const GameStateHandle) -> *mut 
 /// Returns the turn count. Starts at 0 with Defenders going first, odd turn counts are Attackers'
 /// turns.
 #[no_mangle]
-pub extern fn game_state_handle_turn_count(handle: *const GameStateHandle) -> *mut FFIResult<u32, ()> {
+pub extern fn game_state_handle_turn_count(handle: *const GameStateHandle) -> *mut FFIResult<u32, *mut FFIError> {
     FFIResult::new(GameStateHandle::with_handle(handle, "game_state_handle_turn_count", |handle| {
         handle.turn_count()
-    }).map_err(|error| {
-        eprint!("Error calling game_state_handle_turn_count: {:?}", error);
-        ()
-    }))
+    }).map_err(|error| error.leak()))
 }
 
 /// Returns the dead pieces in row major order (no Empty tiles will actually be in the array, but
@@ -186,18 +183,18 @@ pub unsafe extern fn result_game_state_update_get_error(result: *mut FFIResult<G
 
 /// Safety: calling this on an invalid pointer is undefined behavior
 #[no_mangle]
-pub unsafe extern fn result_u32_get_type(result: *mut FFIResult<u32, ()>) -> FFIResultType {
+pub unsafe extern fn result_u32_get_type(result: *mut FFIResult<u32, *mut FFIError>) -> FFIResultType {
     FFIResult::get_type(result)
 }
 
 /// Safety: calling this on an invalid pointer or an Err variant is undefined behavior
 #[no_mangle]
-pub unsafe extern fn result_u32_get_ok(result: *mut FFIResult<u32, ()>) -> u32 {
+pub unsafe extern fn result_u32_get_ok(result: *mut FFIResult<u32, *mut FFIError>) -> u32 {
     FFIResult::get_ok(result)
 }
 
 /// Safety: calling this on an invalid pointer or an Ok variant is undefined behavior
 #[no_mangle]
-pub unsafe extern fn result_u32_get_error(result: *mut FFIResult<u32, ()>) -> () {
+pub unsafe extern fn result_u32_get_error(result: *mut FFIResult<u32, *mut FFIError>) -> *mut FFIError {
     FFIResult::get_error(result)
 }
