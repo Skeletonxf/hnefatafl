@@ -170,13 +170,9 @@ class GameStateHandle : GameState {
             getError = bindings_h::result_winner_get_error
         ).map { Winner.valueOf(it) }
 
-    private fun getTurnPlayer(): KResult<Player, FFIError<Unit?>> = KResult
-        .from(
-            handle = bindings_h.game_state_current_player(handle),
-            getType = bindings_h::result_player_get_type,
-            getOk = bindings_h::result_player_get_ok,
-            getError = bindings_h::result_player_get_error,
-        ).map { Player.valueOf(it) }
+    private fun getTurnPlayer(): KResult<Player, FFIError<String>> = PlayerResult(
+        bindings_h.game_state_current_player(handle)
+    ).toResult()
 
     private fun getDead(): KResult<List<Piece>, FFIError<String>> = TileArrayResult(
         bindings_h.game_state_handle_dead(handle)

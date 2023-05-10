@@ -140,13 +140,10 @@ pub extern fn game_state_handle_winner(handle: *const GameStateHandle) -> *mut F
 
 /// Returns the player that is making the current turn
 #[no_mangle]
-pub extern fn game_state_current_player(handle: *const GameStateHandle) -> *mut FFIResult<TurnPlayer, ()> {
+pub extern fn game_state_current_player(handle: *const GameStateHandle) -> *mut FFIResult<TurnPlayer, *mut FFIError> {
     FFIResult::new(GameStateHandle::with_handle(handle, "game_state_current_player", |handle| {
         TurnPlayer::from(handle.turn())
-    }).map_err(|error| {
-        eprint!("Error calling game_state_current_player: {:?}", error);
-        ()
-    }))
+    }).map_err(|error| error.leak()))
 }
 
 /// Returns the turn count. Starts at 0 with Defenders going first, odd turn counts are Attackers'

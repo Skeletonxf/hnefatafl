@@ -2,6 +2,7 @@ package io.github.skeletonxf.ffi
 
 import io.github.skeletonxf.bindings.bindings_h
 import io.github.skeletonxf.data.KResult
+import io.github.skeletonxf.data.Player
 import java.lang.foreign.MemoryAddress
 
 private val FFI_RESULT_TYPE_OK: Byte = bindings_h.Ok().toByte()
@@ -121,6 +122,21 @@ value class TileArrayResult(
             .andWrap(::RustFFIError)
             .andThen(::consumeRustError),
     )
+}
+
+@JvmInline
+value class PlayerResult(
+    override val address: MemoryAddress
+): ResultError<Player> {
+    override fun toResult(): KResult<Player, FFIError<String>> = KResult.from2(
+        handle = address,
+        getType = bindings_h::result_player_get_type,
+        getOk = bindings_h::result_player_get_ok,
+        getError = bindings_h::result_player_get_error
+            .andWrap(::RustFFIError)
+            .andThen(::consumeRustError),
+    )
+        .map { Player.valueOf(it) }
 }
 
 @JvmInline

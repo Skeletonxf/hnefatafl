@@ -72,7 +72,7 @@ typedef struct FFIResult_GameStateUpdate FFIResult_GameStateUpdate;
 /**
  * A wrapper around a result
  */
-typedef struct FFIResult_TurnPlayer FFIResult_TurnPlayer;
+typedef struct FFIResult_TurnPlayer______FFIError FFIResult_TurnPlayer______FFIError;
 
 /**
  * A wrapper around a result
@@ -197,7 +197,7 @@ struct FFIResult_Winner *game_state_handle_winner(const struct GameStateHandle *
 /**
  * Returns the player that is making the current turn
  */
-struct FFIResult_TurnPlayer *game_state_current_player(const struct GameStateHandle *handle);
+struct FFIResult_TurnPlayer______FFIError *game_state_current_player(const struct GameStateHandle *handle);
 
 /**
  * Returns the turn count. Starts at 0 with Defenders going first, odd turn counts are Attackers'
@@ -398,17 +398,17 @@ void result_winner_get_error(struct FFIResult_Winner *result);
 /**
  * Safety: calling this on an invalid pointer is undefined behavior
  */
-FFIResultType result_player_get_type(struct FFIResult_TurnPlayer *result);
+FFIResultType result_player_get_type(struct FFIResult_TurnPlayer______FFIError *result);
 
 /**
  * Safety: calling this on an invalid pointer or an Err variant is undefined behavior
  */
-TurnPlayer result_player_get_ok(struct FFIResult_TurnPlayer *result);
+TurnPlayer result_player_get_ok(struct FFIResult_TurnPlayer______FFIError *result);
 
 /**
  * Safety: calling this on an invalid pointer or an Ok variant is undefined behavior
  */
-void result_player_get_error(struct FFIResult_TurnPlayer *result);
+struct FFIError *result_player_get_error(struct FFIResult_TurnPlayer______FFIError *result);
 
 /**
  * Destroys the data owned by the pointer

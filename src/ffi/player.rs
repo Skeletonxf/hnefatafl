@@ -1,4 +1,4 @@
-use crate::ffi::results::{FFIResult, FFIResultType};
+use crate::ffi::results::{FFIResult, FFIError, FFIResultType};
 use crate::state::Player;
 
 #[repr(u8)]
@@ -56,18 +56,18 @@ impl TurnPlayer {
 
 /// Safety: calling this on an invalid pointer is undefined behavior
 #[no_mangle]
-pub unsafe extern fn result_player_get_type(result: *mut FFIResult<TurnPlayer, ()>) -> FFIResultType {
+pub unsafe extern fn result_player_get_type(result: *mut FFIResult<TurnPlayer, *mut FFIError>) -> FFIResultType {
     FFIResult::get_type(result)
 }
 
 /// Safety: calling this on an invalid pointer or an Err variant is undefined behavior
 #[no_mangle]
-pub unsafe extern fn result_player_get_ok(result: *mut FFIResult<TurnPlayer, ()>) -> TurnPlayer {
+pub unsafe extern fn result_player_get_ok(result: *mut FFIResult<TurnPlayer, *mut FFIError>) -> TurnPlayer {
     FFIResult::get_ok(result)
 }
 
 /// Safety: calling this on an invalid pointer or an Ok variant is undefined behavior
 #[no_mangle]
-pub unsafe extern fn result_player_get_error(result: *mut FFIResult<TurnPlayer, ()>) -> () {
+pub unsafe extern fn result_player_get_error(result: *mut FFIResult<TurnPlayer, *mut FFIError>) -> *mut FFIError {
     FFIResult::get_error(result)
 }
