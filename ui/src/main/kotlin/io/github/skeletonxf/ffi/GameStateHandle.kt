@@ -178,22 +178,22 @@ class GameStateHandle : GameState {
             getError = bindings_h::result_player_get_error,
         ).map { Player.valueOf(it) }
 
-    private fun getDead(): KResult<List<Piece>, FFIError<Unit?>> = KResult
-        .from(
-            handle = bindings_h.game_state_handle_dead(handle),
-            getType = { bindings_h.result_tile_array_get_type(it) },
-            getOk = { bindings_h.result_tile_array_get_ok(it) },
-            getError = { bindings_h.result_tile_array_get_error(it) },
-        ).map(destroy = bindings_h::tile_array_destroy) { pieces ->
-            val length = bindings_h.tile_array_length(pieces).toInt()
-            val dead = List(length) { i ->
-                Piece.valueOf(
-                    Tile.valueOf(
-                        bindings_h.tile_array_get(pieces, i.toLong())
+    private fun getDead(): KResult<List<Piece>, FFIError<String>> = TileArrayResult(
+        bindings_h.game_state_handle_dead(handle)
+    )
+        .toResult()
+        .map { tileArrayAddress ->
+            tileArrayAddress.address.use(bindings_h::tile_array_destroy) { pieces ->
+                val length = bindings_h.tile_array_length(pieces).toInt()
+                val dead = List(length) { i ->
+                    Piece.valueOf(
+                        Tile.valueOf(
+                            bindings_h.tile_array_get(pieces, i.toLong())
+                        )
                     )
-                )
+                }
+                dead.filterNotNull()
             }
-            dead.filterNotNull()
         }
 
     private fun getTurnCount(): KResult<UInt, FFIError<Unit?>> = KResult

@@ -166,13 +166,10 @@ pub extern fn game_state_handle_turn_count(handle: *const GameStateHandle) -> *m
 ///
 /// Running out of aliases for the enum variants, so adding a PieceArray type would be problematic
 #[no_mangle]
-pub extern fn game_state_handle_dead(handle: *const GameStateHandle) -> *mut FFIResult<*mut TileArray, ()> {
+pub extern fn game_state_handle_dead(handle: *const GameStateHandle) -> *mut FFIResult<*mut TileArray, *mut FFIError> {
     FFIResult::new(GameStateHandle::with_handle(handle, "game_state_handle_dead", |handle| {
         TileArray::new(handle.dead().iter().map(|&piece| piece.into()).collect())
-    }).map_err(|error| {
-        eprint!("Error calling game_state_handle_dead: {:?}", error);
-        ()
-    }))
+    }).map_err(|error| error.leak()))
 }
 
 /// Safety: calling this on an invalid pointer is undefined behavior

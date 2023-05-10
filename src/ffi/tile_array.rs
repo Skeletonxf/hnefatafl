@@ -35,24 +35,6 @@ pub unsafe extern fn tile_array_destroy(array: *mut TileArray) {
 
 /// Safety: calling this on an invalid pointer is undefined behavior
 #[no_mangle]
-pub unsafe extern fn result_tile_array_get_type(result: *mut FFIResult<*mut TileArray, ()>) -> FFIResultType {
-    FFIResult::get_type(result)
-}
-
-/// Safety: calling this on an invalid pointer or an Err variant is undefined behavior
-#[no_mangle]
-pub unsafe extern fn result_tile_array_get_ok(result: *mut FFIResult<*mut TileArray, ()>) -> *mut TileArray {
-    FFIResult::get_ok(result)
-}
-
-/// Safety: calling this on an invalid pointer or an Ok variant is undefined behavior
-#[no_mangle]
-pub unsafe extern fn result_tile_array_get_error(result: *mut FFIResult<*mut TileArray, ()>) -> () {
-    FFIResult::get_error(result)
-}
-
-/// Safety: calling this on an invalid pointer is undefined behavior
-#[no_mangle]
 pub unsafe extern fn result_tile_array_error_get_type(result: *mut FFIResult<*mut TileArray, *mut FFIError>) -> FFIResultType {
     FFIResult::get_type(result)
 }

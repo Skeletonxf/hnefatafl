@@ -97,11 +97,6 @@ typedef struct FFIResult_____PlayArray FFIResult_____PlayArray;
 /**
  * A wrapper around a result
  */
-typedef struct FFIResult_____TileArray FFIResult_____TileArray;
-
-/**
- * A wrapper around a result
- */
 typedef struct FFIResult_____TileArray______FFIError FFIResult_____TileArray______FFIError;
 
 /**
@@ -216,7 +211,7 @@ struct FFIResult_u32 *game_state_handle_turn_count(const struct GameStateHandle 
  *
  * Running out of aliases for the enum variants, so adding a PieceArray type would be problematic
  */
-struct FFIResult_____TileArray *game_state_handle_dead(const struct GameStateHandle *handle);
+struct FFIResult_____TileArray______FFIError *game_state_handle_dead(const struct GameStateHandle *handle);
 
 /**
  * Safety: calling this on an invalid pointer is undefined behavior
@@ -337,21 +332,6 @@ uintptr_t tile_array_length(const TileArray *array);
  * program
  */
 void tile_array_destroy(TileArray *array);
-
-/**
- * Safety: calling this on an invalid pointer is undefined behavior
- */
-FFIResultType result_tile_array_get_type(struct FFIResult_____TileArray *result);
-
-/**
- * Safety: calling this on an invalid pointer or an Err variant is undefined behavior
- */
-TileArray *result_tile_array_get_ok(struct FFIResult_____TileArray *result);
-
-/**
- * Safety: calling this on an invalid pointer or an Ok variant is undefined behavior
- */
-void result_tile_array_get_error(struct FFIResult_____TileArray *result);
 
 /**
  * Safety: calling this on an invalid pointer is undefined behavior
