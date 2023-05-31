@@ -4,11 +4,11 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.selection.SelectionContainer
-import androidx.compose.material.ButtonDefaults
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Surface
-import androidx.compose.material.Text
-import androidx.compose.material.TextButton
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Snackbar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
@@ -126,8 +126,6 @@ private fun SnackbarHost(
     modifier: Modifier = Modifier,
 ) {
     val strings = LocalStrings.current.component
-    // FIXME: Migrate everything else over to material 3, material 2 snackbar is always temporary which doesn't
-    // work well here
     if (timber.isNotEmpty()) {
         val tree = timber.first()
         Snackbar(
@@ -137,15 +135,15 @@ private fun SnackbarHost(
                     onClick = { onDismiss(tree.id) },
                     modifier = Modifier.padding(horizontal = 8.dp),
                     colors = ButtonDefaults.textButtonColors(
-                        backgroundColor = MaterialTheme.colors.background,
+                        containerColor = MaterialTheme.colorScheme.background,
                     ),
                 ) {
                     Text(text = strings.ok)
                 }
             },
-            containerColor = MaterialTheme.colors.surface,
-            contentColor = MaterialTheme.colors.onSurface,
-            dismissActionContentColor = MaterialTheme.colors.onSurface,
+            containerColor = MaterialTheme.colorScheme.surface,
+            contentColor = MaterialTheme.colorScheme.onSurface,
+            dismissActionContentColor = MaterialTheme.colorScheme.onSurface,
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),

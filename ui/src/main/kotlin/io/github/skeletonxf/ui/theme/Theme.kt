@@ -5,10 +5,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material.Colors
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Surface
-import androidx.compose.material.Text
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -39,38 +39,38 @@ private fun ColorBackground(
 private fun ColorPreview() = PreviewSurface {
     Column {
         ColorBackground(
-            backgroundColor = MaterialTheme.colors.background,
-            textColor = MaterialTheme.colors.onBackground,
+            backgroundColor = MaterialTheme.colorScheme.background,
+            textColor = MaterialTheme.colorScheme.onBackground,
             text = "Background (Grey)",
         )
         ColorBackground(
-            backgroundColor = MaterialTheme.colors.surface,
-            textColor = MaterialTheme.colors.onSurface,
+            backgroundColor = MaterialTheme.colorScheme.surface,
+            textColor = MaterialTheme.colorScheme.onSurface,
             text = "Surface (White)",
         )
         ColorBackground(
-            backgroundColor = MaterialTheme.colors.primary,
-            textColor = MaterialTheme.colors.onPrimary,
+            backgroundColor = MaterialTheme.colorScheme.primary,
+            textColor = MaterialTheme.colorScheme.onPrimary,
             text = "Primary (Brown)",
         )
         ColorBackground(
-            backgroundColor = MaterialTheme.colors.primaryVariant,
-            textColor = MaterialTheme.colors.onPrimary,
-            text = "Primary variant (Middle)",
-        )
-        ColorBackground(
-            backgroundColor = MaterialTheme.colors.secondary,
-            textColor = MaterialTheme.colors.onSecondary,
+            backgroundColor = MaterialTheme.colorScheme.secondary,
+            textColor = MaterialTheme.colorScheme.onSecondary,
             text = "Secondary (Dark)",
         )
         ColorBackground(
-            backgroundColor = MaterialTheme.colors.secondaryVariant,
-            textColor = MaterialTheme.colors.onSecondary,
-            text = "Secondary variant (Night)",
+            backgroundColor = MaterialTheme.colorScheme.tertiary,
+            textColor = MaterialTheme.colorScheme.onTertiary,
+            text = "Tertiary (Night)",
+        )
+        ColorBackground(
+            backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
+            textColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            text = "Surface variant",
         )
         ColorBackground(
             backgroundColor = HnefataflColors.light,
-            textColor = MaterialTheme.colors.onBackground,
+            textColor = MaterialTheme.colorScheme.onBackground,
             text = "Light",
         )
     }
@@ -85,23 +85,25 @@ fun PreviewSurface(content: @Composable () -> Unit) = HnefataflMaterialTheme {
 fun HnefataflMaterialTheme(
     content: @Composable () -> Unit
 ) {
-    val colors = Colors(
+    val colorScheme = lightColorScheme(
         primary = HnefataflColors.brown,
-        primaryVariant = HnefataflColors.middle,
-        secondary = HnefataflColors.dark,
-        secondaryVariant = HnefataflColors.night,
-        background = HnefataflColors.grey,
-        surface = Color.White,
-        error = Color.Red,
         onPrimary = Color.White,
+        secondary = HnefataflColors.dark,
         onSecondary = Color.White,
-        onBackground = HnefataflColors.dark,
+        tertiary = HnefataflColors.night,
+        onTertiary = Color.White,
+        surface = Color.White,
         onSurface = HnefataflColors.dark,
+        surfaceVariant = Color(red = 0xF5, green = 0xDD, blue = 0xD9),
+        onSurfaceVariant = Color(red = 0x53, green = 0x43, blue = 0x40),
+        background = HnefataflColors.grey,
+        onBackground = HnefataflColors.dark,
+        error = Color.Red,
         onError = Color.Black,
-        isLight = true,
+        outline = Color(0x85736F),
     )
     MaterialTheme(
-        colors = colors,
+        colorScheme = colorScheme,
         content = content,
     )
 }

@@ -19,8 +19,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.Icon
-import androidx.compose.material.MaterialTheme
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -102,7 +102,7 @@ fun Board(
                 dead = dead.filter { it.ownedBy(Player.Defender) },
                 tileSize = sideWidth,
                 modifier = Modifier
-                    .background(MaterialTheme.colors.background)
+                    .background(MaterialTheme.colorScheme.background)
                     .border(width = margin, color = HnefataflColors.night)
                     .width(sideWidth)
                     .height(boardSize)
@@ -157,7 +157,7 @@ fun Board(
                 dead = dead.filter { it.ownedBy(Player.Attacker) },
                 tileSize = sideWidth,
                 modifier = Modifier
-                    .background(MaterialTheme.colors.background)
+                    .background(MaterialTheme.colorScheme.background)
                     .border(width = margin, color = HnefataflColors.night)
                     .width(sideWidth)
                     .height(boardSize)
