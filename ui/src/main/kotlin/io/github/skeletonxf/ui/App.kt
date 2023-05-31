@@ -101,7 +101,7 @@ private fun Title(
     val strings = LocalStrings.current.game
     val turnsTaken = when (turn) {
         Player.Defender -> turnCount / 2u
-        Player.Attacker -> (turnCount - 1u) / 2u
+        Player.Attacker -> (if (turnCount > 0u) turnCount - 1u else turnCount) / 2u
     }
     Text(
         text = when (winner) {
