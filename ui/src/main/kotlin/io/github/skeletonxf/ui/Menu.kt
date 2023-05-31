@@ -2,6 +2,7 @@ package io.github.skeletonxf.ui
 
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -15,11 +16,13 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -114,17 +117,24 @@ fun LanguagePicker(
         TextButton(
             onClick = { onSetDropdown(true) },
             colors = ButtonDefaults.textButtonColors(
-                containerColor = MaterialTheme.colorScheme.background,
+                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
             ),
         ) {
             Text(text = strings.name)
         }
-        DropdownMenu(expanded = dropdown, onDismissRequest = { onSetDropdown(false) }) {
-            locales.forEach { (locale, strings) ->
-                DropdownMenuItem(
-                    text = { Text(text = strings.name) },
-                    onClick = { changeStrings(locale) }.then { onSetDropdown(false) }
-                )
+        DropdownMenu(
+            modifier = Modifier.background(color = MaterialTheme.colorScheme.surfaceVariant),
+            expanded = dropdown,
+            onDismissRequest = { onSetDropdown(false) }
+        ) {
+            CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSurfaceVariant) {
+                locales.forEach { (locale, strings) ->
+                    DropdownMenuItem(
+                        text = { Text(text = strings.name) },
+                        onClick = { changeStrings(locale) }.then { onSetDropdown(false) }
+                    )
+                }
             }
         }
     }

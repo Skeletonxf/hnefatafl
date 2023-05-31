@@ -136,6 +136,7 @@ private fun SnackbarHost(
                     modifier = Modifier.padding(horizontal = 8.dp),
                     colors = ButtonDefaults.textButtonColors(
                         containerColor = MaterialTheme.colorScheme.background,
+                        contentColor = MaterialTheme.colorScheme.onBackground,
                     ),
                 ) {
                     Text(text = strings.ok)
