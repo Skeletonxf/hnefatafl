@@ -14,6 +14,6 @@ fn main() {
         Ok(bindings) => {
             bindings.write_to_file("bindings.h");
         }
-        Err(error) => eprintln!("Error: {}", error),
+        Err(error) => println!("cargo:warning=Error: {}", error),
     }
 }
