@@ -41,6 +41,9 @@ class GameStateHandle : GameState {
         bindings_h.game_state_handle_debug(handle)
     }
 
+    // TODO: Bot moves need to be calculated off the main thread, can't just do them inside game_state_handle_make_play
+    // because that runs on the UI thread and freezes up the game.
+
     override fun makePlay(play: Play) {
         state.value = KResult
             .from(

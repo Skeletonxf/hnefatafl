@@ -1,3 +1,6 @@
+// Only want these allowed inside function bodies but no way to configure the lint for that :(
+#![allow(mixed_script_confusables)]
+
 mod bot;
 mod piece;
 mod state;

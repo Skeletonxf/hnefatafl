@@ -15,7 +15,7 @@ pub enum Player {
 
 type Position = (u8, u8);
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct GameState {
     board: Board,
     turn: Player,
@@ -24,7 +24,7 @@ pub struct GameState {
     turn_count: u32,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Board {
     board: Matrix<Tile>,
     castle: Position,
@@ -49,7 +49,9 @@ enum Direction {
 pub enum GameStateUpdate {
     DefenderWin = 0,
     AttackerWin = 1,
+    /// Defenders captured a piece.
     DefenderCapture = 2,
+    /// Attackers captured a piece.
     AttackerCapture = 3,
     Nothing = 4,
 }

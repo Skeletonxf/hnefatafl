@@ -4,6 +4,7 @@ use crate::ffi::tile_array::TileArray;
 use crate::ffi::play_array::PlayArray;
 use crate::ffi::player::{Winner, TurnPlayer};
 use crate::ffi::handle::MutexHandle;
+use crate::bot::minmax::min_max_play;
 
 use std::sync::Mutex;
 
@@ -112,10 +113,16 @@ pub extern fn game_state_handle_make_play(
 ) -> *mut FFIResult<GameStateUpdate, ()> {
     FFIResult::new(
         match GameStateHandle::with_handle(handle, "game_state_handle_make_play", |handle| {
-            handle.make_play(&Play {
+            /*let update = */handle.make_play(&Play {
                 from: (from_x, from_y),
                 to: (to_x, to_y),
-            })
+            })//;
+            // // TODO: This should be configured for AI matches specifically
+            // if let Some(play) = min_max_play(handle.clone()) {
+            //     handle.make_play(&play)
+            // } else {
+            //     update
+            // }
         }) {
             Ok(Ok(game_state_update)) => Ok(game_state_update),
             Ok(Err(_)) => Err(()),

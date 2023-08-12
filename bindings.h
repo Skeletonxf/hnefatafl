@@ -18,7 +18,13 @@ typedef uint8_t FFIResultType;
 enum GameStateUpdate {
   DefenderWin = 0,
   AttackerWin = 1,
+  /**
+   * Defenders captured a piece.
+   */
   DefenderCapture = 2,
+  /**
+   * Attackers captured a piece.
+   */
   AttackerCapture = 3,
   Nothing = 4,
 };

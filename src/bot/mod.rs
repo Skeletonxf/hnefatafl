@@ -3,6 +3,8 @@ use easy_ml::tensors::Tensor;
 use crate::piece::Tile;
 use crate::state::Board;
 
+pub mod minmax;
+
 /// Encodes a Board of Tiles into a 3 dimensional Tensor where the third dimension encodes
 /// each type of piece.
 pub fn new_input(board: &Board) -> Tensor<f64, 3> {
