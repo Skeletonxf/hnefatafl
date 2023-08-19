@@ -73,7 +73,7 @@ fun main() {
                 handle = handle,
                 timber = forest.timber.collectAsState().value,
                 onDismiss = forest::dismiss,
-                onNewGame = { handle = GameStateHandle() },
+                onNewGame = { handle = GameStateHandle(localBackgroundScope) },
                 onQuit = { handle = null },
             )
         }

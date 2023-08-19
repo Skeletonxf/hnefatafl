@@ -14,12 +14,15 @@ import io.github.skeletonxf.data.Player
 import io.github.skeletonxf.data.Position
 import io.github.skeletonxf.data.Tile
 import io.github.skeletonxf.data.Winner
+import io.github.skeletonxf.functions.launchUnit
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import java.lang.foreign.MemoryAddress
 import java.lang.foreign.MemorySession
 import java.lang.foreign.SegmentAllocator
 import java.lang.ref.Cleaner
 
-class GameStateHandle : GameState {
+class GameStateHandle(private val coroutineScope: CoroutineScope) : GameState {
     private val handle: MemoryAddress = bindings_h.game_state_handle_new()
 
     override val state: MutableState<GameState.State> = mutableStateOf(getGameState())
@@ -41,10 +44,7 @@ class GameStateHandle : GameState {
         bindings_h.game_state_handle_debug(handle)
     }
 
-    // TODO: Bot moves need to be calculated off the main thread, can't just do them inside game_state_handle_make_play
-    // because that runs on the UI thread and freezes up the game.
-
-    override fun makePlay(play: Play) {
+    override fun makePlay(play: Play) = coroutineScope.launchUnit {
         state.value = KResult
             .from(
                 handle = bindings_h.game_state_handle_make_play(
