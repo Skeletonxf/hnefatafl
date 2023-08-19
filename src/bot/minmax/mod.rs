@@ -17,7 +17,7 @@ pub fn min_max_play(game_state: GameState) -> Option<Play> {
         // no impact on our behaviour.
         plays.shuffle(&mut rng);
     }
-    let depth_remaining = 2;
+    let depth_remaining = 3;
     let mut α = Heuristic(i8::MIN);
     let mut β = Heuristic(i8::MAX);
     let player = match game_state.turn() {
