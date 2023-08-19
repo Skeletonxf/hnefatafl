@@ -2,11 +2,22 @@ use crate::state::{GameState, Play, Player};
 use crate::piece::Piece;
 
 pub fn min_max_play(game_state: GameState) -> Option<Play> {
-    let plays = game_state.available_plays();
+    let mut plays = game_state.available_plays();
     if plays.is_empty() {
         return None;
     }
-    let depth_remaining = 15;
+    {
+        use rand::prelude::*;
+        let mut rng = rand::thread_rng();
+        // Shuffle the top level moves so we don't have a bias towards the top left which would
+        // otherwise always be the first available moves we consider and then pick if we're unable
+        // to find any moves that are better than others
+        // This isn't necessary for recursive calls because we only pick the top iteration for
+        // making a move, the rest are just lookahead and their order of evaluation should have
+        // no impact on our behaviour.
+        plays.shuffle(&mut rng);
+    }
+    let depth_remaining = 2;
     let mut α = Heuristic(i8::MIN);
     let mut β = Heuristic(i8::MAX);
     let player = match game_state.turn() {
@@ -31,8 +42,6 @@ pub fn min_max_play(game_state: GameState) -> Option<Play> {
                     best_value = value;
                     best_play = play;
                 }
-                // FIXME: This has a slight bias towards earlier moves, we should randomise
-                // selecting the move to take if the best value is tied.
                 α = std::cmp::max(α, best_value);
                 if best_value >= β {
                     break;
