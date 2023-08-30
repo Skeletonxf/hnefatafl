@@ -196,6 +196,11 @@ struct FFIResult_GameStateUpdate *game_state_handle_make_play(const struct GameS
                                                               uint8_t to_y);
 
 /**
+ * Makes a play with the bot, if legal
+ */
+struct FFIResult_GameStateUpdate *game_state_handle_make_bot_play(const struct GameStateHandle *handle);
+
+/**
  * Returns the winner, if any
  */
 struct FFIResult_Winner______FFIError *game_state_handle_winner(const struct GameStateHandle *handle);

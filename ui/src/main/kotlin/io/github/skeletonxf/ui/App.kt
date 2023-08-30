@@ -15,6 +15,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.Layout
@@ -40,6 +41,7 @@ import java.lang.Integer.min
 fun App(
     state: GameState.State,
     makePlay: (Play) -> Unit,
+    makeBotPlay: () -> Unit,
     onRestart: () -> Unit,
     onQuit: () -> Unit,
 ) = Box(
@@ -48,12 +50,25 @@ fun App(
 ) {
     val strings = LocalStrings.current.game
     when (state) {
-        is GameState.State.Game -> Content(
-            state = state,
-            makePlay = makePlay,
-            onRestart = onRestart,
-            onQuit = onQuit,
-        )
+        is GameState.State.Game -> {
+            Content(
+                state = state,
+                makePlay = makePlay,
+                onRestart = onRestart,
+                onQuit = onQuit,
+            )
+            LaunchedEffect(state.turn) {
+                // TODO: Loading state and prevent player making moves while it's the computer's turn
+                val computerTurn = when (state.opponent) {
+                    GameState.State.Game.Opponent.Human -> return@LaunchedEffect
+                    GameState.State.Game.Opponent.ComputerAttackers -> Player.Attacker
+                    GameState.State.Game.Opponent.ComputerDefenders -> Player.Defender
+                }
+                if (state.turn == computerTurn) {
+                    makeBotPlay()
+                }
+            }
+        }
 
         is GameState.State.FatalError -> Column {
             Text(text = strings.failure)
@@ -284,6 +299,7 @@ private fun ContentPreview() = PreviewSurface {
             turn = Player.Defender,
             dead = listOf(),
             turnCount = 0u,
+            opponent = GameState.State.Game.Opponent.Human,
         ),
         makePlay = {},
         onRestart = {},
@@ -297,9 +313,11 @@ private fun FatalErrorPreview() = PreviewSurface {
     App(
         state = GameState.State.FatalError(
             message = "Contextual message here",
-            cause = FFIThrowable("Problem here", null, Void::class)
+            cause = FFIThrowable("Problem here", null, Void::class),
+            opponent = GameState.State.Game.Opponent.Human,
         ),
         makePlay = {},
+        makeBotPlay = {},
         onRestart = {},
         onQuit = {},
     )
@@ -312,9 +330,11 @@ private fun FatalErrorSpanishPreview() = PreviewSurface {
         App(
             state = GameState.State.FatalError(
                 message = "Contextual message here",
-                cause = FFIThrowable("Problem here", null, Void::class)
+                cause = FFIThrowable("Problem here", null, Void::class),
+                opponent = GameState.State.Game.Opponent.Human,
             ),
             makePlay = {},
+            makeBotPlay = {},
             onRestart = {},
             onQuit = {},
         )
@@ -332,6 +352,7 @@ private fun GameOverPreview() = PreviewSurface {
             turn = Player.Defender,
             dead = listOf(),
             turnCount = 0u,
+            opponent = GameState.State.Game.Opponent.Human,
         ),
         makePlay = {},
         onRestart = {},

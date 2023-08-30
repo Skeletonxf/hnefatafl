@@ -113,21 +113,38 @@ pub extern fn game_state_handle_make_play(
 ) -> *mut FFIResult<GameStateUpdate, ()> {
     FFIResult::new(
         match GameStateHandle::with_handle(handle, "game_state_handle_make_play", |handle| {
-            /*let update = */handle.make_play(&Play {
+            handle.make_play(&Play {
                 from: (from_x, from_y),
                 to: (to_x, to_y),
-            })//;
-            // // TODO: This should be configured for AI matches specifically
-            // if let Some(play) = min_max_play(handle.clone()) {
-            //     handle.make_play(&play)
-            // } else {
-            //     update
-            // }
+            })
         }) {
             Ok(Ok(game_state_update)) => Ok(game_state_update),
             Ok(Err(_)) => Err(()),
             Err(error) => {
                 eprint!("Error calling game_state_handle_make_play: {:?}", error);
+                Err(())
+            }
+        }
+    )
+}
+
+/// Makes a play with the bot, if legal
+#[no_mangle]
+pub extern fn game_state_handle_make_bot_play(
+    handle: *const GameStateHandle,
+) -> *mut FFIResult<GameStateUpdate, ()> {
+    FFIResult::new(
+        match GameStateHandle::with_handle(handle, "game_state_handle_make_bot_play", |handle| {
+            if let Some(play) = min_max_play(handle.clone()) {
+                handle.make_play(&play)
+            } else {
+                Err(())
+            }
+        }) {
+            Ok(Ok(game_state_update)) => Ok(game_state_update),
+            Ok(Err(_)) => Err(()),
+            Err(error) => {
+                eprint!("Error calling game_state_handle_make_bot_play: {:?}", error);
                 Err(())
             }
         }

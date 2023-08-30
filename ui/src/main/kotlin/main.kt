@@ -10,6 +10,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarHost
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
@@ -38,6 +39,7 @@ import io.github.skeletonxf.logging.Tree
 import io.github.skeletonxf.logging.TreeIdentifier
 import io.github.skeletonxf.settings.Settings
 import io.github.skeletonxf.ui.App
+import io.github.skeletonxf.ui.GameState
 import io.github.skeletonxf.ui.MenuContent
 import io.github.skeletonxf.ui.strings.LocalStrings
 import io.github.skeletonxf.ui.strings.ProvideStrings
@@ -73,7 +75,7 @@ fun main() {
                 handle = handle,
                 timber = forest.timber.collectAsState().value,
                 onDismiss = forest::dismiss,
-                onNewGame = { handle = GameStateHandle(localBackgroundScope) },
+                onNewGame = { opponent -> handle = GameStateHandle(localBackgroundScope, opponent) },
                 onQuit = { handle = null },
             )
         }
@@ -85,7 +87,7 @@ fun Root(
     handle: GameStateHandle?,
     timber: List<Tree>,
     onDismiss: (TreeIdentifier) -> Unit,
-    onNewGame: () -> Unit,
+    onNewGame: (GameState.State.Game.Opponent) -> Unit,
     onQuit: () -> Unit,
 ) = HnefataflMaterialTheme {
     ProvideStrings {
@@ -98,8 +100,9 @@ fun Root(
                         App(
                             state = state,
                             makePlay = handle::makePlay,
+                            makeBotPlay = handle::makeBotPlay,
                             onQuit = onQuit,
-                            onRestart = onNewGame,
+                            onRestart = { onNewGame(state.opponent) },
                         )
                     }
                 }

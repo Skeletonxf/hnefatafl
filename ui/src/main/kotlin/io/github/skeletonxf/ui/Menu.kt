@@ -49,7 +49,7 @@ import java.nio.ByteOrder
 
 @Composable
 fun MenuContent(
-    onNewGame: () -> Unit,
+    onNewGame: (GameState.State.Game.Opponent) -> Unit,
 ) = Surface {
     val strings = LocalStrings.current.menu
     Column(
@@ -81,14 +81,13 @@ fun MenuContent(
                 )
                 Spacer(Modifier.height(16.dp))
                 Button(
-                    onClick = onNewGame,
+                    onClick = { onNewGame(GameState.State.Game.Opponent.Human) },
                 ) {
                     Text(text = strings.twoPlayerGame)
                 }
                 Spacer(Modifier.height(16.dp))
                 Button(
-                    onClick = {},
-                    enabled = false,
+                    onClick = { onNewGame(GameState.State.Game.Opponent.ComputerAttackers) },
                 ) {
                     Text(text = strings.versusComputer)
                 }

@@ -20,7 +20,7 @@ data class Strings(
 ) {
     data class Menu(
         val twoPlayerGame: String = "Two player game",
-        val versusComputer: String = "Versus computer (coming soon)",
+        val versusComputer: String = "Versus computer",
         val appIcon: String = "App icon",
     ) {
         val title: String = "Hnefatafl"
@@ -67,7 +67,7 @@ private val castilianSpanish = Strings(
         // works nicely. "juego de dos jugadores" would be more literal, but I don't
         // like the repetition
         twoPlayerGame = "Jugar contra su amigo",
-        versusComputer = "Jugar contra el ordenador (próximamente)",
+        versusComputer = "Jugar contra el ordenador",
         appIcon = "Icono de la aplicación",
     ),
     game = Strings.Game(
@@ -99,7 +99,7 @@ val locales = mapOf(
         name = "Español latinoaméricano",
         type = Strings.Type.LatinAmericanSpanish,
         menu = castilianSpanish.menu.copy(
-            versusComputer = "Jugar contra el computadora (próximamente)",
+            versusComputer = "Jugar contra el computadora",
         )
     )
 )

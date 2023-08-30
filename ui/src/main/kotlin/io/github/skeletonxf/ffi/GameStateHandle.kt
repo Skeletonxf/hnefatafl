@@ -22,7 +22,10 @@ import java.lang.foreign.MemorySession
 import java.lang.foreign.SegmentAllocator
 import java.lang.ref.Cleaner
 
-class GameStateHandle(private val coroutineScope: CoroutineScope) : GameState {
+class GameStateHandle(
+    private val coroutineScope: CoroutineScope,
+    private val opponent: GameState.State.Game.Opponent
+) : GameState {
     private val handle: MemoryAddress = bindings_h.game_state_handle_new()
 
     override val state: MutableState<GameState.State> = mutableStateOf(getGameState())
@@ -45,74 +48,90 @@ class GameStateHandle(private val coroutineScope: CoroutineScope) : GameState {
     }
 
     override fun makePlay(play: Play) = coroutineScope.launchUnit {
-        state.value = KResult
-            .from(
-                handle = bindings_h.game_state_handle_make_play(
-                    handle,
-                    play.from.x.toByte(),
-                    play.from.y.toByte(),
-                    play.to.x.toByte(),
-                    play.to.y.toByte()
-                ),
-                getType = bindings_h::result_game_state_update_get_type,
-                getOk = bindings_h::result_game_state_update_get_ok,
-                getError = bindings_h::result_game_state_update_get_error,
-            )
-            .map(GameStateUpdate::valueOf)
-            .fold(
-                ok = { gameStateUpdate ->
-                    when (gameStateUpdate) {
-                        // Might want to do something in particular when entering a win or capture state here?
-                        GameStateUpdate.DefenderWin,
-                        GameStateUpdate.AttackerWin,
-                        GameStateUpdate.DefenderCapture,
-                        GameStateUpdate.AttackerCapture,
-                        GameStateUpdate.Nothing -> getGameState()
-                    }
-                },
-                error = { error ->
-                    GameState.State.FatalError(
-                        "Failed to make play", error.toThrowable()
-                    )
-                }
-            )
+        state.value = doPlay(
+            KResult
+                .from(
+                    handle = bindings_h.game_state_handle_make_play(
+                        handle,
+                        play.from.x.toByte(),
+                        play.from.y.toByte(),
+                        play.to.x.toByte(),
+                        play.to.y.toByte()
+                    ),
+                    getType = bindings_h::result_game_state_update_get_type,
+                    getOk = bindings_h::result_game_state_update_get_ok,
+                    getError = bindings_h::result_game_state_update_get_error,
+                )
+        )
     }
+
+    override fun makeBotPlay() = coroutineScope.launchUnit {
+        state.value = doPlay(
+            KResult
+                .from(
+                    handle = bindings_h.game_state_handle_make_bot_play(handle),
+                    getType = bindings_h::result_game_state_update_get_type,
+                    getOk = bindings_h::result_game_state_update_get_ok,
+                    getError = bindings_h::result_game_state_update_get_error,
+                )
+        )
+    }
+
+    private fun doPlay(result: KResult<Byte, FFIError<Unit?>>) = result
+        .map(GameStateUpdate::valueOf)
+        .fold(
+            ok = { gameStateUpdate ->
+                when (gameStateUpdate) {
+                    // Might want to do something in particular when entering a win or capture state here?
+                    GameStateUpdate.DefenderWin,
+                    GameStateUpdate.AttackerWin,
+                    GameStateUpdate.DefenderCapture,
+                    GameStateUpdate.AttackerCapture,
+                    GameStateUpdate.Nothing -> getGameState()
+                }
+            },
+            error = { error ->
+                GameState.State.FatalError(
+                    "Failed to make play", error.toThrowable(), opponent
+                )
+            }
+        )
 
     private fun getGameState(): GameState.State {
         val board = when (val result = getBoard()) {
             is KResult.Ok -> result.ok
             is KResult.Error -> return GameState.State.FatalError(
-                "Unable to query board tiles", result.err.toThrowable()
+                "Unable to query board tiles", result.err.toThrowable(), opponent
             )
         }
         val plays = when (val result = getAvailablePlays()) {
             is KResult.Ok -> result.ok
             is KResult.Error -> return GameState.State.FatalError(
-                "Unable to query available plays", result.err.toThrowable()
+                "Unable to query available plays", result.err.toThrowable(), opponent
             )
         }
         val winner = when (val result = getWinner()) {
             is KResult.Ok -> result.ok
             is KResult.Error -> return GameState.State.FatalError(
-                "Unable to query winner", result.err.toThrowable()
+                "Unable to query winner", result.err.toThrowable(), opponent
             )
         }
         val turn = when (val result = getTurnPlayer()) {
             is KResult.Ok -> result.ok
             is KResult.Error -> return GameState.State.FatalError(
-                "Unable to query turn player", result.err.toThrowable()
+                "Unable to query turn player", result.err.toThrowable(), opponent
             )
         }
         val dead = when (val result = getDead()) {
             is KResult.Ok -> result.ok
             is KResult.Error -> return GameState.State.FatalError(
-                "Unable to query dead pieces", result.err.toThrowable()
+                "Unable to query dead pieces", result.err.toThrowable(), opponent
             )
         }
         val turnCount = when (val result = getTurnCount()) {
             is KResult.Ok -> result.ok
             is KResult.Error -> return GameState.State.FatalError(
-                "Unable to query turn count", result.err.toThrowable()
+                "Unable to query turn count", result.err.toThrowable(), opponent
             )
         }
         return GameState.State.Game(
@@ -121,7 +140,8 @@ class GameStateHandle(private val coroutineScope: CoroutineScope) : GameState {
             winner = winner,
             turn = turn,
             dead = dead,
-            turnCount = turnCount
+            turnCount = turnCount,
+            opponent = opponent,
         )
     }
 

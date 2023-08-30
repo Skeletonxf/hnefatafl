@@ -14,8 +14,11 @@ interface GameState {
     val state: ComposeState<State>
 
     fun makePlay(play: Play)
+    fun makeBotPlay()
 
     sealed class State {
+        abstract val opponent: Game.Opponent
+
         data class Game(
             val board: BoardData,
             val plays: List<Play>,
@@ -23,11 +26,19 @@ interface GameState {
             val turn: Player,
             val dead: List<Piece>,
             val turnCount: UInt,
-        ) : State()
+            override val opponent: Opponent,
+        ) : State() {
+            enum class Opponent {
+                Human,
+                ComputerAttackers,
+                ComputerDefenders,
+            }
+        }
 
         data class FatalError(
             val message: String,
             val cause: FFIThrowable,
+            override val opponent: Game.Opponent,
         ) : State()
     }
 }
