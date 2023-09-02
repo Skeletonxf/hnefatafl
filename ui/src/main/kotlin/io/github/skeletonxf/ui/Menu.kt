@@ -36,6 +36,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import io.github.skeletonxf.ffi.Configuration
 import io.github.skeletonxf.functions.then
 import io.github.skeletonxf.ui.strings.LocalChangeStrings
 import io.github.skeletonxf.ui.strings.LocalStrings
@@ -49,7 +50,7 @@ import java.nio.ByteOrder
 
 @Composable
 fun MenuContent(
-    onNewGame: (GameState.State.Game.Opponent) -> Unit,
+    onNewGame: (Configuration) -> Unit,
 ) = Surface {
     val strings = LocalStrings.current.menu
     Column(
@@ -81,13 +82,13 @@ fun MenuContent(
                 )
                 Spacer(Modifier.height(16.dp))
                 Button(
-                    onClick = { onNewGame(GameState.State.Game.Opponent.Human) },
+                    onClick = { onNewGame(Configuration(attackers = RoleType.Human, defenders = RoleType.Human)) },
                 ) {
                     Text(text = strings.twoPlayerGame)
                 }
                 Spacer(Modifier.height(16.dp))
                 Button(
-                    onClick = { onNewGame(GameState.State.Game.Opponent.ComputerAttackers) },
+                    onClick = { onNewGame(Configuration(attackers = RoleType.Computer, defenders = RoleType.Human)) },
                 ) {
                     Text(text = strings.versusComputer)
                 }

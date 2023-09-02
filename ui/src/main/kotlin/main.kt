@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
+import io.github.skeletonxf.ffi.Configuration
 import io.github.skeletonxf.ffi.GameStateHandle
 import io.github.skeletonxf.logging.ForestLogger
 import io.github.skeletonxf.logging.Log
@@ -71,11 +72,20 @@ fun main() {
             IconSideEffect(window)
 
             var handle: GameStateHandle? by remember { mutableStateOf(null) }
+            var lastUsedConfig: Configuration? by remember { mutableStateOf(null) }
             Root(
                 handle = handle,
                 timber = forest.timber.collectAsState().value,
                 onDismiss = forest::dismiss,
-                onNewGame = { opponent -> handle = GameStateHandle(localBackgroundScope, opponent) },
+                onNewGame = { config ->
+                    lastUsedConfig = config
+                    handle = GameStateHandle(localBackgroundScope, config)
+                },
+                onRestart = {
+                    lastUsedConfig
+                        ?.let { config -> handle = GameStateHandle(localBackgroundScope, config) }
+                        ?: Log.error("Unable to find configuration used for previous game")
+                },
                 onQuit = { handle = null },
             )
         }
@@ -87,7 +97,8 @@ fun Root(
     handle: GameStateHandle?,
     timber: List<Tree>,
     onDismiss: (TreeIdentifier) -> Unit,
-    onNewGame: (GameState.State.Game.Opponent) -> Unit,
+    onNewGame: (Configuration) -> Unit,
+    onRestart: () -> Unit,
     onQuit: () -> Unit,
 ) = HnefataflMaterialTheme {
     ProvideStrings {
@@ -102,7 +113,7 @@ fun Root(
                             makePlay = handle::makePlay,
                             makeBotPlay = handle::makeBotPlay,
                             onQuit = onQuit,
-                            onRestart = { onNewGame(state.opponent) },
+                            onRestart = onRestart,
                         )
                     }
                 }

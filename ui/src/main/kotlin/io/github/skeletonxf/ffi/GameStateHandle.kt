@@ -15,8 +15,10 @@ import io.github.skeletonxf.data.Position
 import io.github.skeletonxf.data.Tile
 import io.github.skeletonxf.data.Winner
 import io.github.skeletonxf.functions.launchUnit
+import io.github.skeletonxf.ui.Role
+import io.github.skeletonxf.ui.RoleType
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
+import org.jetbrains.skia.impl.Log
 import java.lang.foreign.MemoryAddress
 import java.lang.foreign.MemorySession
 import java.lang.foreign.SegmentAllocator
@@ -24,11 +26,11 @@ import java.lang.ref.Cleaner
 
 class GameStateHandle(
     private val coroutineScope: CoroutineScope,
-    private val opponent: GameState.State.Game.Opponent
+    private val configuration: Configuration,
 ) : GameState {
     private val handle: MemoryAddress = bindings_h.game_state_handle_new()
 
-    override val state: MutableState<GameState.State> = mutableStateOf(getGameState())
+    override val state: MutableState<GameState.State> = mutableStateOf(getGameState(UIState.from(configuration)))
 
     init {
         // We must not use any inner classes or lambdas for the runnable object, to avoid capturing our
@@ -43,12 +45,52 @@ class GameStateHandle(
         bridgeCleaner.register(this, BridgeHandleCleaner(handle))
     }
 
+    private fun Configuration.fatalError(message: String, cause: FFIThrowable) = GameState.State.FatalError(
+        message = message,
+        cause = cause,
+        attackers = attackers,
+        defenders = defenders,
+    )
+
+    private data class UIState(
+        val attackers: Role,
+        val defenders: Role,
+    ) {
+         companion object {
+            fun from(configuration: Configuration) = UIState(
+                attackers = initialRoleState(configuration.attackers),
+                defenders = initialRoleState(configuration.defenders),
+            )
+
+            private fun initialRoleState(type: RoleType): Role = when (type) {
+                RoleType.Human -> Role.Human()
+                RoleType.Computer -> Role.Computer(isLoading = false)
+            }
+        }
+    }
+
+    private fun GameState.State.Game.uiState(): UIState = UIState(attackers, defenders)
+
     override fun debug() {
         bindings_h.game_state_handle_debug(handle)
     }
 
     override fun makePlay(play: Play) = coroutineScope.launchUnit {
+        val ui = when (val s = state.value) {
+            is GameState.State.Game -> when (s.turnPlayerRole()) {
+                is Role.Human -> s.uiState()
+                is Role.Computer -> {
+                    Log.error("Cannot make human play on a computer's turn")
+                    return@launchUnit
+                }
+            }
+            is GameState.State.FatalError -> {
+                Log.error("Cannot make play in a fatal error state")
+                return@launchUnit
+            }
+        }
         state.value = doPlay(
+            ui,
             KResult
                 .from(
                     handle = bindings_h.game_state_handle_make_play(
@@ -66,7 +108,38 @@ class GameStateHandle(
     }
 
     override fun makeBotPlay() = coroutineScope.launchUnit {
+        val ui = when (val s = state.value) {
+            is GameState.State.Game -> when (s.turnPlayerRole()) {
+                is Role.Computer -> {
+                    val loading = when (s.turn) {
+                        Player.Attacker -> s.copy(
+                            attackers = s.attackers.enterLoading(),
+                            defenders = s.defenders.exitLoading()
+                        )
+                        Player.Defender -> s.copy(
+                            defenders = s.defenders.enterLoading(),
+                            attackers = s.attackers.exitLoading()
+                        )
+                    }
+                    state.value = loading
+                    // UI state we'll enter after a play will be not loading again
+                    loading.uiState().copy(
+                        attackers = s.attackers.exitLoading(),
+                        defenders = s.defenders.exitLoading(),
+                    )
+                }
+                is Role.Human -> {
+                    Log.error("Cannot make bot play on a human's turn")
+                    return@launchUnit
+                }
+            }
+            is GameState.State.FatalError -> {
+                Log.error("Cannot make play in a fatal error state")
+                return@launchUnit
+            }
+        }
         state.value = doPlay(
+            ui,
             KResult
                 .from(
                     handle = bindings_h.game_state_handle_make_bot_play(handle),
@@ -77,7 +150,7 @@ class GameStateHandle(
         )
     }
 
-    private fun doPlay(result: KResult<Byte, FFIError<Unit?>>) = result
+    private fun doPlay(ui: UIState, result: KResult<Byte, FFIError<Unit?>>) = result
         .map(GameStateUpdate::valueOf)
         .fold(
             ok = { gameStateUpdate ->
@@ -87,51 +160,51 @@ class GameStateHandle(
                     GameStateUpdate.AttackerWin,
                     GameStateUpdate.DefenderCapture,
                     GameStateUpdate.AttackerCapture,
-                    GameStateUpdate.Nothing -> getGameState()
+                    GameStateUpdate.Nothing -> getGameState(ui)
                 }
             },
             error = { error ->
-                GameState.State.FatalError(
-                    "Failed to make play", error.toThrowable(), opponent
-                )
+                with (configuration) {
+                    fatalError("Failed to make play", error.toThrowable())
+                }
             }
         )
 
-    private fun getGameState(): GameState.State {
+    private fun getGameState(ui: UIState): GameState.State = with (configuration) {
         val board = when (val result = getBoard()) {
             is KResult.Ok -> result.ok
-            is KResult.Error -> return GameState.State.FatalError(
-                "Unable to query board tiles", result.err.toThrowable(), opponent
+            is KResult.Error -> return fatalError(
+                "Unable to query board tiles", result.err.toThrowable()
             )
         }
         val plays = when (val result = getAvailablePlays()) {
             is KResult.Ok -> result.ok
-            is KResult.Error -> return GameState.State.FatalError(
-                "Unable to query available plays", result.err.toThrowable(), opponent
+            is KResult.Error -> return fatalError(
+                "Unable to query available plays", result.err.toThrowable()
             )
         }
         val winner = when (val result = getWinner()) {
             is KResult.Ok -> result.ok
-            is KResult.Error -> return GameState.State.FatalError(
-                "Unable to query winner", result.err.toThrowable(), opponent
+            is KResult.Error -> return fatalError(
+                "Unable to query winner", result.err.toThrowable()
             )
         }
         val turn = when (val result = getTurnPlayer()) {
             is KResult.Ok -> result.ok
-            is KResult.Error -> return GameState.State.FatalError(
-                "Unable to query turn player", result.err.toThrowable(), opponent
+            is KResult.Error -> return fatalError(
+                "Unable to query turn player", result.err.toThrowable()
             )
         }
         val dead = when (val result = getDead()) {
             is KResult.Ok -> result.ok
-            is KResult.Error -> return GameState.State.FatalError(
-                "Unable to query dead pieces", result.err.toThrowable(), opponent
+            is KResult.Error -> return fatalError(
+                "Unable to query dead pieces", result.err.toThrowable()
             )
         }
         val turnCount = when (val result = getTurnCount()) {
             is KResult.Ok -> result.ok
-            is KResult.Error -> return GameState.State.FatalError(
-                "Unable to query turn count", result.err.toThrowable(), opponent
+            is KResult.Error -> return fatalError(
+                "Unable to query turn count", result.err.toThrowable()
             )
         }
         return GameState.State.Game(
@@ -141,7 +214,8 @@ class GameStateHandle(
             turn = turn,
             dead = dead,
             turnCount = turnCount,
-            opponent = opponent,
+            attackers = ui.attackers,
+            defenders = ui.defenders,
         )
     }
 

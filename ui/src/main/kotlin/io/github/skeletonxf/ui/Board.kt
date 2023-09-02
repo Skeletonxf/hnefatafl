@@ -19,8 +19,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -59,6 +61,7 @@ fun Board(
     plays: List<Play>,
     dead: List<Piece>,
     makePlay: (Play) -> Unit,
+    isLoading: Boolean,
 ) {
     Board(
         board,
@@ -67,6 +70,7 @@ fun Board(
         onSelect = boardState::select,
         selected = boardState.selected,
         makePlay = makePlay,
+        isLoading = isLoading,
     )
 }
 
@@ -78,6 +82,7 @@ fun Board(
     onSelect: (Position) -> Unit,
     selected: Position?,
     makePlay: (Play) -> Unit,
+    isLoading: Boolean,
 ) {
     BoxWithConstraints {
         val width = max(minWidth, maxWidth)
@@ -151,6 +156,19 @@ fun Board(
                     }
                     Spacer(Modifier.height(margin))
                 }
+                if (isLoading) {
+                    Surface(modifier = Modifier.fillMaxSize().alpha(0.25F)) {
+                        Box(
+                            modifier = Modifier.fillMaxSize().padding(32.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.fillMaxSize(),
+                                strokeWidth = max(availableSideWidth / 8, 2.dp)
+                            )
+                        }
+                    }
+                }
             }
             Spacer(Modifier.width(sideMargin))
             PieceGraveyard(
@@ -175,7 +193,8 @@ private fun EmptyBoardPreview() = PreviewSurface {
         dead = listOf(),
         onSelect = {},
         selected = null,
-        makePlay = {}
+        makePlay = {},
+        isLoading = false,
     )
 }
 

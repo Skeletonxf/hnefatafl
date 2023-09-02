@@ -16,9 +16,7 @@ interface GameState {
     fun makePlay(play: Play)
     fun makeBotPlay()
 
-    sealed class State {
-        abstract val opponent: Game.Opponent
-
+    sealed interface State {
         data class Game(
             val board: BoardData,
             val plays: List<Play>,
@@ -26,19 +24,51 @@ interface GameState {
             val turn: Player,
             val dead: List<Piece>,
             val turnCount: UInt,
-            override val opponent: Opponent,
-        ) : State() {
-            enum class Opponent {
-                Human,
-                ComputerAttackers,
-                ComputerDefenders,
+            val attackers: Role,
+            val defenders: Role,
+        ) : State {
+            fun turnPlayerRole() = when (turn) {
+                Player.Attacker -> attackers
+                Player.Defender -> defenders
             }
         }
 
         data class FatalError(
             val message: String,
             val cause: FFIThrowable,
-            override val opponent: Game.Opponent,
-        ) : State()
+            val attackers: RoleType,
+            val defenders: RoleType,
+        ) : State
     }
 }
+
+sealed interface Role {
+    val isLoading: Boolean
+
+    /** If the state can be in a loading state, exists it */
+    fun exitLoading(): Role
+    /** If the state can be in a loading state, enters it */
+    fun enterLoading(): Role
+
+    fun type(): RoleType
+
+    class Human : Role {
+        override val isLoading = false
+        override fun enterLoading() = this
+        override fun exitLoading() = this
+        override fun type() = RoleType.Human
+    }
+
+    data class Computer(
+        override val isLoading: Boolean,
+    ) : Role {
+        override fun enterLoading() = copy(isLoading = true)
+        override fun exitLoading() = copy(isLoading = false)
+        override fun type() = RoleType.Computer
+    }
+}
+
+enum class RoleType {
+    Human, Computer
+}
+
