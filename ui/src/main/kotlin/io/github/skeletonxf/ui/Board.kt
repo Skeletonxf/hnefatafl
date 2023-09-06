@@ -1,5 +1,6 @@
 package io.github.skeletonxf.ui
 
+import LoadingSpinner
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.LocalIndication
@@ -19,11 +20,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -63,12 +64,18 @@ fun Board(
     makePlay: (Play) -> Unit,
     isLoading: Boolean,
 ) {
+    // Clear selection and don't let the user select when loading
+    LaunchedEffect(isLoading) {
+        if (isLoading) {
+            boardState.deselect()
+        }
+    }
     Board(
         board,
         moves = boardState.filterPlaysToSelected(plays),
         dead = dead,
-        onSelect = boardState::select,
-        selected = boardState.selected,
+        onSelect = boardState::select.takeUnless { isLoading } ?: {},
+        selected = boardState.selected.takeUnless { isLoading },
         makePlay = makePlay,
         isLoading = isLoading,
     )
@@ -157,15 +164,15 @@ fun Board(
                     Spacer(Modifier.height(margin))
                 }
                 if (isLoading) {
-                    Surface(modifier = Modifier.fillMaxSize().alpha(0.25F)) {
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
+                        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.45F)
+                    ) {
                         Box(
-                            modifier = Modifier.fillMaxSize().padding(32.dp),
+                            modifier = Modifier.fillMaxSize(),
                             contentAlignment = Alignment.Center
                         ) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.fillMaxSize(),
-                                strokeWidth = max(availableSideWidth / 8, 2.dp)
-                            )
+                            LoadingSpinner(size = tileSize * 3, strokeWidth = max(2.dp, tileSize / 3))
                         }
                     }
                 }
@@ -195,6 +202,20 @@ private fun EmptyBoardPreview() = PreviewSurface {
         selected = null,
         makePlay = {},
         isLoading = false,
+    )
+}
+
+@Composable
+@Preview
+private fun LoadingBoardPreview() = PreviewSurface {
+    Board(
+        board = emptyBoard,
+        moves = listOf(),
+        dead = listOf(),
+        onSelect = {},
+        selected = null,
+        makePlay = {},
+        isLoading = true,
     )
 }
 

@@ -10,9 +10,11 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.compositeOver
+import androidx.compose.ui.platform.LocalInspectionMode
 
 object HnefataflColors {
     val brown = Color(red = 0x90, green = 0x52, blue = 0x45)
@@ -78,7 +80,10 @@ private fun ColorPreview() = PreviewSurface {
 
 @Composable
 fun PreviewSurface(content: @Composable () -> Unit) = HnefataflMaterialTheme {
-    Surface(content = content)
+    // Not sure why this needs setting to true, but after we can forget about the desktop preview weirdness
+    CompositionLocalProvider(LocalInspectionMode provides true) {
+        Surface(content = content)
+    }
 }
 
 @Composable
