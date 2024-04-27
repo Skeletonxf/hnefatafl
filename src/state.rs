@@ -22,6 +22,8 @@ pub struct GameState {
     winner: Option<Player>,
     dead: Vec<Piece>,
     turn_count: u32,
+    // This is redundant state but extremely useful to have O(1) queries for
+    king: Position,
 }
 
 #[derive(Clone, Debug)]
@@ -239,6 +241,7 @@ impl GameState {
             winner: None,
             dead: vec![],
             turn_count: 0,
+            king: (5, 5),
         }
     }
 }
@@ -328,6 +331,9 @@ impl GameState {
         };
         if !valid {
             return Err(());
+        }
+        if self.board[play.from] == Tile::King {
+            self.king = play.to;
         }
         self.board.swap(play.from, play.to);
         let mut info = self.check_capture(play);
@@ -637,5 +643,9 @@ impl GameState {
 
     pub fn turn_count(&self) -> u32 {
         self.turn_count
+    }
+
+    pub fn king_position(&self) -> Position {
+        self.king
     }
 }

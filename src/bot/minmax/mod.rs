@@ -18,8 +18,11 @@ pub fn min_max_play(game_state: GameState) -> Option<Play> {
         plays.shuffle(&mut rng);
     }
     let depth_remaining = 3;
-    let mut α = Heuristic(i8::MIN);
-    let mut β = Heuristic(i8::MAX);
+    let mut α = Heuristic(i8::MIN); // min score maximising player found (trying to maximise)
+    let mut β = Heuristic(i8::MAX); // max score minimising player found (trying to minimise)
+    // Min Max algorithm is the maximising player if the turn in the game state is attackers
+    // (because we arbitrarily choose attackers as maximising in the heuristic) and the minimising
+    // player if the turn in the game state is the defenders.
     let player = match game_state.turn() {
         Player::Attacker => MinMaxPlayer::Maximising,
         Player::Defender => MinMaxPlayer::Minimising,
@@ -27,6 +30,7 @@ pub fn min_max_play(game_state: GameState) -> Option<Play> {
 
     match player {
         MinMaxPlayer::Maximising => {
+            // Attackers want to maximise the heuristic, so it starts at -infinity.
             let mut best_value = Heuristic(i8::MIN);
             let mut best_play = plays[0].clone();
             for play in plays {
@@ -50,6 +54,7 @@ pub fn min_max_play(game_state: GameState) -> Option<Play> {
             Some(best_play)
         },
         MinMaxPlayer::Minimising => {
+            // Defenders want to minimise the heuristic, so it starts at infinity.
             let mut best_value = Heuristic(i8::MAX);
             let mut best_play = plays[0].clone();
             for play in plays {
@@ -60,13 +65,12 @@ pub fn min_max_play(game_state: GameState) -> Option<Play> {
                         .expect("Using available plays should mean making a play never fails");
                     copy
                 };
+
                 let value = min_max(state, depth_remaining - 1, α, β, player.next());
                 if value < best_value {
                     best_value = value;
                     best_play = play;
                 }
-                // FIXME: This has a slight bias towards earlier moves, we should randomise
-                // selecting the move to take if the best value is tied.
                 β = std::cmp::min(β, best_value);
                 if best_value <= α {
                     break;
@@ -97,6 +101,9 @@ impl MinMaxPlayer {
     }
 }
 
+// Returns a heuristic score of this game state, given highest minimum score alpha for maximising
+// player (attackers) and lowest maximum score beta for minimising player (defenders) so far, and
+// the turn player for this game state.
 fn min_max(
     game_state: GameState,
     depth_remaining: u8,
@@ -107,12 +114,65 @@ fn min_max(
     let plays = game_state.available_plays();
     if let Some(winner) = game_state.winner() {
         return match winner {
+            // Victory for defenders is min score
             Player::Defender => Heuristic(i8::MIN),
+            // Victory for attackers is max score
             Player::Attacker => Heuristic(i8::MAX),
         };
     }
     if depth_remaining == 0 {
-        // approximate value of this state based on number of pieces alive
+        // With low depth it's far too easy for the algorithm to be looking at what it can do
+        // then considering any move the player might make (which may for example move the king
+        // to a single turn away from victory) then looking at what it can do again but not
+        // considering that the game state is left in a state where the game can be won outright
+        // on the next turn. Hence even at zero depth we should ensure the game isn't left on
+        // a turn player victory to avoid the heuristic being misleading.
+        let plays = game_state.available_plays();
+        let king = game_state.king_position();
+        match player {
+            // Defenders can only win by moving the king so we can ignore all other plays
+            // that don't move it
+            MinMaxPlayer::Minimising => {
+                for play in plays {
+                    if play.from != king {
+                        continue;
+                    }
+                    let state = {
+                        let mut copy = game_state.clone();
+                        copy
+                            .make_play(&play)
+                            .expect("Using available plays should mean making a play never fails");
+                        copy
+                    };
+                    if let Some(winner) = state.winner() {
+                        if winner == Player::Defender {
+                            // Victory available for defenders on their turn is min score
+                            return Heuristic(i8::MIN);
+                        }
+                    }
+                }
+            },
+            // Attackers can almost only win by capturing the king so we could potentially prune
+            // these plays a little too?
+            MinMaxPlayer::Maximising => {
+                for play in plays {
+                    let state = {
+                        let mut copy = game_state.clone();
+                        copy
+                            .make_play(&play)
+                            .expect("Using available plays should mean making a play never fails");
+                        copy
+                    };
+                    if let Some(winner) = state.winner() {
+                        if winner == Player::Attacker {
+                            // Victory available for attackers on their turn is max score
+                            return Heuristic(i8::MAX);
+                        }
+                    }
+                }
+            }
+        }
+        // otherwise approximate value of this state based on number of pieces alive
         // this is very approximate, as there are more attackers than defenders so piece loss
         // might not be of equal value, but need to start with something
         let dead = game_state.dead();
@@ -123,9 +183,7 @@ fn min_max(
     if plays.is_empty() {
         panic!("Plays can't be empty if there is no winner");
     }
-    // From wikipedia: Alpha represents the minimum amount of points the player the algorithm
-    // wants to win can have (the maximizing player), while beta is the maximum amount of points
-    // the algorithm wants to lose can have (the minimizing player).
+    // Attackers will be maximising alpha, defenders minimising beta
     let mut α = alpha;
     let mut β = beta;
     return match player {
@@ -143,6 +201,8 @@ fn min_max(
                     best_value,
                     min_max(state, depth_remaining - 1, α, β, player.next())
                 );
+                // We can guarantee at least this score of alpha by choosing the highest
+                // scoring play available
                 α = std::cmp::max(α, best_value);
                 if best_value >= β {
                     break;
@@ -164,6 +224,8 @@ fn min_max(
                     best_value,
                     min_max(state, depth_remaining - 1, α, β, player.next())
                 );
+                // We can guarantee at least this score of beta by choosing the lowest
+                // scoring play available
                 β = std::cmp::min(β, best_value);
                 if best_value <= α {
                     break;
