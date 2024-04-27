@@ -46,6 +46,8 @@ val generateBindings = tasks.register("generateBindings", Exec::class) {
     if (jextractPath == null || jextractPath == "") {
         throw IllegalArgumentException("path to JExtract executable must be specified in local.properties")
     }
+    // Always depend on release binary even when app built in debug mode due to speed issues
+    // when depth is non-trivial
     commandLine = listOf(
         jextractPath as String,
         "--source",
@@ -55,7 +57,7 @@ val generateBindings = tasks.register("generateBindings", Exec::class) {
         "src/main/kotlin/",
         "$sourceRoot/bindings.h",
         "-l",
-        "$sourceRoot/target/debug/libhnefatafl.so", // FIXME: This won't work on Windows
+        "$sourceRoot/target/release/libhnefatafl.so", // FIXME: This won't work on Windows
     ).also { println("Building bindings: ${it.joinToString(separator = " ")}") }
 }
 
