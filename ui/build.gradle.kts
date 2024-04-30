@@ -38,6 +38,18 @@ val properties = Properties().apply {
 }
 val jextractPath = properties["jextract-path"]
 
+val compileRust = tasks.register("compileRust", Exec::class) {
+    // The ui folder is inside the root folder, and the root folder is from where we need to reach
+    // the rust code
+    val sourceRoot = project.projectDir.parent
+    workingDir = File(sourceRoot)
+    commandLine = listOf(
+        "cargo",
+        "build",
+        "--release"
+    )
+}
+
 val generateBindings = tasks.register("generateBindings", Exec::class) {
     workingDir = File("${project.projectDir}")
     // The ui folder is inside the root folder, and the root folder is from where we need to reach
@@ -59,6 +71,8 @@ val generateBindings = tasks.register("generateBindings", Exec::class) {
         "-l",
         "$sourceRoot/target/release/libhnefatafl.so", // FIXME: This won't work on Windows
     ).also { println("Building bindings: ${it.joinToString(separator = " ")}") }
+
+    dependsOn.add(compileRust)
 }
 
 tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile::class).all {
