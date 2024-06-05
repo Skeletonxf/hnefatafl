@@ -1,6 +1,8 @@
 use crate::state::{GameState, Play, Player};
 use crate::piece::Piece;
 
+use rayon::prelude::*;
+
 pub fn min_max_play(game_state: GameState) -> Option<Play> {
     let mut plays = game_state.available_plays();
     if plays.is_empty() {
@@ -30,27 +32,43 @@ pub fn min_max_play(game_state: GameState) -> Option<Play> {
 
     match player {
         MinMaxPlayer::Maximising => {
-            // Attackers want to maximise the heuristic, so it starts at -infinity.
-            let mut best_value = Heuristic(i8::MIN);
-            let mut best_play = plays[0].clone();
-            for play in plays {
-                let state = {
-                    let mut copy = game_state.clone();
-                    copy
-                        .make_play(&play)
-                        .expect("Using available plays should mean making a play never fails");
-                    copy
-                };
-                let value = min_max(state, depth_remaining - 1, α, β, player.next());
-                if value > best_value {
-                    best_value = value;
-                    best_play = play;
-                }
-                α = std::cmp::max(α, best_value);
-                if best_value >= β {
-                    break;
-                }
-            }
+            //let mut best_value = Heuristic(i8::MIN);
+            //let mut best_play = plays[0].clone();
+            let dummy = (Heuristic(i8::MIN), plays[0].clone());
+            let (_best_value, best_play) = plays
+                .par_iter()
+                // Attackers want to maximise the heuristic, so it starts at -infinity.
+                .fold(|| dummy.clone(),
+                |(best_value, best_play), play| {
+                    let state = {
+                        let mut copy = game_state.clone();
+                        copy
+                            .make_play(&play)
+                            .expect("Using available plays should mean making a play never fails");
+                        copy
+                    };
+                    // because alpha beta search can be done randomly on the children, in principle
+                    // any of the first children we look at could be calculated when α was still
+                    // infinity and β was still -infinity, so to avoid serialising the algorithm
+                    // with a critical section to update α and β we'll try just not writing to them
+                    // on this top level function (which will mean we skip less work, but we'll
+                    // be doing that work fully in parallel)
+                    let value = min_max(state, depth_remaining - 1, α, β, player.next());
+                    if value > best_value {
+                        (value, play.clone())
+                    } else {
+                        (best_value, best_play)
+                    }
+                })
+                .reduce(
+                    || dummy.clone(),
+                    |(best_value, best_play), (value, play)| {
+                    if value > best_value {
+                        (value, play.clone())
+                    } else {
+                        (best_value, best_play)
+                    }
+                });
             Some(best_play)
         },
         MinMaxPlayer::Minimising => {
