@@ -20,8 +20,8 @@ pub fn min_max_play(game_state: GameState) -> Option<Play> {
         plays.shuffle(&mut rng);
     }
     let depth_remaining = 3;
-    let mut α = Heuristic(i8::MIN); // min score maximising player found (trying to maximise)
-    let mut β = Heuristic(i8::MAX); // max score minimising player found (trying to minimise)
+    let α = Heuristic(i8::MIN); // min score maximising player found (trying to maximise)
+    let β = Heuristic(i8::MAX); // max score minimising player found (trying to minimise)
     // Min Max algorithm is the maximising player if the turn in the game state is attackers
     // (because we arbitrarily choose attackers as maximising in the heuristic) and the minimising
     // player if the turn in the game state is the defenders.
@@ -32,12 +32,10 @@ pub fn min_max_play(game_state: GameState) -> Option<Play> {
 
     match player {
         MinMaxPlayer::Maximising => {
-            //let mut best_value = Heuristic(i8::MIN);
-            //let mut best_play = plays[0].clone();
-            let dummy = (Heuristic(i8::MIN), plays[0].clone());
+            // Attackers want to maximise the heuristic, so it starts at -infinity.
+            let dummy = (α, plays[0].clone());
             let (_best_value, best_play) = plays
                 .par_iter()
-                // Attackers want to maximise the heuristic, so it starts at -infinity.
                 .fold(|| dummy.clone(),
                 |(best_value, best_play), play| {
                     let state = {
@@ -47,12 +45,10 @@ pub fn min_max_play(game_state: GameState) -> Option<Play> {
                             .expect("Using available plays should mean making a play never fails");
                         copy
                     };
-                    // because alpha beta search can be done randomly on the children, in principle
-                    // any of the first children we look at could be calculated when α was still
-                    // infinity and β was still -infinity, so to avoid serialising the algorithm
-                    // with a critical section to update α and β we'll try just not writing to them
-                    // on this top level function (which will mean we skip less work, but we'll
-                    // be doing that work fully in parallel)
+                    // To avoid serialising the algorithm with a critical section we won't write
+                    // to α or β for the top level iteration. Children will still be able to cull
+                    // work via α and β optimisations. This will mean we might do more work overall
+                    // but it can happen more in parallel.
                     let value = min_max(state, depth_remaining - 1, α, β, player.next());
                     if value > best_value {
                         (value, play.clone())
@@ -73,27 +69,38 @@ pub fn min_max_play(game_state: GameState) -> Option<Play> {
         },
         MinMaxPlayer::Minimising => {
             // Defenders want to minimise the heuristic, so it starts at infinity.
-            let mut best_value = Heuristic(i8::MAX);
-            let mut best_play = plays[0].clone();
-            for play in plays {
-                let state = {
-                    let mut copy = game_state.clone();
-                    copy
-                        .make_play(&play)
-                        .expect("Using available plays should mean making a play never fails");
-                    copy
-                };
-
-                let value = min_max(state, depth_remaining - 1, α, β, player.next());
-                if value < best_value {
-                    best_value = value;
-                    best_play = play;
-                }
-                β = std::cmp::min(β, best_value);
-                if best_value <= α {
-                    break;
-                }
-            }
+            let dummy = (β, plays[0].clone());
+            let (_best_value, best_play) = plays
+                .par_iter()
+                .fold(|| dummy.clone(),
+                |(best_value, best_play), play| {
+                    let state = {
+                        let mut copy = game_state.clone();
+                        copy
+                            .make_play(&play)
+                            .expect("Using available plays should mean making a play never fails");
+                        copy
+                    };
+                    // To avoid serialising the algorithm with a critical section we won't write
+                    // to α or β for the top level iteration. Children will still be able to cull
+                    // work via α and β optimisations. This will mean we might do more work overall
+                    // but it can happen more in parallel.
+                    let value = min_max(state, depth_remaining - 1, α, β, player.next());
+                    if value < best_value {
+                        (value, play.clone())
+                    } else {
+                        (best_value, best_play)
+                    }
+                })
+                .reduce(
+                    || dummy.clone(),
+                    |(best_value, best_play), (value, play)| {
+                    if value < best_value {
+                        (value, play.clone())
+                    } else {
+                        (best_value, best_play)
+                    }
+                });
             Some(best_play)
         },
     }
