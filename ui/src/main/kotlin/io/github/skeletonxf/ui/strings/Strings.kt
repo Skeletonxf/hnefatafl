@@ -14,17 +14,24 @@ import java.util.Locale
 data class Strings(
     val name: String,
     val type: Type,
-    val menu: Menu = Menu(),
+    val mainMenu: MainMenu = MainMenu(),
+    val rolePicker: RolePicker = RolePicker(),
     val game: Game = Game(),
     val component: Component = Component(),
 ) {
-    data class Menu(
+    data class MainMenu(
         val twoPlayerGame: String = "Two player game",
         val versusComputer: String = "Versus computer",
         val appIcon: String = "App icon",
     ) {
         val title: String = "Hnefatafl"
     }
+
+    data class RolePicker(
+        val attackers: String = "Play Attackers",
+        val defenders: String = "Play Defenders",
+        val cancel: String = "Cancel",
+    )
 
     data class Game(
         val quit: String = "Quit",
@@ -61,7 +68,7 @@ private val britishEnglish = Strings(
 private val castilianSpanish = Strings(
     name = "Español 🇪🇸",
     type = Strings.Type.CastilianSpanish,
-    menu = Strings.Menu(
+    mainMenu = Strings.MainMenu(
         // this is kinda a different copy but versus computer seems to translate
         // better as "Jugar contra" so keeping this form for the 2 player option
         // works nicely. "juego de dos jugadores" would be more literal, but I don't
@@ -69,6 +76,11 @@ private val castilianSpanish = Strings(
         twoPlayerGame = "Jugar contra su amigo",
         versusComputer = "Jugar contra el ordenador",
         appIcon = "Icono de la aplicación",
+    ),
+    rolePicker = Strings.RolePicker(
+        attackers = "Jugar los atacantes",
+        defenders = "Jugar los defensores",
+        cancel = "Cancelar"
     ),
     game = Strings.Game(
         quit = "Abandonar",
@@ -98,7 +110,7 @@ val locales = mapOf(
     "es-419" to castilianSpanish.copy(
         name = "Español latinoaméricano",
         type = Strings.Type.LatinAmericanSpanish,
-        menu = castilianSpanish.menu.copy(
+        mainMenu = castilianSpanish.mainMenu.copy(
             versusComputer = "Jugar contra el computadora",
         )
     )

@@ -273,7 +273,7 @@ private fun Tile(
 }
 
 @Composable
-private fun Piece.Icon(
+fun Piece.Icon(
     modifier: Modifier
 ) {
     val strings = LocalStrings.current.game.piece
