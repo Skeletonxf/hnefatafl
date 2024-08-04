@@ -244,6 +244,27 @@ impl GameState {
             king: (5, 5),
         }
     }
+
+    pub fn from_setup(
+        pieces: Matrix<Tile>,
+        turn: Player,
+    ) -> Self {
+        assert_eq!((11, 11), pieces.size(), "Board must be 11x11");
+        let board = pieces;
+        let (king, _) = board.row_major_iter().with_index().find(|&(_, tile)| tile == Tile::King)
+            .expect("1 king must be present in board");
+        GameState {
+            board: Board {
+                board,
+                castle: (5, 5),
+            },
+            turn,
+            winner: None,
+            dead: vec![],
+            turn_count: 0,
+            king: (king.0 as u8, king.1 as u8),
+        }
+    }
 }
 
 impl Default for GameState {
@@ -332,7 +353,7 @@ impl GameState {
         if !valid {
             return Err(());
         }
-        if self.board[play.from] == Tile::King {
+        if self.king == play.from {
             self.king = play.to;
         }
         self.board.swap(play.from, play.to);

@@ -135,7 +135,7 @@ pub extern fn game_state_handle_make_bot_play(
 ) -> *mut FFIResult<GameStateUpdate, ()> {
     FFIResult::new(
         match GameStateHandle::with_handle(handle, "game_state_handle_make_bot_play", |handle| {
-            if let Some(play) = min_max_play(handle.clone()) {
+            if let Some(play) = min_max_play(&handle) {
                 handle.make_play(&play)
             } else {
                 Err(())

@@ -3,7 +3,9 @@ use crate::piece::Piece;
 
 use rayon::prelude::*;
 
-pub fn min_max_play(game_state: GameState) -> Option<Play> {
+static STARTING_DEPTH: u8 = 3;
+
+pub fn min_max_play(game_state: &GameState) -> Option<Play> {
     let mut plays = game_state.available_plays();
     if plays.is_empty() {
         return None;
@@ -19,7 +21,7 @@ pub fn min_max_play(game_state: GameState) -> Option<Play> {
         // no impact on our behaviour.
         plays.shuffle(&mut rng);
     }
-    let depth_remaining = 3;
+    let depth_remaining = STARTING_DEPTH;
     let α = Heuristic(i8::MIN); // min score maximising player found (trying to maximise)
     let β = Heuristic(i8::MAX); // max score minimising player found (trying to minimise)
     // Min Max algorithm is the maximising player if the turn in the game state is attackers
@@ -137,12 +139,15 @@ fn min_max(
     player: MinMaxPlayer,
 ) -> Heuristic {
     let plays = game_state.available_plays();
+    // Winning sooner is better than winning later, we don't want the bot to ignore a 'free' win
+    // because the opponent can't actually deny it one or two turns later.
+    let victory_delay_penalty = (STARTING_DEPTH - depth_remaining) as i8;
     if let Some(winner) = game_state.winner() {
         return match winner {
             // Victory for defenders is min score
-            Player::Defender => Heuristic(i8::MIN),
+            Player::Defender => Heuristic(i8::MIN + victory_delay_penalty),
             // Victory for attackers is max score
-            Player::Attacker => Heuristic(i8::MAX),
+            Player::Attacker => Heuristic(i8::MAX - victory_delay_penalty),
         };
     }
     if depth_remaining == 0 {
@@ -172,7 +177,7 @@ fn min_max(
                     if let Some(winner) = state.winner() {
                         if winner == Player::Defender {
                             // Victory available for defenders on their turn is min score
-                            return Heuristic(i8::MIN);
+                            return Heuristic(i8::MIN + victory_delay_penalty);
                         }
                     }
                 }
@@ -191,7 +196,7 @@ fn min_max(
                     if let Some(winner) = state.winner() {
                         if winner == Player::Attacker {
                             // Victory available for attackers on their turn is max score
-                            return Heuristic(i8::MAX);
+                            return Heuristic(i8::MAX - victory_delay_penalty);
                         }
                     }
                 }
@@ -259,4 +264,83 @@ fn min_max(
             best_value
         },
     }
+}
+
+// Although the minmax algorithm is randomised because it will break ties differently on randomised
+// order of moves, it should be deterministic in terms of always taking the 'best' move according
+// to the heuristics
+#[test]
+fn defenders_minmax_takes_the_winning_move() {
+    use easy_ml::matrices::Matrix;
+    use crate::state::GameStateUpdate;
+    #[rustfmt::skip]
+    let board = {
+        use crate::piece::Tile::Empty as E;
+        use crate::piece::Tile::Attacker as A;
+        use crate::piece::Tile::Defender as D;
+        use crate::piece::Tile::King as K;
+        Matrix::from_flat_row_major((11, 11), vec![
+            E, E, E, E, E, K, E, E, E, E, E,
+            E, E, E, E, E, A, E, E, A, E, E,
+            E, E, E, E, E, E, E, E, E, E, E,
+            A, E, E, E, E, E, E, E, E, E, A,
+            E, E, E, E, D, E, E, E, E, E, E,
+            E, E, E, E, D, E, D, D, E, E, A,
+            A, E, E, E, E, D, A, E, E, E, E,
+            A, E, E, E, E, D, E, E, E, E, A,
+            E, E, E, E, E, E, E, E, E, E, E,
+            E, E, E, E, E, E, E, E, E, A, E,
+            E, E, E, E, A, A, E, A, E, E, E,
+        ])
+    };
+    let mut game_state = GameState::from_setup(
+        board,
+        Player::Defender,
+    );
+    println!("Game state before defender's turn: {}", game_state);
+    let best_play = min_max_play(&game_state).expect("Defenders should have a play to make");
+    let result = game_state.make_play(&best_play);
+    println!("Game state after play: {}", game_state);
+    assert_eq!(Ok(GameStateUpdate::DefenderWin), result);
+    assert_eq!(Some(Player::Defender), game_state.winner());
+}
+
+
+// Although the minmax algorithm is randomised because it will break ties differently on randomised
+// order of moves, it should be deterministic in terms of always taking the 'best' move according
+// to the heuristics
+#[test]
+fn attackers_minmax_takes_the_winning_move() {
+    use easy_ml::matrices::Matrix;
+    use crate::state::GameStateUpdate;
+    #[rustfmt::skip]
+    let board = {
+        use crate::piece::Tile::Empty as E;
+        use crate::piece::Tile::Attacker as A;
+        use crate::piece::Tile::Defender as D;
+        use crate::piece::Tile::King as K;
+        Matrix::from_flat_row_major((11, 11), vec![
+            E, E, A, E, E, K, A, E, E, E, E,
+            E, E, E, E, E, A, E, E, A, E, E,
+            E, E, E, E, E, E, E, E, E, E, E,
+            A, E, E, E, E, E, E, E, E, E, A,
+            E, E, E, E, D, E, E, E, E, E, E,
+            E, E, E, E, D, E, D, D, E, E, A,
+            A, E, E, E, E, D, A, E, E, E, E,
+            A, E, E, E, E, D, E, E, E, E, A,
+            E, E, E, E, E, E, E, E, E, E, E,
+            E, E, E, E, E, E, E, E, E, A, E,
+            E, E, E, E, A, A, E, A, E, E, E,
+        ])
+    };
+    let mut game_state = GameState::from_setup(
+        board,
+        Player::Attacker,
+    );
+    println!("Game state before attacker's turn: {}", game_state);
+    let best_play = min_max_play(&game_state).expect("Attackers should have a play to make");
+    let result = game_state.make_play(&best_play);
+    println!("Game state after play: {}", game_state);
+    assert_eq!(Ok(GameStateUpdate::AttackerWin), result);
+    assert_eq!(Some(Player::Attacker), game_state.winner());
 }
