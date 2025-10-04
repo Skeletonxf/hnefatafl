@@ -70,22 +70,20 @@ import java.lang.Integer.min
 
 val localBackgroundScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
-// TODO: We really want this to be created outside compose, but that will
-// need more refactoring
-val forest by lazy {
-    setup()
-}
+data class Environment(
+    val forestLogger: ForestLogger,
+)
 
-fun setup(): ForestLogger {
+fun setup(): Environment {
     Log.add(PrintLogger())
     val forest = ForestLogger()
     Log.add(forest)
-    return forest
+    return Environment(forest)
 }
 
 @Composable
-fun App() {
-    val forest = forest
+fun App(environment: Environment) {
+    val forest = environment.forestLogger
     var handle: GameStateHandle? by remember { mutableStateOf(null) }
     var lastUsedConfig: Configuration? by remember { mutableStateOf(null) }
     Root(

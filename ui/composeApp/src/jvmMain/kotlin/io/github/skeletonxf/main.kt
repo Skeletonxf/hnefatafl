@@ -5,7 +5,6 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.awt.ComposeWindow
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.toAwtImage
-import androidx.compose.ui.layout.BeyondBoundsLayout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.window.Window
@@ -14,10 +13,12 @@ import io.github.skeletonxf.settings.Settings
 import io.github.skeletonxf.ui.App
 import io.github.skeletonxf.ui.Res
 import io.github.skeletonxf.ui.icon
+import io.github.skeletonxf.ui.setup
 import org.jetbrains.compose.resources.painterResource
 import java.awt.Dimension
 
 fun main() = application {
+    val environment = setup()
     Window(
         onCloseRequest = {
             Settings.instance?.save(immediate = true)
@@ -29,7 +30,7 @@ fun main() = application {
             window.minimumSize = Dimension(450, 450)
         }
         IconSideEffect(window)
-        App()
+        App(environment)
     }
 }
 

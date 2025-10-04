@@ -7,14 +7,16 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import io.github.skeletonxf.ui.App
+import io.github.skeletonxf.ui.setup
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
+        val appState = AppGlobalState.getInstance(applicationContext)
         setContent {
-            App()
+            App(environment = appState.environment)
         }
     }
 }
@@ -22,5 +24,5 @@ class MainActivity : ComponentActivity() {
 @Preview
 @Composable
 fun AppAndroidPreview() {
-    App()
+    App(environment = setup())
 }
