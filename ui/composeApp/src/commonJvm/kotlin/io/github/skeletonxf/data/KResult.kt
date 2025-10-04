@@ -1,7 +1,5 @@
 package io.github.skeletonxf.data
 
-import io.github.skeletonxf.bindings.bindings_h.Err
-
 /**
  * Kotliny version of Rust's Ok/Err result
  */
