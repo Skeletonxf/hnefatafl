@@ -9,7 +9,7 @@ crate-type = ["cdylib"]
 
 [dependencies]
 # ML
-easy-ml = "1.9"
+easy-ml = "2.0"
 # argument parsing
 clap = { version = "4", features = [ "derive" ] }
 rustyline = "9.0"
