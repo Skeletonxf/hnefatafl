@@ -4,12 +4,16 @@
 use std::cell::RefCell;
 use std::sync::Once;
 use backtrace::Backtrace;
+use uniffi;
 
 mod bot;
 mod config;
 mod piece;
 mod state;
 mod ffi;
+mod uffi;
+
+uniffi::setup_scaffolding!();
 
 thread_local! {
     static BACKTRACE: RefCell<Option<Backtrace>> = RefCell::new(None);
