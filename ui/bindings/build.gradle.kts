@@ -2,6 +2,8 @@ import java.util.Properties
 import gobley.gradle.GobleyHost
 import gobley.gradle.cargo.dsl.jvm
 import gobley.gradle.Variant
+import gobley.gradle.cargo.dsl.android
+import gobley.gradle.rust.targets.RustAndroidTarget
 
 plugins {
     alias(libs.plugins.kotlinJvm)
@@ -66,11 +68,6 @@ cargo {
     builds.jvm {
         // Build Rust library only for the host platform
         embedRustLibrary = (GobleyHost.current.rustTarget == rustTarget)
+        jvmVariant = Variant.Release
     }
 }
-
-//uniffi {
-//    generateFromLibrary {
-//        variant = Variant.Release
-//    }
-//}
