@@ -1,7 +1,13 @@
 import java.util.Properties
+import gobley.gradle.GobleyHost
+import gobley.gradle.cargo.dsl.jvm
+import gobley.gradle.Variant
 
 plugins {
-    id("java-library")
+    alias(libs.plugins.kotlinJvm)
+    alias(libs.plugins.gobleyCargo)
+    alias(libs.plugins.gobleyUniffi)
+    kotlin("plugin.atomicfu") version libs.versions.kotlin
 }
 
 val properties = Properties().apply {
@@ -53,4 +59,18 @@ tasks.withType(JavaCompile::class).all {
 }
 
 dependencies {
+
 }
+
+cargo {
+    builds.jvm {
+        // Build Rust library only for the host platform
+        embedRustLibrary = (GobleyHost.current.rustTarget == rustTarget)
+    }
+}
+
+//uniffi {
+//    generateFromLibrary {
+//        variant = Variant.Release
+//    }
+//}

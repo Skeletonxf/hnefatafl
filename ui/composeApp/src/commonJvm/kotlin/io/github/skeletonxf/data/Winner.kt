@@ -15,7 +15,7 @@ enum class Winner : KEnum {
     }
 
     companion object {
-        private val variants = Winner.values().toList()
+        private val variants = entries
         fun valueOf(winner: Byte) = KEnum.valueOf(winner, variants, None)
     }
 }

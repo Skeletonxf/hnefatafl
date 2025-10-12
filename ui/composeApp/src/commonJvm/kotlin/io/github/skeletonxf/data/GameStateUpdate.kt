@@ -19,7 +19,7 @@ enum class GameStateUpdate : KEnum {
     }
 
     companion object {
-        private val variants = GameStateUpdate.values().toList()
+        private val variants = entries
         fun valueOf(gameStateUpdate: Byte) = KEnum.valueOf(gameStateUpdate, variants, Nothing)
     }
 }

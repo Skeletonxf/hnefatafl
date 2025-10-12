@@ -15,7 +15,7 @@ interface Config {
         }
 
         companion object {
-            private val variants = StringKey.values().toList()
+            private val variants = entries
             fun valueOf(key: Byte) = KEnum.valueOf(key, variants, Locale)
         }
     }
