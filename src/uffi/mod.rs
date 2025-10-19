@@ -6,6 +6,8 @@ use crate::uniffi;
 use std::fmt;
 use std::sync::Mutex;
 
+mod config;
+
 /// A handle to the game state behind a mutex to allow calling from Kotlin without issue
 #[derive(Debug, uniffi::Object)]
 pub struct GameStateHandle {
