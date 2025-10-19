@@ -47,7 +47,7 @@ enum Direction {
 }
 
 #[repr(u8)]
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, uniffi::Enum)]
 pub enum GameStateUpdate {
     DefenderWin = 0,
     AttackerWin = 1,
