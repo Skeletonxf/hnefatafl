@@ -53,7 +53,10 @@ private class ConfigFileSettings private constructor(
         config = readConfig().fold(
             ok = { it },
             error = { error ->
-                Log.debug("Unable to parse or find config file", error)
+                Log.debug(
+                    "Unable to parse or find an existing config file, a new one has been created from defaults",
+                    error
+                )
                 doSetup = true
                 ConfigHandle.default()
             },
@@ -68,12 +71,15 @@ private class ConfigFileSettings private constructor(
         fun create(
             path: Path,
             ioScope: CoroutineScope,
-        ): KResult<ConfigFileSettings, Throwable> = KResult.runCatching { ConfigFileSettings(path, ioScope) }
+        ): KResult<ConfigFileSettings, Throwable> = KResult.runCatching {
+            ConfigFileSettings(path, ioScope)
+                .also { config -> config.saveConfig() }
+        }
     }
 
     private fun readConfig(): KResult<Config, Throwable> = KResult
         .runCatching { Files.readAllLines(path).joinToString(separator = "\n") }
-        .andThen { config -> ConfigHandle.new(config).mapError { it.toThrowable() } }
+        .andThen { config -> ConfigHandle.new(config).mapError { Throwable(it) } }
 
     private fun writeConfig(contents: String): KResult<Unit, Throwable> = KResult
         .runCatching { Files.write(path, contents.encodeToByteArray()) }

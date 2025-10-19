@@ -1,7 +1,7 @@
 use crate::config::Config;
 use crate::uniffi;
 
-use std::convert::TryFrom;
+use std::convert::{TryFrom, TryInto};
 use std::fmt;
 use std::sync::Mutex;
 
@@ -42,6 +42,28 @@ impl ConfigHandle {
             ConfigStringKey::Locale => config.locale.clone(),
         }
     }
+
+    /// Sets the value of a key
+    fn set(&self, for_key: ConfigStringKey, value: String) {
+        let mut config = self
+            .config
+            .lock()
+            .expect("Poisoned mutex in ConfigHandle key");
+        match for_key {
+            ConfigStringKey::Locale => config.locale = value,
+        }
+    }
+
+    /// Gets the value of the TOML file
+    fn as_toml(&self) -> Result<String, SerializeError> {
+        let guard = self
+            .config
+            .lock()
+            .expect("Poisoned mutex in ConfigHandle key");
+        let config: &Config = &guard;
+        let converted: Result<String, toml::ser::Error> = config.try_into();
+        converted.map_err(|error| SerializeError::Error(error.to_string()))
+    }
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, uniffi::Enum)]
@@ -54,6 +76,21 @@ impl fmt::Display for DeserializeError {
         match self {
             DeserializeError::Error(error) => {
                 write!(f, "Error trying to deserialize TOML: {}", error)
+            }
+        }
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, uniffi::Enum)]
+enum SerializeError {
+    Error(String),
+}
+
+impl fmt::Display for SerializeError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            SerializeError::Error(error) => {
+                write!(f, "Error trying to serialize TOML: {}", error)
             }
         }
     }
