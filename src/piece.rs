@@ -3,7 +3,7 @@ use std::convert::TryFrom;
 use std::fmt::Display;
 
 #[repr(u8)]
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, uniffi::Enum)]
 pub enum Tile {
     Empty = 0,
     Attacker = 1,
