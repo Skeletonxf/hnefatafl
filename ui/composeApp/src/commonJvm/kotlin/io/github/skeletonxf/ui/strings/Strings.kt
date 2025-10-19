@@ -6,6 +6,7 @@ import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import io.github.skeletonxf.logging.Log
 import io.github.skeletonxf.settings.LocalSettings
@@ -141,23 +142,18 @@ val LocalChangeStrings = staticCompositionLocalOf<(String) -> Unit> { {} }
 @Composable
 fun ProvideStrings(content: @Composable () -> Unit) {
     val settings = LocalSettings.current
-    // TODO: Should just trap user on an error screen if Settings doesn't initialise, trying to continue with FFI
-    // failures will just mean loads of boilerplate
-    val strings by when (settings) {
-        null -> mutableStateOf(britishEnglish)
-        else -> {
-            val locale by settings.locale.value
-            derivedStateOf {
-                locales[locale]
-                    ?: britishEnglish.also { Log.warn("Unable to match $locale to a supported set of strings") }
-            }
+    val strings by remember {
+        val locale by settings.locale.value
+        derivedStateOf {
+            locales[locale]
+                ?: britishEnglish.also { Log.warn("Unable to match $locale to a supported set of strings") }
         }
     }
     CompositionLocalProvider(
         LocalStrings provides strings,
         LocalChangeStrings provides { value ->
-            settings?.locale?.set(value)
-            settings?.save()
+            settings.locale.set(value)
+            settings.save()
         }
     ) {
         content()

@@ -18,27 +18,23 @@ class ConfigHandle private constructor(private val handle: uniffi.hnefatafl.Conf
         fun default(): ConfigHandle = ConfigHandle(uniffi.hnefatafl.ConfigHandle.default())
     }
 
-    override fun get(key: Config.StringKey): KResult<String, FFIError<String>> = KResult.Ok(
-        handle.key(
-            forKey = when (key) {
-                Config.StringKey.Locale -> uniffi.hnefatafl.ConfigStringKey.LOCALE
-            }
-        )
+    override fun get(key: Config.StringKey) = handle.key(
+        forKey = when (key) {
+            Config.StringKey.Locale -> uniffi.hnefatafl.ConfigStringKey.LOCALE
+        }
     )
 
     override fun set(
         key: Config.StringKey,
         value: String
-    ): KResult<Unit, FFIError<String>> = KResult.Ok(
+    ) {
         handle.set(
             forKey = when (key) {
                 Config.StringKey.Locale -> uniffi.hnefatafl.ConfigStringKey.LOCALE
             },
             value = value
         )
-    )
+    }
 
-    override fun getAll(): KResult<String, FFIError<String>> = KResult.Ok(
-        handle.asToml()
-    )
+    override fun getAll() = handle.asToml()
 }

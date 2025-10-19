@@ -33,11 +33,9 @@ interface Settings {
     companion object {
         // TODO: Need to look into setting up proper DI instead of making the background scope and this
         // static objects
-        internal val instance: Settings? = new(localBackgroundScope)
-        // TODO: Better error handling
-        fun new(ioScope: CoroutineScope): Settings? = ConfigFileSettings
+        internal val instance: Settings = new(localBackgroundScope)
+        fun new(ioScope: CoroutineScope): Settings = ConfigFileSettings
             .create(Paths.get("./settings.toml"), ioScope)
-            .okOrNull()
     }
 }
 
@@ -61,7 +59,7 @@ private class ConfigFileSettings private constructor(
                 ConfigHandle.default()
             },
         )
-        locale = ConfigSetting.create(config = config, key = Config.StringKey.Locale).okOrThrow()
+        locale = ConfigSetting.create(config = config, key = Config.StringKey.Locale)
         if (doSetup) {
             locale.set(getDefaultLocale())
         }
@@ -71,10 +69,8 @@ private class ConfigFileSettings private constructor(
         fun create(
             path: Path,
             ioScope: CoroutineScope,
-        ): KResult<ConfigFileSettings, Throwable> = KResult.runCatching {
-            ConfigFileSettings(path, ioScope)
-                .also { config -> config.saveConfig() }
-        }
+        ): ConfigFileSettings = ConfigFileSettings(path, ioScope)
+            .also { config -> config.saveConfig() }
     }
 
     private fun readConfig(): KResult<Config, Throwable> = KResult
@@ -84,9 +80,7 @@ private class ConfigFileSettings private constructor(
     private fun writeConfig(contents: String): KResult<Unit, Throwable> = KResult
         .runCatching { Files.write(path, contents.encodeToByteArray()) }
 
-    private fun saveConfig(): KResult<Unit, Throwable> = config
-        .getAll().mapError { it.toThrowable() }
-        .andThen { toml -> writeConfig(toml) }
+    private fun saveConfig() = writeConfig(config.getAll())
 
     override fun toString(): String = "ConfigFileSettings(locale = $locale)"
 
@@ -108,21 +102,23 @@ private class ConfigFileSettings private constructor(
     }
 }
 
-private class ConfigSetting<T: Any> private constructor(
+private class ConfigSetting<T : Any> private constructor(
     val config: Config,
     val key: ConfigKey<T>,
-): Setting<T> {
-    override val value = mutableStateOf(config.get(key).mapError { it.toThrowable() }.okOrThrow())
+) : Setting<T> {
+    override val value = mutableStateOf(config.get(key))
     override fun set(value: T) {
         this.value.value = value
-        config.set(key, value).mapError { Log.error("Unable to set $key to $value", it.toThrowable()) }
+        config.set(key, value)
     }
-    override fun toString(): String = "ConfigSetting(value=${value.value}, config=$config, key=$key)"
+
+    override fun toString(): String =
+        "ConfigSetting(value=${value.value}, config=$config, key=$key)"
 
     companion object {
         fun <T : Any> create(
             config: Config,
             key: ConfigKey<T>
-        ): KResult<ConfigSetting<T>, Throwable> = KResult.runCatching { ConfigSetting(config, key) }
+        ): ConfigSetting<T> = ConfigSetting(config, key)
     }
 }

@@ -21,7 +21,7 @@ fun main() = application {
     val environment = setup()
     Window(
         onCloseRequest = {
-            Settings.instance?.save(immediate = true)
+            Settings.instance.save(immediate = true)
             exitApplication()
         },
         title = "Hnefatafl",
