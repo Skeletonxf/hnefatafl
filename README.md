@@ -8,6 +8,8 @@ This project is licensed under the terms of the GNU Affero General Public Licens
 
 ## Building the Jetpack Compose GUI app
 
+*JExtract was previously used to allow the JVM Kotlin UI code to communicate with the Rust game engine. This is being phased out in favour of [UniFFI](https://github.com/mozilla/uniffi-rs) due to missing support on Android for the java.lang.foreign APIs JEXtract depends on. UniFFI increases overheads due to adding atomic reference counting and Java Native Access instead of the more direct FFI that modern Java can do, but will enable porting the game to run on Android.*
+
 [jextract](https://github.com/openjdk/jextract) and Java 21 or later must be installed. The path to the jextract needs to be provided in `ui/local.properties`. A normal `cargo build` will generate the `bindings.h` file from the Rust sources. Once this is generated, building the Jetpack Compose app will generate the Java glue code using the Foreign Function & Memory API of Project Panama. Afterwards the JVM app can be ran normally, and it will use the shared object from the built cdylib Rust code.
 
 ```
