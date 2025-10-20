@@ -1,11 +1,5 @@
 package io.github.skeletonxf.settings
 
-import io.github.skeletonxf.bindings.bindings_h
-import io.github.skeletonxf.data.KResult
-import io.github.skeletonxf.data.Player
-import io.github.skeletonxf.ffi.FFIError
-import io.github.skeletonxf.ffi.KEnum
-
 interface Config {
     enum class StringKey : ConfigKey<String> {
         Locale;

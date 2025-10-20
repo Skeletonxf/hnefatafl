@@ -30,7 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import io.github.skeletonxf.ffi.Configuration
+import io.github.skeletonxf.data.Configuration
 import io.github.skeletonxf.functions.then
 import io.github.skeletonxf.ui.Res
 import io.github.skeletonxf.ui.RoleType

@@ -13,11 +13,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeContentPadding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.Surface
@@ -33,7 +31,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -45,8 +42,7 @@ import io.github.skeletonxf.ui.theme.PreviewSurface
 import io.github.skeletonxf.data.Play
 import io.github.skeletonxf.data.Player
 import io.github.skeletonxf.data.Winner
-import io.github.skeletonxf.ffi.Configuration
-import io.github.skeletonxf.ffi.FFIThrowable
+import io.github.skeletonxf.data.Configuration
 import io.github.skeletonxf.ffi.GameStateHandle
 import io.github.skeletonxf.functions.then
 import io.github.skeletonxf.logging.ForestLogger
@@ -458,7 +454,7 @@ private fun FatalErrorPreview() = PreviewSurface {
     AppContent(
         state = GameState.State.FatalError(
             message = "Contextual message here",
-            cause = FFIThrowable("Problem here", null, Void::class),
+            cause = Throwable("Problem here"),
             attackers = RoleType.Human,
             defenders = RoleType.Human,
         ),
@@ -476,7 +472,7 @@ private fun FatalErrorSpanishPreview() = PreviewSurface {
         AppContent(
             state = GameState.State.FatalError(
                 message = "Contextual message here",
-                cause = FFIThrowable("Problem here", null, Void::class),
+                cause = Throwable("Problem here"),
                 attackers = RoleType.Human,
                 defenders = RoleType.Human,
             ),

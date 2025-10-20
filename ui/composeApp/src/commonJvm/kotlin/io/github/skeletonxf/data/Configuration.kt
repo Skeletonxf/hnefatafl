@@ -1,4 +1,4 @@
-package io.github.skeletonxf.ffi
+package io.github.skeletonxf.data
 
 import io.github.skeletonxf.ui.RoleType
 

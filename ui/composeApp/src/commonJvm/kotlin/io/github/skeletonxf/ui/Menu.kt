@@ -11,7 +11,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import io.github.skeletonxf.ffi.Configuration
+import io.github.skeletonxf.data.Configuration
 import io.github.skeletonxf.ui.menu.MainMenu
 import io.github.skeletonxf.ui.menu.MenuState
 import io.github.skeletonxf.ui.menu.RolePickerMenu

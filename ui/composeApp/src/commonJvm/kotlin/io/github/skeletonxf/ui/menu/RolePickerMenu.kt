@@ -20,7 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import io.github.skeletonxf.data.Piece
 import io.github.skeletonxf.data.Tile
-import io.github.skeletonxf.ffi.Configuration
+import io.github.skeletonxf.data.Configuration
 import io.github.skeletonxf.ui.Icon
 import io.github.skeletonxf.ui.RoleType
 import io.github.skeletonxf.ui.strings.LocalStrings

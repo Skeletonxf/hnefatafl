@@ -1,6 +1,5 @@
 package io.github.skeletonxf.ui
 
-import io.github.skeletonxf.ffi.FFIThrowable
 import androidx.compose.runtime.State as ComposeState
 import io.github.skeletonxf.data.BoardData
 import io.github.skeletonxf.data.Piece

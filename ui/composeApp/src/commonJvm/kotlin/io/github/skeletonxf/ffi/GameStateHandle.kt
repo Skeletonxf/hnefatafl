@@ -3,8 +3,9 @@ package io.github.skeletonxf.ffi
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import io.github.skeletonxf.ui.GameState
-import io.github.skeletonxf.bindings.bindings_h
 import io.github.skeletonxf.data.BoardData
+import io.github.skeletonxf.data.Configuration
+import io.github.skeletonxf.data.KResult
 import io.github.skeletonxf.data.Piece
 import io.github.skeletonxf.data.Play
 import io.github.skeletonxf.data.Player
@@ -15,9 +16,6 @@ import io.github.skeletonxf.logging.Log
 import io.github.skeletonxf.ui.Role
 import io.github.skeletonxf.ui.RoleType
 import kotlinx.coroutines.CoroutineScope
-import uniffi.hnefatafl.InvalidPlayException
-import uniffi.hnefatafl.PlayException
-import java.lang.foreign.MemorySegment
 
 private fun uniffi.hnefatafl.FlatPlay.Companion.from(play: Play) = uniffi.hnefatafl.FlatPlay(
     fromX = play.from.x.toUByte(),
@@ -81,19 +79,20 @@ class GameStateHandle(
                 return@launchUnit
             }
         }
-        try {
+        state.value = KResult.runCatching {
             handle.makePlay(uniffi.hnefatafl.FlatPlay.from(play))
-        } catch (error: InvalidPlayException) {
-            // FIXME: Errors seem to be getting misread by uniffi glue and not thrown
-            // as this type due to a bug somewhere along the chain. Can reproduce by changing
-            // FlatPlay.from to use `from` in place of to which makes it easy to select an
-            // invalid move from the UI.
-            state.value = with (configuration) {
-                fatalError("Failed to make play", error)
+        }.fold(
+            ok = { getGameState(ui) },
+            error = { error ->
+                with(configuration) {
+                    // FIXME: Errors seem to be getting misread by uniffi glue and not thrown
+                    // as correct type due to a bug somewhere along the chain. Can reproduce by
+                    // changing FlatPlay.from to use `from` in place of to which makes it easy to
+                    // select an invalid move from the UI.
+                    fatalError("Failed to make play", error)
+                }
             }
-            return@launchUnit
-        }
-        state.value = getGameState(ui)
+        )
     }
 
     override fun makeBotPlay() = coroutineScope.launchUnit {
@@ -130,15 +129,16 @@ class GameStateHandle(
                 return@launchUnit
             }
         }
-        try {
+        state.value = KResult.runCatching {
             handle.makeBotPlay()
-        } catch (error: PlayException) {
-            state.value = with (configuration) {
-                fatalError("Failed to make bot play", error)
+        }.fold(
+            ok = { getGameState(ui) },
+            error = { error ->
+                with (configuration) {
+                    fatalError("Failed to make bot play", error)
+                }
             }
-            return@launchUnit
-        }
-        state.value = getGameState(ui)
+        )
     }
 
     private fun getGameState(ui: UIState): GameState.State = with (configuration) {
