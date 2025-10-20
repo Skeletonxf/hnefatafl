@@ -17,5 +17,11 @@ enum class Winner : KEnum {
     companion object {
         private val variants = entries
         fun valueOf(winner: Byte) = KEnum.valueOf(winner, variants, None)
+
+        fun from(winner: uniffi.hnefatafl.Winner): Winner = when (winner) {
+            uniffi.hnefatafl.Winner.DEFENDERS -> Defenders
+            uniffi.hnefatafl.Winner.ATTACKERS -> Attackers
+            uniffi.hnefatafl.Winner.NONE -> None
+        }
     }
 }

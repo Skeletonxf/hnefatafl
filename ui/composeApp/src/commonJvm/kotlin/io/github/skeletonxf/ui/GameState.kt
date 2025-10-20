@@ -35,7 +35,7 @@ interface GameState {
 
         data class FatalError(
             val message: String,
-            val cause: FFIThrowable,
+            val cause: Throwable,
             val attackers: RoleType,
             val defenders: RoleType,
         ) : State

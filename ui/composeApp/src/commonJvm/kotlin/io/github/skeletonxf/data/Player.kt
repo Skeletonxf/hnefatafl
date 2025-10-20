@@ -15,5 +15,10 @@ enum class Player : KEnum {
     companion object {
         private val variants = values().toList()
         fun valueOf(player: Byte) = KEnum.valueOf(player, variants, Defender)
+
+        fun from(player: uniffi.hnefatafl.TurnPlayer): Player = when (player) {
+            uniffi.hnefatafl.TurnPlayer.DEFENDERS -> Defender
+            uniffi.hnefatafl.TurnPlayer.ATTACKERS -> Attacker
+        }
     }
 }

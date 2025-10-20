@@ -2,16 +2,12 @@ package io.github.skeletonxf.ffi
 
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
-import io.github.skeletonxf.bindings.FlatPlay
 import io.github.skeletonxf.ui.GameState
 import io.github.skeletonxf.bindings.bindings_h
 import io.github.skeletonxf.data.BoardData
-import io.github.skeletonxf.data.GameStateUpdate
-import io.github.skeletonxf.data.KResult
 import io.github.skeletonxf.data.Piece
 import io.github.skeletonxf.data.Play
 import io.github.skeletonxf.data.Player
-import io.github.skeletonxf.data.Position
 import io.github.skeletonxf.data.Tile
 import io.github.skeletonxf.data.Winner
 import io.github.skeletonxf.functions.launchUnit
@@ -19,33 +15,31 @@ import io.github.skeletonxf.logging.Log
 import io.github.skeletonxf.ui.Role
 import io.github.skeletonxf.ui.RoleType
 import kotlinx.coroutines.CoroutineScope
-import java.lang.foreign.Arena
+import uniffi.hnefatafl.InvalidPlayException
+import uniffi.hnefatafl.PlayException
 import java.lang.foreign.MemorySegment
-import java.lang.foreign.SegmentAllocator
-import java.lang.ref.Cleaner
+
+private fun uniffi.hnefatafl.FlatPlay.Companion.from(play: Play) = uniffi.hnefatafl.FlatPlay(
+    fromX = play.from.x.toUByte(),
+    fromY = play.from.y.toUByte(),
+    toX = play.to.x.toUByte(),
+    toY = play.to.y.toUByte(),
+)
 
 class GameStateHandle(
     private val coroutineScope: CoroutineScope,
     private val configuration: Configuration,
 ) : GameState {
-    private val handle: MemorySegment = bindings_h.game_state_handle_new()
+    private val handle = uniffi.hnefatafl.GameStateHandle()
 
-    override val state: MutableState<GameState.State> = mutableStateOf(getGameState(UIState.from(configuration)))
+    override val state: MutableState<GameState.State> = mutableStateOf(
+        getGameState(UIState.from(configuration))
+    )
 
-    init {
-        // We must not use any inner classes or lambdas for the runnable object, to avoid capturing our
-        // GameStateHandle instance, which would prevent the cleaner ever running.
-        // We could hold onto the cleanable this method returns so that we can manually trigger it
-        // with a `close()` method or such, but such an API can't stop us calling that method
-        // while still holding references to the GameStateHandle, in which case we'd trigger
-        // undefined behavior and likely reclaim the memory on the Rust side while we still
-        // have other aliases to it that think it's still in use. Instead, the *only* way
-        // to tell Rust it's time to call the destructor is when the cleaner determines there are
-        // no more references to our GameStateHandle.
-        bridgeCleaner.register(this, BridgeHandleCleaner(handle))
-    }
-
-    private fun Configuration.fatalError(message: String, cause: FFIThrowable) = GameState.State.FatalError(
+    private fun Configuration.fatalError(
+        message: String,
+        cause: Throwable,
+    ) = GameState.State.FatalError(
         message = message,
         cause = cause,
         attackers = attackers,
@@ -56,7 +50,7 @@ class GameStateHandle(
         val attackers: Role,
         val defenders: Role,
     ) {
-         companion object {
+        companion object {
             fun from(configuration: Configuration) = UIState(
                 attackers = initialRoleState(configuration.attackers),
                 defenders = initialRoleState(configuration.defenders),
@@ -71,9 +65,7 @@ class GameStateHandle(
 
     private fun GameState.State.Game.uiState(): UIState = UIState(attackers, defenders)
 
-    override fun debug() {
-        bindings_h.game_state_handle_debug(handle)
-    }
+    override fun debug() = Log.debug(handle.debug())
 
     override fun makePlay(play: Play) = coroutineScope.launchUnit {
         val ui = when (val s = state.value) {
@@ -89,22 +81,19 @@ class GameStateHandle(
                 return@launchUnit
             }
         }
-        state.value = doPlay(
-            ui,
-            KResult
-                .from(
-                    handle = bindings_h.game_state_handle_make_play(
-                        handle,
-                        play.from.x.toByte(),
-                        play.from.y.toByte(),
-                        play.to.x.toByte(),
-                        play.to.y.toByte()
-                    ),
-                    getType = bindings_h::result_game_state_update_get_type,
-                    getOk = bindings_h::result_game_state_update_get_ok,
-                    getError = bindings_h::result_game_state_update_get_error,
-                )
-        )
+        try {
+            handle.makePlay(uniffi.hnefatafl.FlatPlay.from(play))
+        } catch (error: InvalidPlayException) {
+            // FIXME: Errors seem to be getting misread by uniffi glue and not thrown
+            // as this type due to a bug somewhere along the chain. Can reproduce by changing
+            // FlatPlay.from to use `from` in place of to which makes it easy to select an
+            // invalid move from the UI.
+            state.value = with (configuration) {
+                fatalError("Failed to make play", error)
+            }
+            return@launchUnit
+        }
+        state.value = getGameState(ui)
     }
 
     override fun makeBotPlay() = coroutineScope.launchUnit {
@@ -116,6 +105,7 @@ class GameStateHandle(
                             attackers = s.attackers.enterLoading(),
                             defenders = s.defenders.exitLoading()
                         )
+
                         Player.Defender -> s.copy(
                             defenders = s.defenders.enterLoading(),
                             attackers = s.attackers.exitLoading()
@@ -128,181 +118,56 @@ class GameStateHandle(
                         defenders = s.defenders.exitLoading(),
                     )
                 }
+
                 is Role.Human -> {
                     Log.error("Cannot make bot play on a human's turn")
                     return@launchUnit
                 }
             }
+
             is GameState.State.FatalError -> {
                 Log.error("Cannot make play in a fatal error state")
                 return@launchUnit
             }
         }
-        state.value = doPlay(
-            ui,
-            KResult
-                .from(
-                    handle = bindings_h.game_state_handle_make_bot_play(handle),
-                    getType = bindings_h::result_game_state_update_get_type,
-                    getOk = bindings_h::result_game_state_update_get_ok,
-                    getError = bindings_h::result_game_state_update_get_error,
-                )
-        )
+        try {
+            handle.makeBotPlay()
+        } catch (error: PlayException) {
+            state.value = with (configuration) {
+                fatalError("Failed to make bot play", error)
+            }
+            return@launchUnit
+        }
+        state.value = getGameState(ui)
     }
 
-    private fun doPlay(ui: UIState, result: KResult<Byte, FFIError<Unit?>>) = result
-        .map(GameStateUpdate::valueOf)
-        .fold(
-            ok = { gameStateUpdate ->
-                when (gameStateUpdate) {
-                    // Might want to do something in particular when entering a win or capture state here?
-                    GameStateUpdate.DefenderWin,
-                    GameStateUpdate.AttackerWin,
-                    GameStateUpdate.DefenderCapture,
-                    GameStateUpdate.AttackerCapture,
-                    GameStateUpdate.Nothing -> getGameState(ui)
-                }
-            },
-            error = { error ->
-                with (configuration) {
-                    fatalError("Failed to make play", error.toThrowable())
-                }
-            }
-        )
-
     private fun getGameState(ui: UIState): GameState.State = with (configuration) {
-        val board = when (val result = getBoard()) {
-            is KResult.Ok -> result.ok
-            is KResult.Error -> return fatalError(
-                "Unable to query board tiles", result.err.toThrowable()
-            )
-        }
-        val plays = when (val result = getAvailablePlays()) {
-            is KResult.Ok -> result.ok
-            is KResult.Error -> return fatalError(
-                "Unable to query available plays", result.err.toThrowable()
-            )
-        }
-        val winner = when (val result = getWinner()) {
-            is KResult.Ok -> result.ok
-            is KResult.Error -> return fatalError(
-                "Unable to query winner", result.err.toThrowable()
-            )
-        }
-        val turn = when (val result = getTurnPlayer()) {
-            is KResult.Ok -> result.ok
-            is KResult.Error -> return fatalError(
-                "Unable to query turn player", result.err.toThrowable()
-            )
-        }
-        val dead = when (val result = getDead()) {
-            is KResult.Ok -> result.ok
-            is KResult.Error -> return fatalError(
-                "Unable to query dead pieces", result.err.toThrowable()
-            )
-        }
-        val turnCount = when (val result = getTurnCount()) {
-            is KResult.Ok -> result.ok
-            is KResult.Error -> return fatalError(
-                "Unable to query turn count", result.err.toThrowable()
-            )
-        }
-        return GameState.State.Game(
-            board = board,
-            plays = plays,
-            winner = winner,
-            turn = turn,
-            dead = dead,
-            turnCount = turnCount,
+        GameState.State.Game(
+            board = getBoard(),
+            plays = getAvailablePlays(),
+            winner = getWinner(),
+            turn = getTurnPlayer(),
+            dead = getDead(),
+            turnCount = getTurnCount(),
             attackers = ui.attackers,
             defenders = ui.defenders,
         )
     }
 
-    private fun getBoard(): KResult<BoardData, FFIError<String>> = TileArrayResult(
-        bindings_h.game_state_handle_tiles(handle)
+    private fun getBoard(): BoardData = BoardData(
+        tiles = handle.tiles().map(Tile.Companion::from),
+        length = handle.gridSize().toInt()
     )
-        .toResult()
-        .map { tileArrayAddress ->
-            tileArrayToBoard(
-                tileArrayAddress,
-                bindings_h.game_state_handle_grid_size(handle).toInt()
-            )
-        }
 
-    private fun getAvailablePlays(): KResult<List<Play>, FFIError<Unit?>> = KResult.from(
-        handle = bindings_h.game_state_available_plays(handle),
-        getType = { bindings_h.result_play_array_get_type(it) },
-        getOk = { bindings_h.result_play_array_get_ok(it) },
-        getError = { bindings_h.result_play_array_get_error(it) }
-    ).map(destroy = bindings_h::play_array_destroy) { plays ->
-        val length = bindings_h.play_array_length(plays).toInt()
-        if (length == 0) {
-            return@map listOf()
-        }
-        val bytesPerPlay = FlatPlay.sizeof()
-        Arena.ofConfined().use { arena ->
-            val allocator = SegmentAllocator { byteSize: Long, byteAlignment: Long ->
-                arena.allocate(byteSize, byteAlignment)
-            }
-            List(length) { i ->
-                val memorySegment = bindings_h.play_array_get(allocator, plays, i.toLong())
-                Play(
-                    from = Position(
-                        x = FlatPlay.`from_x$get`(memorySegment).toInt(),
-                        y = FlatPlay.`from_y$get`(memorySegment).toInt()
-                    ),
-                    to = Position(
-                        x = FlatPlay.`to_x$get`(memorySegment).toInt(),
-                        y = FlatPlay.`to_y$get`(memorySegment).toInt()
-                    )
-                )
-            }
-        }
-    }
+    private fun getAvailablePlays(): List<Play> = handle
+        .availablePlays()
+        .map(Play.Companion::from)
 
-    private fun getWinner(): KResult<Winner, FFIError<String>> = WinnerResult(
-        bindings_h.game_state_handle_winner(handle)
-    ).toResult()
+    private fun getWinner(): Winner = handle.winner().let(Winner.Companion::from)
 
-    private fun getTurnPlayer(): KResult<Player, FFIError<String>> = PlayerResult(
-        bindings_h.game_state_current_player(handle)
-    ).toResult()
+    private fun getTurnPlayer(): Player = handle.currentPlayer().let(Player.Companion::from)
 
-    private fun getDead(): KResult<List<Piece>, FFIError<String>> = TileArrayResult(
-        bindings_h.game_state_handle_dead(handle)
-    )
-        .toResult()
-        .map { tileArrayAddress ->
-            tileArrayAddress.address.use(bindings_h::tile_array_destroy) { pieces ->
-                val length = bindings_h.tile_array_length(pieces).toInt()
-                val dead = List(length) { i ->
-                    Piece.valueOf(
-                        Tile.valueOf(
-                            bindings_h.tile_array_get(pieces, i.toLong())
-                        )
-                    )
-                }
-                dead.filterNotNull()
-            }
-        }
+    private fun getDead(): List<Piece> = handle.dead().map(Tile.Companion::from)
 
-    private fun getTurnCount(): KResult<UInt, FFIError<String>> = UIntResult(
-        bindings_h.game_state_handle_turn_count(handle)
-    ).toResult()
-
-    companion object {
-        private val bridgeCleaner: Cleaner = Cleaner.create()
-    }
-}
-
-private data class BridgeHandleCleaner(private val handle: MemorySegment) : Runnable {
-    override fun run() {
-        // Because this class is private, and we only ever call it from the cleaner, and we never
-        // give out any references to our `handle: MemorySegment` to any other classes, this
-        // runs exactly once after all references to GameStateHandle are dead and the cleaner
-        // runs us. Hence, we can meet the requirement that the handle is not aliased, so the
-        // Rust side can use it as an exclusive reference and reclaim the memory safely.
-        bindings_h.game_state_handle_destroy(handle)
-    }
+    private fun getTurnCount(): UInt = handle.turnCount()
 }

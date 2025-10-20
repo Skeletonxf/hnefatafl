@@ -25,6 +25,19 @@ sealed interface Tile : KEnum {
     companion object {
         private val variants = listOf(Empty, Attacker, Defender, King)
         fun valueOf(tile: Byte) = KEnum.valueOf(tile, variants, Empty)
+
+        fun from(tile: uniffi.hnefatafl.Tile): Tile = when (tile) {
+            uniffi.hnefatafl.Tile.EMPTY -> Empty
+            uniffi.hnefatafl.Tile.ATTACKER -> Attacker
+            uniffi.hnefatafl.Tile.DEFENDER -> Defender
+            uniffi.hnefatafl.Tile.KING -> King
+        }
+
+        fun from(tile: uniffi.hnefatafl.Dead): Piece = when (tile) {
+            uniffi.hnefatafl.Dead.ATTACKER -> Attacker
+            uniffi.hnefatafl.Dead.DEFENDER -> Defender
+            uniffi.hnefatafl.Dead.KING -> King
+        }
     }
 
     object Empty : Tile

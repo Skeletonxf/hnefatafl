@@ -167,7 +167,7 @@ fun AppContent(
             Spacer(Modifier.height(16.dp))
             Text(state.message)
             Spacer(Modifier.height(8.dp))
-            Text(state.cause.message)
+            Text(state.cause.message ?: "")
             Spacer(Modifier.height(24.dp))
             Button(
                 onClick = onRestart,
