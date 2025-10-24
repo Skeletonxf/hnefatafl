@@ -3,10 +3,10 @@
 
 use uniffi;
 
+uniffi::setup_scaffolding!();
+
 mod bot;
 mod config;
 mod piece;
 mod state;
-mod uffi;
-
-uniffi::setup_scaffolding!();
+mod ffi;
