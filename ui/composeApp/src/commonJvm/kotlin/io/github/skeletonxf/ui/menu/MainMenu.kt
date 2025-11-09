@@ -100,6 +100,7 @@ fun MainMenu(
             modifier = Modifier
                 .align(Alignment.Center)
                 .verticalScroll(rememberScrollState())
+                .fillMaxWidth()
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {

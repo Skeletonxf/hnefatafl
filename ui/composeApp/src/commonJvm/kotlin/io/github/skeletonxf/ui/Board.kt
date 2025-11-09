@@ -97,7 +97,12 @@ fun Board(
         if (!width.isFinite || !height.isFinite) {
             throw UnsupportedOperationException("Unsupported constraints: $constraints")
         }
-        val sideArea = 32.dp
+        // TODO: Put graveyards horizontally when we have more vertical space
+        // than horizontal. This will free up space to make tiles bigger on
+        // mobile. Making side area 0 for now seems to mostly work to free up
+        // the space for most screen dimensions but it has some cases where we
+        // don't allocate enough pixels to the graveyards on portrait displays.
+        val sideArea = 0.dp
         val square = min(width - (sideArea * 2), height)
         val margin = 1.dp
         val margins = margin.value * (board.length + 1)

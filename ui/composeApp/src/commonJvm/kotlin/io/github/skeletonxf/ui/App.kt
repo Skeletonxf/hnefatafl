@@ -12,7 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeContentPadding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -80,6 +80,8 @@ fun setup(): Environment {
 @Composable
 fun App(environment: Environment) {
     val forest = environment.forestLogger
+    // FIXME: Need to hoist this higher so configuration changes on
+    // Android don't reset it
     var handle: GameStateHandle? by remember { mutableStateOf(null) }
     var lastUsedConfig: Configuration? by remember { mutableStateOf(null) }
     Root(
@@ -109,7 +111,11 @@ fun Root(
     onQuit: () -> Unit,
 ) = HnefataflMaterialTheme {
     ProvideStrings {
-        Box(modifier = Modifier.safeContentPadding()) {
+        Box(
+            modifier = Modifier
+                .background(color = MaterialTheme.colorScheme.surface)
+                .safeDrawingPadding()
+        ) {
             Surface {
                 when (handle) {
                     null -> MenuContent(onNewGame = onNewGame)
@@ -250,7 +256,7 @@ fun Content(
     }
     val mainContent: @Composable () -> Unit = {
         Box(
-            Modifier.fillMaxWidth().padding(8.dp),
+            Modifier.fillMaxSize().padding(vertical = 8.dp),
             contentAlignment = Alignment.Center,
         ) {
             Board(
