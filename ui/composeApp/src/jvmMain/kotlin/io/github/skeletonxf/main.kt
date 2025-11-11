@@ -9,6 +9,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
+import io.github.skeletonxf.settings.DesktopFilePaths
 import io.github.skeletonxf.settings.Settings
 import io.github.skeletonxf.ui.App
 import io.github.skeletonxf.ui.Res
@@ -18,10 +19,10 @@ import org.jetbrains.compose.resources.painterResource
 import java.awt.Dimension
 
 fun main() = application {
-    val environment = setup()
+    val environment = setup(filePaths = DesktopFilePaths)
     Window(
         onCloseRequest = {
-            Settings.instance.save(immediate = true)
+            environment.settings.save(immediate = true)
             exitApplication()
         },
         title = "Hnefatafl",

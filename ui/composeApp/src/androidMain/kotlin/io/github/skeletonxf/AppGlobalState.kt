@@ -1,6 +1,7 @@
 package io.github.skeletonxf
 
 import android.content.Context
+import io.github.skeletonxf.settings.AndroidFilePaths
 import io.github.skeletonxf.ui.setup
 
 /**
@@ -9,7 +10,8 @@ import io.github.skeletonxf.ui.setup
 class AppGlobalState private constructor(
     private val applicationContext: Context,
 ) {
-    val environment = setup()
+    val filePaths = AndroidFilePaths(applicationContext)
+    val environment = setup(filePaths = filePaths)
 
     companion object {
         private val instance: AppGlobalState? = null

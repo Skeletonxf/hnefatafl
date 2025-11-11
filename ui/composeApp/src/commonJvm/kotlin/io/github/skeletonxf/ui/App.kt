@@ -24,6 +24,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -51,6 +52,9 @@ import io.github.skeletonxf.logging.LogLevel
 import io.github.skeletonxf.logging.PrintLogger
 import io.github.skeletonxf.logging.Tree
 import io.github.skeletonxf.logging.TreeIdentifier
+import io.github.skeletonxf.settings.FilePaths
+import io.github.skeletonxf.settings.Setting
+import io.github.skeletonxf.settings.Settings
 import io.github.skeletonxf.ui.strings.LocalStrings
 import io.github.skeletonxf.ui.strings.ProvideStrings
 import io.github.skeletonxf.ui.strings.Strings
@@ -63,18 +67,42 @@ import kotlinx.coroutines.SupervisorJob
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import java.lang.Integer.max
 import java.lang.Integer.min
+import java.nio.file.Path
+import java.nio.file.Paths
 
 val localBackgroundScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
 data class Environment(
     val forestLogger: ForestLogger,
-)
+    val filePaths: FilePaths,
+    val settings: Settings,
+) {
+    companion object {
+        fun dummy(): Environment = Environment(
+            forestLogger = ForestLogger(),
+            filePaths = object : FilePaths {
+                override fun settingsPath(): Path = Paths.get("./settings.toml")
+            },
+            settings = object : Settings {
+                override val locale: Setting<String> = object : Setting<String> {
+                    override val value = mutableStateOf("en-GB")
+                    override fun set(value: String) = Unit
+                }
+                override fun save(immediate: Boolean) = Unit
+            }
+        )
+    }
+}
 
-fun setup(): Environment {
+fun setup(filePaths: FilePaths): Environment {
     Log.add(PrintLogger())
     val forest = ForestLogger()
     Log.add(forest)
-    return Environment(forest)
+    return Environment(
+        forestLogger = forest,
+        filePaths = filePaths,
+        settings = Settings.new(ioScope = localBackgroundScope, filePaths = filePaths)
+    )
 }
 
 @Composable
@@ -85,6 +113,7 @@ fun App(environment: Environment) {
     var handle: GameStateHandle? by remember { mutableStateOf(null) }
     var lastUsedConfig: Configuration? by remember { mutableStateOf(null) }
     Root(
+        environment = environment,
         handle = handle,
         timber = forest.timber.collectAsState().value,
         onDismiss = forest::dismiss,
@@ -103,6 +132,7 @@ fun App(environment: Environment) {
 
 @Composable
 fun Root(
+    environment: Environment,
     handle: GameStateHandle?,
     timber: List<Tree>,
     onDismiss: (TreeIdentifier) -> Unit,
@@ -110,7 +140,7 @@ fun Root(
     onRestart: () -> Unit,
     onQuit: () -> Unit,
 ) = HnefataflMaterialTheme {
-    ProvideStrings {
+    ProvideStrings(settings = environment.settings) {
         Box(
             modifier = Modifier
                 .background(color = MaterialTheme.colorScheme.surface)

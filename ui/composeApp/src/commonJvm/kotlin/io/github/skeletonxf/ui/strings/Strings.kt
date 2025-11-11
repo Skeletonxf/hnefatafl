@@ -5,11 +5,10 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import io.github.skeletonxf.logging.Log
-import io.github.skeletonxf.settings.LocalSettings
+import io.github.skeletonxf.settings.Settings
 import java.util.Locale
 
 data class Strings(
@@ -140,8 +139,10 @@ val LocalStrings = compositionLocalOf { britishEnglish }
 val LocalChangeStrings = staticCompositionLocalOf<(String) -> Unit> { {} }
 
 @Composable
-fun ProvideStrings(content: @Composable () -> Unit) {
-    val settings = LocalSettings.current
+fun ProvideStrings(
+    settings: Settings,
+    content: @Composable () -> Unit,
+) {
     val strings by remember {
         val locale by settings.locale.value
         derivedStateOf {

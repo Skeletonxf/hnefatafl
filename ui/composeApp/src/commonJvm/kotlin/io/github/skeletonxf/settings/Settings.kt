@@ -18,8 +18,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 
-val LocalSettings = staticCompositionLocalOf { Settings.instance }
-
 interface Setting<T : Any> {
     val value: State<T>
     fun set(value: T)
@@ -31,11 +29,11 @@ interface Settings {
     fun save(immediate: Boolean = false)
 
     companion object {
-        // TODO: Need to look into setting up proper DI instead of making the background scope and this
-        // static objects
-        internal val instance: Settings = new(localBackgroundScope)
-        fun new(ioScope: CoroutineScope): Settings = ConfigFileSettings
-            .create(Paths.get("./settings.toml"), ioScope)
+        fun new(
+            ioScope: CoroutineScope,
+            filePaths: FilePaths,
+        ): Settings = ConfigFileSettings
+            .create(filePaths.settingsPath(), ioScope)
     }
 }
 
