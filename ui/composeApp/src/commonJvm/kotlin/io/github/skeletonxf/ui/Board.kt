@@ -97,34 +97,51 @@ fun Board(
         if (!width.isFinite || !height.isFinite) {
             throw UnsupportedOperationException("Unsupported constraints: $constraints")
         }
-        // TODO: Put graveyards horizontally when we have more vertical space
-        // than horizontal. This will free up space to make tiles bigger on
-        // mobile. Making side area 0 for now seems to mostly work to free up
-        // the space for most screen dimensions but it has some cases where we
-        // don't allocate enough pixels to the graveyards on portrait displays.
-        val sideArea = 0.dp
-        val square = min(width - (sideArea * 2), height)
+        val longerLength = max(width, height)
+        val shorterLength = min(width, height)
+        val isHorizontal = width > height
+        // The board length gives the number of tiles for our shorter length
+        // We need to reserve at least 32 dp on the longer length on both sides
+        // for the graveyards. This could make the longer length become shorter
+        // after factoring in the graveyards.
+        val longerBoardLength = longerLength - 64.dp
+        val shorterBoardLength = shorterLength
+        val square = min(shorterBoardLength, longerBoardLength)
         val margin = 1.dp
         val margins = margin.value * (board.length + 1)
         val availableTileSize = min(((square.value - margins) / board.length.toFloat()).dp, 64.dp)
-        val roundedDownTileSize = (availableTileSize.value.toInt() / 4) * 4
+        val roundedDownTileSize = (availableTileSize.value.roundToInt() / 4) * 4
         val tileSize = roundedDownTileSize.dp - margin
         val boardSize = (tileSize * board.length) + (margin * (board.length + 1))
         val selectedPiece = selected?.let { board[it.x, it.y] }
-        val availableSideWidth = (width - boardSize) / 2
-        val sideMargin = 4.dp
-        val sideWidth = min(availableSideWidth - sideMargin, tileSize)
-        Row {
+
+        val availableSideWidth = (longerLength - boardSize) / 2
+        val sideMargin = if (availableSideWidth < 100.dp) {
+            2.dp
+        } else {
+            4.dp
+        }
+        val sideSpace = min(availableSideWidth - sideMargin, tileSize)
+        val graveyardSize = if (isHorizontal) {
+            Modifier
+                .width(sideSpace)
+                .height(boardSize)
+        } else {
+            Modifier
+                .height(sideSpace)
+                .width(boardSize)
+        }
+        val defenderGraveyard: @Composable () -> Unit = {
             PieceGraveyard(
                 dead = dead.filter { it.ownedBy(Player.Defender) },
-                tileSize = sideWidth,
+                tileSize = sideSpace,
                 modifier = Modifier
                     .background(MaterialTheme.colorScheme.background)
                     .border(width = margin, color = HnefataflColors.night)
-                    .width(sideWidth)
-                    .height(boardSize)
+                    .then(graveyardSize)
             )
-            Spacer(Modifier.width(sideMargin))
+        }
+        val boardContents: @Composable () -> Unit = {
             Box(modifier = Modifier.background(HnefataflColors.night).size(boardSize)) {
                 Column(modifier = Modifier.fillMaxSize()) {
                     for (row in 0 until board.length) {
@@ -182,16 +199,33 @@ fun Board(
                     }
                 }
             }
-            Spacer(Modifier.width(sideMargin))
+        }
+        val attackerGraveyard: @Composable () -> Unit = {
             PieceGraveyard(
                 dead = dead.filter { it.ownedBy(Player.Attacker) },
-                tileSize = sideWidth,
+                tileSize = sideSpace,
                 modifier = Modifier
                     .background(MaterialTheme.colorScheme.background)
                     .border(width = margin, color = HnefataflColors.night)
-                    .width(sideWidth)
-                    .height(boardSize)
+                    .then(graveyardSize)
             )
+        }
+        if (isHorizontal) {
+            Row {
+                defenderGraveyard()
+                Spacer(Modifier.width(sideMargin))
+                boardContents()
+                Spacer(Modifier.width(sideMargin))
+                attackerGraveyard()
+            }
+        } else {
+            Column {
+                defenderGraveyard()
+                Spacer(Modifier.height(sideMargin))
+                boardContents()
+                Spacer(Modifier.height(sideMargin))
+                attackerGraveyard()
+            }
         }
     }
 }
@@ -329,9 +363,11 @@ private fun PieceGraveyard(
         }
         val width = max(constraints.minWidth, constraints.maxWidth)
         val height = max(constraints.minHeight, constraints.maxHeight)
+        val longerLength = max(width, height)
+        val isHorizontal = width > height
         val pieces = measurables.size
-        val heightPerPiece = (height - (tileSize.toPx() / 2)) / pieces
-        val heightUsed = heightPerPiece
+        val spacePerPiece = (longerLength - (tileSize.toPx() / 2)) / pieces
+        val spaceUsed = spacePerPiece
         val placeables = measurables.map { measurable ->
             measurable.measure(
                 Constraints(
@@ -343,13 +379,24 @@ private fun PieceGraveyard(
             )
         }
         layout(width, height) {
-            var y = height - (tileSize.toPx() / 2)
+            var i = if (isHorizontal) {
+                width - (tileSize.toPx() / 2)
+            } else {
+                height - (tileSize.toPx() / 2)
+            }
             placeables.forEach { placeable ->
-                placeable.placeRelative(
-                    x = (width - placeable.width) / 2,
-                    y = (y - (placeable.height / 2)).roundToInt(),
-                )
-                y -= heightUsed
+                if (isHorizontal) {
+                    placeable.placeRelative(
+                        x = (i - (placeable.width) / 2).roundToInt(),
+                        y = (height - placeable.height) / 2,
+                    )
+                } else {
+                    placeable.placeRelative(
+                        x = (width - placeable.width) / 2,
+                        y = (i - (placeable.height / 2)).roundToInt(),
+                    )
+                }
+                i -= spaceUsed
             }
         }
     }
@@ -357,7 +404,7 @@ private fun PieceGraveyard(
 
 @Composable
 @Preview
-private fun PieceGraveyardPreview() = PreviewSurface {
+private fun PieceGraveyardRowsPreview() = PreviewSurface {
     Row {
         listOf(1, 3, 4, 6, 10, 12, 16, 18).forEach { number ->
             PieceGraveyard(
@@ -367,6 +414,24 @@ private fun PieceGraveyardPreview() = PreviewSurface {
                     .background(HnefataflColors.light)
                     .width(50.dp)
                     .height(300.dp),
+                tileSize = 32.dp
+            )
+        }
+    }
+}
+
+@Composable
+@Preview
+private fun PieceGraveyardColumnsPreview() = PreviewSurface {
+    Column {
+        listOf(1, 3, 4, 6, 10, 12, 16, 18).forEach { number ->
+            PieceGraveyard(
+                dead = List(number) { Tile.Defender },
+                modifier = Modifier
+                    .padding(vertical = 2.dp)
+                    .background(HnefataflColors.light)
+                    .width(300.dp)
+                    .height(50.dp),
                 tileSize = 32.dp
             )
         }

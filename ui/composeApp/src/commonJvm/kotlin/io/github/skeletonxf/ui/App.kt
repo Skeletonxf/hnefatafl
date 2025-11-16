@@ -286,7 +286,7 @@ fun Content(
     }
     val mainContent: @Composable () -> Unit = {
         Box(
-            Modifier.fillMaxSize().padding(vertical = 8.dp),
+            Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center,
         ) {
             Board(
