@@ -15,7 +15,10 @@ import io.github.skeletonxf.functions.launchUnit
 import io.github.skeletonxf.logging.Log
 import io.github.skeletonxf.ui.Role
 import io.github.skeletonxf.ui.RoleType
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 
 private fun uniffi.hnefatafl.FlatPlay.Companion.from(play: Play) = uniffi.hnefatafl.FlatPlay(
     fromX = play.from.x.toUByte(),
@@ -26,9 +29,11 @@ private fun uniffi.hnefatafl.FlatPlay.Companion.from(play: Play) = uniffi.hnefat
 
 class GameStateHandle(
     private val coroutineScope: CoroutineScope,
-    private val configuration: Configuration,
+    val configuration: Configuration,
 ) : GameState {
     private val handle = uniffi.hnefatafl.GameStateHandle()
+
+    private var ongoingPlay: Job? = null
 
     override val state: MutableState<GameState.State> = mutableStateOf(
         getGameState(UIState.from(configuration))
@@ -65,18 +70,18 @@ class GameStateHandle(
 
     override fun debug() = Log.debug(handle.debug())
 
-    override fun makePlay(play: Play) = coroutineScope.launchUnit {
+    override fun makePlay(play: Play) = attemptPlay {
         val ui = when (val s = state.value) {
             is GameState.State.Game -> when (s.turnPlayerRole()) {
                 is Role.Human -> s.uiState()
                 is Role.Computer -> {
                     Log.error("Cannot make human play on a computer's turn")
-                    return@launchUnit
+                    return@attemptPlay
                 }
             }
             is GameState.State.FatalError -> {
                 Log.error("Cannot make play in a fatal error state")
-                return@launchUnit
+                return@attemptPlay
             }
         }
         state.value = KResult.runCatching {
@@ -95,7 +100,7 @@ class GameStateHandle(
         )
     }
 
-    override fun makeBotPlay() = coroutineScope.launchUnit {
+    override fun makeBotPlay() = attemptPlay {
         val ui = when (val s = state.value) {
             is GameState.State.Game -> when (s.turnPlayerRole()) {
                 is Role.Computer -> {
@@ -119,14 +124,15 @@ class GameStateHandle(
                 }
 
                 is Role.Human -> {
-                    Log.error("Cannot make bot play on a human's turn")
-                    return@launchUnit
+                    //Log.error("Cannot make bot play on a human's turn")
+                    return@attemptPlay
                 }
             }
 
             is GameState.State.FatalError -> {
                 Log.error("Cannot make play in a fatal error state")
-                return@launchUnit
+                ongoingPlay = null
+                return@attemptPlay
             }
         }
         state.value = KResult.runCatching {
@@ -139,6 +145,30 @@ class GameStateHandle(
                 }
             }
         )
+    }
+
+    /**
+     * Critical section for the Job that will update the board state.
+     * In some rare cases such as configuration changes on Android we
+     * might expect multiple calls to the GameStateHandle to perform a
+     * play, and we need to ignore them if one is in progress.
+     */
+    private fun attemptPlay(
+        block: suspend CoroutineScope.() -> Unit
+    ) = synchronized(this) {
+        if (ongoingPlay == null) {
+            try {
+                ongoingPlay = coroutineScope.launch {
+                    block()
+                    ongoingPlay = null
+                }
+            } catch (error: CancellationException) {
+                ongoingPlay = null
+                throw error
+            }
+        } else {
+            //Log.debug("Ignored repeat request to make bot play")
+        }
     }
 
     private fun getGameState(ui: UIState): GameState.State = with (configuration) {

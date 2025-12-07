@@ -52,6 +52,7 @@ import io.github.skeletonxf.logging.LogLevel
 import io.github.skeletonxf.logging.PrintLogger
 import io.github.skeletonxf.logging.Tree
 import io.github.skeletonxf.logging.TreeIdentifier
+import io.github.skeletonxf.settings.Config
 import io.github.skeletonxf.settings.FilePaths
 import io.github.skeletonxf.settings.Setting
 import io.github.skeletonxf.settings.Settings
@@ -77,6 +78,25 @@ data class Environment(
     val filePaths: FilePaths,
     val settings: Settings,
 ) {
+    private val handle = mutableStateOf<GameStateHandle?>(null)
+
+    val gameStateHandle: GameStateHandle?
+        get() = handle.value
+
+    fun startNewGame(config: Configuration) {
+        handle.value = GameStateHandle(localBackgroundScope, config)
+    }
+
+    fun restartGame(): Boolean {
+        val config = gameStateHandle?.configuration ?: return false
+        startNewGame(config)
+        return true
+    }
+
+    fun stopGame() {
+        handle.value = null
+    }
+
     companion object {
         fun dummy(): Environment = Environment(
             forestLogger = ForestLogger(),
@@ -108,25 +128,19 @@ fun setup(filePaths: FilePaths): Environment {
 @Composable
 fun App(environment: Environment) {
     val forest = environment.forestLogger
-    // FIXME: Need to hoist this higher so configuration changes on
-    // Android don't reset it
-    var handle: GameStateHandle? by remember { mutableStateOf(null) }
-    var lastUsedConfig: Configuration? by remember { mutableStateOf(null) }
     Root(
         environment = environment,
-        handle = handle,
+        handle = environment.gameStateHandle,
         timber = forest.timber.collectAsState().value,
         onDismiss = forest::dismiss,
-        onNewGame = { config ->
-            lastUsedConfig = config
-            handle = GameStateHandle(localBackgroundScope, config)
-        },
+        onNewGame = environment::startNewGame,
         onRestart = {
-            lastUsedConfig
-                ?.let { config -> handle = GameStateHandle(localBackgroundScope, config) }
-                ?: Log.error("Unable to find configuration used for previous game")
+            val success = environment.restartGame()
+            if (!success) {
+                Log.error("Unable to find configuration used for previous game")
+            }
         },
-        onQuit = { handle = null },
+        onQuit = environment::stopGame,
     )
 }
 
@@ -187,7 +201,6 @@ fun AppContent(
                 onQuit = onQuit,
             )
             LaunchedEffect(state.turn) {
-                // TODO: Prevent player attempting to make moves while it's the computer's turn
                 if (state.turnPlayerRole() is Role.Computer) {
                     makeBotPlay()
                 }

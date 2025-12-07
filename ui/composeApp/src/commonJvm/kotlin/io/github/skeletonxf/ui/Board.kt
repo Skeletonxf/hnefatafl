@@ -71,7 +71,7 @@ fun Board(
         }
     }
     Board(
-        board,
+        board = board,
         moves = boardState.filterPlaysToSelected(plays),
         dead = dead,
         onSelect = boardState::select.takeUnless { isLoading } ?: {},

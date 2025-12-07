@@ -14,12 +14,16 @@ class AppGlobalState private constructor(
     val environment = setup(filePaths = filePaths)
 
     companion object {
-        private val instance: AppGlobalState? = null
+        private var instance: AppGlobalState? = null
 
         fun getInstance(
             applicationContext: Context
         ): AppGlobalState = synchronized(this) {
-            instance ?: AppGlobalState(applicationContext)
+            instance ?: run {
+                val state = AppGlobalState(applicationContext)
+                instance = state
+                state
+            }
         }
     }
 }
