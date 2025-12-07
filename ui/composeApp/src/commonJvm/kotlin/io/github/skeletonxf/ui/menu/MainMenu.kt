@@ -23,7 +23,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,7 +42,7 @@ import org.jetbrains.compose.resources.painterResource
 
 @Composable
 fun LanguagePicker() {
-    var dropdown by remember { mutableStateOf(false) }
+    var dropdown by rememberSaveable { mutableStateOf(false) }
     LanguagePicker(
         dropdown = dropdown,
         onSetDropdown = { dropdown = it },

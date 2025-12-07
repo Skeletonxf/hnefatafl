@@ -7,7 +7,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -23,7 +23,7 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 fun MenuContent(
     onNewGame: (Configuration) -> Unit,
 ) = Surface {
-    var state by remember { mutableStateOf(MenuState.MainMenu) }
+    var state by rememberSaveable { mutableStateOf(MenuState.MainMenu) }
     Column(
         modifier = Modifier.fillMaxSize().shaderGradient(color1 = HnefataflColors.grey, color2 = Color.White)
     ) {
