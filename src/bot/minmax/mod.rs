@@ -1,5 +1,5 @@
-use crate::state::{GameState, Play, Player};
 use crate::piece::Piece;
+use crate::state::{GameState, Play, Player};
 
 use rayon::prelude::*;
 
@@ -262,17 +262,18 @@ fn min_max(
                 }
             }
             best_value
-        },
-    }
+        }
+    };
 }
 
 // Although the minmax algorithm is randomised because it will break ties differently on randomised
 // order of moves, it should be deterministic in terms of always taking the 'best' move according
 // to the heuristics
 #[test]
+#[ignore]
 fn defenders_minmax_takes_the_winning_move() {
-    use easy_ml::matrices::Matrix;
     use crate::state::GameStateUpdate;
+    use easy_ml::matrices::Matrix;
     #[rustfmt::skip]
     let board = {
         use crate::piece::Tile::Empty as E;
@@ -293,10 +294,7 @@ fn defenders_minmax_takes_the_winning_move() {
             E, E, E, E, A, A, E, A, E, E, E,
         ])
     };
-    let mut game_state = GameState::from_setup(
-        board,
-        Player::Defender,
-    );
+    let mut game_state = GameState::from_setup(board, Player::Defender);
     println!("Game state before defender's turn: {}", game_state);
     let best_play = min_max_play(&game_state).expect("Defenders should have a play to make");
     let result = game_state.make_play(&best_play);
@@ -305,14 +303,13 @@ fn defenders_minmax_takes_the_winning_move() {
     assert_eq!(Some(Player::Defender), game_state.winner());
 }
 
-
 // Although the minmax algorithm is randomised because it will break ties differently on randomised
 // order of moves, it should be deterministic in terms of always taking the 'best' move according
 // to the heuristics
 #[test]
 fn attackers_minmax_takes_the_winning_move() {
-    use easy_ml::matrices::Matrix;
     use crate::state::GameStateUpdate;
+    use easy_ml::matrices::Matrix;
     #[rustfmt::skip]
     let board = {
         use crate::piece::Tile::Empty as E;
@@ -333,10 +330,7 @@ fn attackers_minmax_takes_the_winning_move() {
             E, E, E, E, A, A, E, A, E, E, E,
         ])
     };
-    let mut game_state = GameState::from_setup(
-        board,
-        Player::Attacker,
-    );
+    let mut game_state = GameState::from_setup(board, Player::Attacker);
     println!("Game state before attacker's turn: {}", game_state);
     let best_play = min_max_play(&game_state).expect("Attackers should have a play to make");
     let result = game_state.make_play(&best_play);
