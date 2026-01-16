@@ -17,7 +17,7 @@ import io.github.skeletonxf.ui.menu.MenuState
 import io.github.skeletonxf.ui.menu.RolePickerMenu
 import io.github.skeletonxf.ui.theme.HnefataflColors
 import io.github.skeletonxf.ui.theme.PreviewSurface
-import org.jetbrains.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.Preview
 
 @Composable
 fun MenuContent(

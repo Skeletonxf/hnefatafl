@@ -24,12 +24,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.Layout
@@ -52,7 +49,6 @@ import io.github.skeletonxf.logging.LogLevel
 import io.github.skeletonxf.logging.PrintLogger
 import io.github.skeletonxf.logging.Tree
 import io.github.skeletonxf.logging.TreeIdentifier
-import io.github.skeletonxf.settings.Config
 import io.github.skeletonxf.settings.FilePaths
 import io.github.skeletonxf.settings.Setting
 import io.github.skeletonxf.settings.Settings
@@ -65,7 +61,7 @@ import io.github.skeletonxf.ui.theme.HnefataflMaterialTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import org.jetbrains.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.Preview
 import java.lang.Integer.max
 import java.lang.Integer.min
 import java.nio.file.Path

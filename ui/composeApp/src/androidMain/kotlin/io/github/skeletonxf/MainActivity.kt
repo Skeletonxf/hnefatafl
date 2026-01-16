@@ -5,12 +5,9 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
-import io.github.skeletonxf.settings.AndroidFilePaths
 import io.github.skeletonxf.ui.App
 import io.github.skeletonxf.ui.Environment
-import io.github.skeletonxf.ui.setup
 
 class MainActivity : ComponentActivity() {
     lateinit var appGlobalState: AppGlobalState
