@@ -141,7 +141,9 @@ fn min_max(
     let plays = game_state.available_plays();
     // Winning sooner is better than winning later, we don't want the bot to ignore a 'free' win
     // because the opponent can't actually deny it one or two turns later.
-    let victory_delay_penalty = (STARTING_DEPTH - depth_remaining) as i8;
+    // If it can win at maximum depth remaining we want the penalty to be 0 as this is
+    // the best possible move the bot could take.
+    let victory_delay_penalty = ((STARTING_DEPTH - 1) - depth_remaining) as i8;
     if let Some(winner) = game_state.winner() {
         return match winner {
             // Victory for defenders is min score
@@ -160,8 +162,8 @@ fn min_max(
         let plays = game_state.available_plays();
         let king = game_state.king_position();
         match player {
-            // Defenders can only win by moving the king so we can ignore all other plays
-            // that don't move it
+            // Defenders can almost always only win by moving the king so we can
+            // ignore all other plays that don't move it
             MinMaxPlayer::Minimising => {
                 for play in plays {
                     if play.from != king {
@@ -182,10 +184,37 @@ fn min_max(
                     }
                 }
             },
-            // Attackers can almost only win by capturing the king so we could potentially prune
-            // these plays a little too?
             MinMaxPlayer::Maximising => {
+                let possible_king_capture_positions = {
+                    let (x, y) = king;
+                    let (length_w, length_h) = game_state.size();
+                    let mut positions = Vec::with_capacity(4);
+                    if x > 1 {
+                        positions.push((x - 1, y));
+                    }
+                    if y > 1 {
+                        positions.push((x, y - 1));
+                    }
+                    if x < length_w - 1 {
+                        positions.push((x + 1, y));
+                    }
+                    if y < length_h - 1 {
+                        positions.push((x, y + 1));
+                    }
+                    positions
+                };
                 for play in plays {
+                    if !possible_king_capture_positions.contains(&play.to) {
+                        // In rare cases it is possible that a non-capturing
+                        // move could win the game due to how we have implemented
+                        // resolving a player left with no remaining moves as a
+                        // loss (which attackers are more likely to be able to
+                        // force), but this is unlikely and also not in the immediate
+                        // future because we're checking at a depth of 0 here, so
+                        // the performance gain of not checking most plays at no
+                        // depth is worth the accuracy penalty.
+                        continue;
+                    }
                     let state = {
                         let mut copy = game_state.clone();
                         copy
@@ -270,7 +299,6 @@ fn min_max(
 // order of moves, it should be deterministic in terms of always taking the 'best' move according
 // to the heuristics
 #[test]
-#[ignore]
 fn defenders_minmax_takes_the_winning_move() {
     use crate::state::GameStateUpdate;
     use easy_ml::matrices::Matrix;
