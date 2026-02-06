@@ -48,6 +48,7 @@ import io.github.skeletonxf.ui.theme.HnefataflColors
 import io.github.skeletonxf.ui.theme.PreviewSurface
 import org.jetbrains.compose.resources.painterResource
 import androidx.compose.ui.tooling.preview.Preview
+import java.lang.Float.min
 import kotlin.math.max
 import kotlin.math.roundToInt
 
@@ -367,7 +368,12 @@ private fun PieceGraveyard(
         val isHorizontal = width > height
         val pieces = measurables.size
         val spacePerPiece = (longerLength - (tileSize.toPx() / 2)) / pieces
-        val spaceUsed = spacePerPiece
+        // If we have more space for tiles than we
+        // actually need, we'll just stack them without
+        // any overlapping, but if we're short on space
+        // we're overlap the tiles by dividing the space
+        // between them.
+        val spaceUsed = min(spacePerPiece, tileSize.toPx())
         val placeables = measurables.map { measurable ->
             measurable.measure(
                 Constraints(
@@ -379,7 +385,7 @@ private fun PieceGraveyard(
             )
         }
         layout(width, height) {
-            var i = if (isHorizontal) {
+            var claimed = if (isHorizontal) {
                 width - (tileSize.toPx() / 2)
             } else {
                 height - (tileSize.toPx() / 2)
@@ -387,16 +393,16 @@ private fun PieceGraveyard(
             placeables.forEach { placeable ->
                 if (isHorizontal) {
                     placeable.placeRelative(
-                        x = (i - (placeable.width) / 2).roundToInt(),
+                        x = (claimed - (placeable.width) / 2).roundToInt(),
                         y = (height - placeable.height) / 2,
                     )
                 } else {
                     placeable.placeRelative(
                         x = (width - placeable.width) / 2,
-                        y = (i - (placeable.height / 2)).roundToInt(),
+                        y = (claimed - (placeable.height / 2)).roundToInt(),
                     )
                 }
-                i -= spaceUsed
+                claimed -= spaceUsed
             }
         }
     }
