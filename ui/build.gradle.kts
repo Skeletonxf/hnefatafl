@@ -10,4 +10,5 @@ plugins {
     alias(libs.plugins.kotlinJvm) apply false
     alias(libs.plugins.gobleyCargo) apply false
     alias(libs.plugins.gobleyUniffi) apply false
+    alias(libs.plugins.jetbrains.kotlin.serialization) apply false
 }
