@@ -19,6 +19,10 @@ compose-ui = "1.10.0"
 compose-uiToolingPreview = "1.10.0"
 compose-componentsResources = "1.10.0"
 
+nav3Core = "1.1.0-alpha02"
+lifecycleViewmodelNav3 = "2.10.0-alpha08"
+kotlinxSerializationCore = "1.10.0"
+
 # UniFFI version needs to match Gobley version used in gradle
 # https://gobley.dev/docs/bindgen
 gobley = "0.3.7"
@@ -38,6 +42,13 @@ compose-ui = { module = "org.jetbrains.compose.ui:ui", version.ref = "compose-ui
 compose-uiToolingPreview = { module = "org.jetbrains.compose.ui:ui-tooling-preview", version.ref = "compose-uiToolingPreview" }
 compose-componentsResources = { module = "org.jetbrains.compose.components:components-resources", version.ref = "compose-componentsResources" }
 
+# Core Navigation 3 libraries
+androidx-navigation3-ui = { module = "org.jetbrains.androidx.navigation3:navigation3-ui", version.ref = "nav3Core" }
+
+# Optional add-on libraries
+androidx-lifecycle-viewmodel-navigation3 = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-navigation3", version.ref = "lifecycleViewmodelNav3" }
+kotlinx-serialization-core = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core", version.ref = "kotlinxSerializationCore" }
+
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
 androidLibrary = { id = "com.android.library", version.ref = "agp" }
@@ -48,3 +59,4 @@ kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref =
 kotlinJvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 gobleyCargo = { id = "dev.gobley.cargo", version.ref = "gobley" }
 gobleyUniffi = { id = "dev.gobley.uniffi", version.ref = "gobley" }
+jetbrains-kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin"}

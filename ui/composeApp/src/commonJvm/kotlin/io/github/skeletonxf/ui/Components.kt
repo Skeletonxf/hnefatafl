@@ -27,7 +27,7 @@ fun LoadingSpinner(size: Dp, strokeWidth: Dp) {
     val preview = LocalInspectionMode.current
     if (preview) {
         CircularProgressIndicator(
-            progress = 0.5F,
+            progress = { 0.5F },
             modifier = Modifier.size(size),
             strokeWidth = strokeWidth
         )

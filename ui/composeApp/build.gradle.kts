@@ -44,6 +44,9 @@ kotlin {
             implementation(libs.compose.componentsResources)
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
+            implementation(libs.androidx.navigation3.ui)
+            implementation(libs.androidx.lifecycle.viewmodel.navigation3)
+            implementation(libs.kotlinx.serialization.core)
             implementation(project(":bindings"))
         }
         commonJvmTest.dependencies {

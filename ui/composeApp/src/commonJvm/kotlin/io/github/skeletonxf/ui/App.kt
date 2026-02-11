@@ -25,7 +25,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -33,14 +32,17 @@ import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import io.github.skeletonxf.ui.theme.PreviewSurface
+import androidx.navigationevent.NavigationEventInfo
+import androidx.navigationevent.compose.NavigationBackHandler
+import androidx.navigationevent.compose.rememberNavigationEventState
+import io.github.skeletonxf.data.Configuration
 import io.github.skeletonxf.data.Play
 import io.github.skeletonxf.data.Player
 import io.github.skeletonxf.data.Winner
-import io.github.skeletonxf.data.Configuration
 import io.github.skeletonxf.ffi.GameStateHandle
 import io.github.skeletonxf.functions.then
 import io.github.skeletonxf.logging.ForestLogger
@@ -52,16 +54,17 @@ import io.github.skeletonxf.logging.TreeIdentifier
 import io.github.skeletonxf.settings.FilePaths
 import io.github.skeletonxf.settings.Setting
 import io.github.skeletonxf.settings.Settings
+import io.github.skeletonxf.ui.nav.NavigationRoot
 import io.github.skeletonxf.ui.strings.LocalStrings
 import io.github.skeletonxf.ui.strings.ProvideStrings
 import io.github.skeletonxf.ui.strings.Strings
 import io.github.skeletonxf.ui.strings.locales
 import io.github.skeletonxf.ui.theme.HnefataflColors
 import io.github.skeletonxf.ui.theme.HnefataflMaterialTheme
+import io.github.skeletonxf.ui.theme.PreviewSurface
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import androidx.compose.ui.tooling.preview.Preview
 import java.lang.Integer.max
 import java.lang.Integer.min
 import java.nio.file.Path
@@ -126,29 +129,16 @@ fun App(environment: Environment) {
     val forest = environment.forestLogger
     Root(
         environment = environment,
-        handle = environment.gameStateHandle,
         timber = forest.timber.collectAsState().value,
         onDismiss = forest::dismiss,
-        onNewGame = environment::startNewGame,
-        onRestart = {
-            val success = environment.restartGame()
-            if (!success) {
-                Log.error("Unable to find configuration used for previous game")
-            }
-        },
-        onQuit = environment::stopGame,
     )
 }
 
 @Composable
 fun Root(
     environment: Environment,
-    handle: GameStateHandle?,
     timber: List<Tree>,
     onDismiss: (TreeIdentifier) -> Unit,
-    onNewGame: (Configuration) -> Unit,
-    onRestart: () -> Unit,
-    onQuit: () -> Unit,
 ) = HnefataflMaterialTheme {
     ProvideStrings(settings = environment.settings) {
         Box(
@@ -157,19 +147,7 @@ fun Root(
                 .safeDrawingPadding()
         ) {
             Surface {
-                when (handle) {
-                    null -> MenuContent(onNewGame = onNewGame)
-                    else -> {
-                        val state by handle.state
-                        AppContent(
-                            state = state,
-                            makePlay = handle::makePlay,
-                            makeBotPlay = handle::makeBotPlay,
-                            onQuit = onQuit,
-                            onRestart = onRestart,
-                        )
-                    }
-                }
+                NavigationRoot(environment)
             }
             SnackbarHost(timber, onDismiss, modifier = Modifier.align(Alignment.BottomCenter))
         }
@@ -201,6 +179,16 @@ fun AppContent(
                     makeBotPlay()
                 }
             }
+            // Disable back presses while playing to prevent accidentally
+            // quitting the game. TODO: Turn into confirmation dialog?
+            // FIXME: This seems to have no effect on Esc in desktop?
+            val navigationState = rememberNavigationEventState(NavigationEventInfo.None)
+            NavigationBackHandler(
+                state = navigationState,
+                isBackEnabled = state.winner != Winner.None,
+                onBackCancelled = {},
+                onBackCompleted = {},
+            )
         }
 
         is GameState.State.FatalError -> Column {
