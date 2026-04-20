@@ -2,6 +2,7 @@ package io.github.skeletonxf.ui
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -22,6 +23,7 @@ fun MainMenuContent(
         modifier = Modifier
             .fillMaxSize()
             .shaderGradient(color1 = HnefataflColors.grey, color2 = Color.White)
+            .safeDrawingPadding()
     ) {
         MainMenu(
             onNewGame = onNewGame,
@@ -36,7 +38,10 @@ fun RolePickerContent(
     onCancel: () -> Unit,
 ) = Surface {
     Column(
-        modifier = Modifier.fillMaxSize().shaderGradient(color1 = HnefataflColors.grey, color2 = Color.White)
+        modifier = Modifier
+            .fillMaxSize()
+            .shaderGradient(color1 = HnefataflColors.grey, color2 = Color.White)
+            .safeDrawingPadding()
     ) {
         RolePickerMenu(
             onNewGame = onNewGame,

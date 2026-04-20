@@ -3,8 +3,15 @@ package io.github.skeletonxf.ui.nav
 import androidx.compose.animation.ContentTransform
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
@@ -58,8 +65,31 @@ sealed interface Route: NavKey {
 @Composable
 fun NavigationRoot(
     environment: Environment,
+    snackbar: @Composable () -> Unit,
 ) {
     val backStack = Route.rememberNavigationStack()
+    Box(
+        modifier = Modifier
+            .background(color = MaterialTheme.colorScheme.surface)
+    ) {
+        Surface {
+            NavigationRoot(environment, backStack)
+        }
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .safeDrawingPadding()
+        ) {
+            snackbar()
+        }
+    }
+}
+
+@Composable
+private fun NavigationRoot(
+    environment: Environment,
+    backStack: NavBackStack<NavKey> = Route.rememberNavigationStack(),
+) {
     val handle = environment.gameStateHandle
     NavDisplay(
         backStack = backStack,

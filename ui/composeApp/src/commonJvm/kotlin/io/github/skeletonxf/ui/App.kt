@@ -8,17 +8,22 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.exclude
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Snackbar
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -34,6 +39,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigationevent.NavigationEventInfo
@@ -141,15 +147,8 @@ fun Root(
     onDismiss: (TreeIdentifier) -> Unit,
 ) = HnefataflMaterialTheme {
     ProvideStrings(settings = environment.settings) {
-        Box(
-            modifier = Modifier
-                .background(color = MaterialTheme.colorScheme.surface)
-                .safeDrawingPadding()
-        ) {
-            Surface {
-                NavigationRoot(environment)
-            }
-            SnackbarHost(timber, onDismiss, modifier = Modifier.align(Alignment.BottomCenter))
+        NavigationRoot(environment) {
+            SnackbarHost(timber, onDismiss)
         }
     }
 }
@@ -191,7 +190,9 @@ fun AppContent(
             )
         }
 
-        is GameState.State.FatalError -> Column {
+        is GameState.State.FatalError -> Column(
+            modifier = Modifier.safeDrawingPadding()
+        ) {
             Text(text = strings.failure)
             Spacer(Modifier.height(16.dp))
             Text(state.message)
@@ -271,19 +272,40 @@ fun Content(
     val boardState = rememberBoardState()
     val onRestart = boardState::deselect.then(onRestart)
     val onQuit = boardState::deselect.then(onQuit)
+    val safeDrawing = WindowInsets.safeDrawing
     val title: @Composable () -> Unit = {
         Crossfade(targetState = state.turn, animationSpec = tween(durationMillis = 500)) { turn ->
             Title(
                 turn = turn,
                 winner = state.winner,
                 turnCount = state.turnCount,
-                modifier = Modifier.fillMaxWidth().padding(start = 8.dp, top = 8.dp, end = 8.dp),
+                modifier = Modifier
+                    .padding(
+                        top = safeDrawing
+                            .asPaddingValues()
+                            .calculateTopPadding(),
+                        start = safeDrawing
+                            .asPaddingValues()
+                            .calculateLeftPadding(LayoutDirection.Ltr),
+                        end = safeDrawing
+                                .asPaddingValues()
+                            .calculateRightPadding(LayoutDirection.Ltr)
+                    )
+                    .padding(start = 8.dp, top = 8.dp, end = 8.dp),
             )
         }
     }
     val mainContent: @Composable () -> Unit = {
         Box(
-            Modifier.fillMaxSize(),
+            Modifier
+                .fillMaxSize()
+                .let { modifier ->
+                    val otherSafeDrawingInsets = WindowInsets.safeDrawing
+                        .exclude(WindowInsets.statusBars)
+                    modifier
+                        .padding(otherSafeDrawingInsets.asPaddingValues())
+                        .consumeWindowInsets(otherSafeDrawingInsets)
+                },
             contentAlignment = Alignment.Center,
         ) {
             Board(
@@ -338,11 +360,13 @@ fun Content(
         val titlePlaceable = titleMeasurable.measure(
             constraints.copy(
                 minHeight = 0,
-                minWidth = constraints.maxWidth - titleMargins,
+                minWidth = 0,
                 maxWidth = constraints.maxWidth - titleMargins,
             )
         )
-        val titleHeaderHeight = when (centerAlignTitle) {
+        val titleTopPaddingPixels = safeDrawing.getTop(this)
+        val titleLeftPaddingPixels = safeDrawing.getLeft(this, LayoutDirection.Ltr)
+        val titleHeaderHeight = titleTopPaddingPixels + when (centerAlignTitle) {
             true -> max(titlePlaceable.height, max(quitPlaceable.height, restartPlaceable.height))
             false -> max(titlePlaceable.height, quitPlaceable.height + restartPlaceable.height)
         }
@@ -397,13 +421,26 @@ fun Content(
             when (centerAlignTitle) {
                 true -> {
                     // Quit and restart buttons are pinned to the top corners
-                    quitPlaceable.placeRelative(x = 0, y = 0)
-                    restartPlaceable.placeRelative(x = constraints.maxWidth - restartPlaceable.width, y = 0)
+                    quitPlaceable.placeRelative(
+                        x = titleLeftPaddingPixels,
+                        y = titleTopPaddingPixels
+                    )
+                    restartPlaceable.placeRelative(
+                        x = titleLeftPaddingPixels + (constraints.maxWidth - restartPlaceable.width),
+                        y = titleTopPaddingPixels
+                    )
                 }
+
                 false -> {
                     // Quit and restart buttons are left aligned in a column
-                    quitPlaceable.placeRelative(x = 0, y = 0)
-                    restartPlaceable.placeRelative(x = 0, y = quitPlaceable.height)
+                    quitPlaceable.placeRelative(
+                        x = titleLeftPaddingPixels,
+                        y = titleTopPaddingPixels
+                    )
+                    restartPlaceable.placeRelative(
+                        x = titleLeftPaddingPixels,
+                        y = titleTopPaddingPixels + quitPlaceable.height
+                    )
                 }
             }
         }
