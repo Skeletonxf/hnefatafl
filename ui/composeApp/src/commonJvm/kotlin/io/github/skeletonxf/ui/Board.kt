@@ -2,6 +2,7 @@ package io.github.skeletonxf.ui
 
 import LoadingSpinner
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -29,6 +30,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap.Companion.Round
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
@@ -48,6 +53,7 @@ import io.github.skeletonxf.ui.theme.HnefataflColors
 import io.github.skeletonxf.ui.theme.PreviewSurface
 import org.jetbrains.compose.resources.painterResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.times
 import java.lang.Float.min
 import kotlin.math.max
 import kotlin.math.roundToInt
@@ -63,6 +69,7 @@ fun Board(
     plays: List<Play>,
     dead: List<Piece>,
     makePlay: (Play) -> Unit,
+    previousPlay: Play?,
     isLoading: Boolean,
 ) {
     // Clear selection and don't let the user select when loading
@@ -78,6 +85,7 @@ fun Board(
         onSelect = boardState::select.takeUnless { isLoading } ?: {},
         selected = boardState.selected.takeUnless { isLoading },
         makePlay = makePlay,
+        previousPlay = previousPlay,
         isLoading = isLoading,
     )
 }
@@ -90,6 +98,7 @@ fun Board(
     onSelect: (Position) -> Unit,
     selected: Position?,
     makePlay: (Play) -> Unit,
+    previousPlay: Play?,
     isLoading: Boolean,
 ) {
     BoxWithConstraints {
@@ -199,6 +208,35 @@ fun Board(
                         }
                     }
                 }
+                if (previousPlay != null) {
+                    val piece = board[previousPlay.to.x, previousPlay.to.y]
+                    val color = (piece as? Piece)?.tint() ?: Color.Unspecified
+                    Canvas(modifier = Modifier.size(boardSize)) {
+                        val stride = tileSize + margin
+                        val from = Offset(
+                            x = (tileSize / 2 + margin + (previousPlay.from.y * stride)).toPx(),
+                            y = (tileSize / 2 + margin + (previousPlay.from.x * stride)).toPx(),
+                        )
+                        val to = Offset(
+                            x = (tileSize / 2 + margin + (previousPlay.to.y * stride)).toPx(),
+                            y = (tileSize / 2 + margin + (previousPlay.to.x * stride)).toPx(),
+                        )
+                        drawLine(
+                            brush = Brush.linearGradient(
+                                colors = listOf(
+                                    color.copy(alpha = 0.25F),
+                                    color.copy(alpha = 0.75F),
+                                ),
+                                start = from,
+                                end = to,
+                            ),
+                            start = from,
+                            end = to,
+                            strokeWidth = (tileSize / 4).toPx(),
+                            cap = Round,
+                        )
+                    }
+                }
             }
         }
         val attackerGraveyard: @Composable () -> Unit = {
@@ -241,6 +279,7 @@ private fun EmptyBoardPreview() = PreviewSurface {
         onSelect = {},
         selected = null,
         makePlay = {},
+        previousPlay = null,
         isLoading = false,
     )
 }
@@ -255,6 +294,7 @@ private fun LoadingBoardPreview() = PreviewSurface {
         onSelect = {},
         selected = null,
         makePlay = {},
+        previousPlay = null,
         isLoading = true,
     )
 }
@@ -313,6 +353,13 @@ private fun Tile(
 }
 
 @Composable
+fun Piece.tint(): Color = when (this) {
+    Tile.Attacker -> HnefataflColors.brown
+    Tile.Defender -> HnefataflColors.night
+    Tile.King -> HnefataflColors.night
+}
+
+@Composable
 fun Piece.Icon(
     modifier: Modifier
 ) {
@@ -322,21 +369,21 @@ fun Piece.Icon(
             painter = painterResource(Res.drawable.piece),
             contentDescription = strings.attacker,
             modifier = modifier,
-            tint = HnefataflColors.brown,
+            tint = this.tint(),
         )
 
         Tile.Defender -> Icon(
             painter = painterResource(Res.drawable.piece),
             contentDescription = strings.defender,
             modifier = modifier,
-            tint = HnefataflColors.night,
+            tint = this.tint(),
         )
 
         Tile.King -> Icon(
             painter = painterResource(Res.drawable.king),
             contentDescription = strings.king,
             modifier = modifier,
-            tint = HnefataflColors.night,
+            tint = this.tint(),
         )
     }
 }

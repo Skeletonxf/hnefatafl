@@ -11,7 +11,6 @@ import io.github.skeletonxf.data.Play
 import io.github.skeletonxf.data.Player
 import io.github.skeletonxf.data.Tile
 import io.github.skeletonxf.data.Winner
-import io.github.skeletonxf.functions.launchUnit
 import io.github.skeletonxf.logging.Log
 import io.github.skeletonxf.ui.Role
 import io.github.skeletonxf.ui.RoleType
@@ -52,11 +51,13 @@ class GameStateHandle(
     private data class UIState(
         val attackers: Role,
         val defenders: Role,
+        val previousPlay: Play?,
     ) {
         companion object {
             fun from(configuration: Configuration) = UIState(
                 attackers = initialRoleState(configuration.attackers),
                 defenders = initialRoleState(configuration.defenders),
+                previousPlay = null,
             )
 
             private fun initialRoleState(type: RoleType): Role = when (type) {
@@ -66,7 +67,11 @@ class GameStateHandle(
         }
     }
 
-    private fun GameState.State.Game.uiState(): UIState = UIState(attackers, defenders)
+    private fun GameState.State.Game.uiState(): UIState = UIState(
+        attackers,
+        defenders,
+        previousPlay,
+    )
 
     override fun debug() = Log.debug(handle.debug())
 
@@ -87,7 +92,7 @@ class GameStateHandle(
         state.value = KResult.runCatching {
             handle.makePlay(uniffi.hnefatafl.FlatPlay.from(play))
         }.fold(
-            ok = { getGameState(ui) },
+            ok = { getGameState(ui.copy(previousPlay = play)) },
             error = { error ->
                 with(configuration) {
                     // FIXME: Errors seem to be getting misread by uniffi glue and not thrown
@@ -138,7 +143,7 @@ class GameStateHandle(
         state.value = KResult.runCatching {
             handle.makeBotPlay()
         }.fold(
-            ok = { getGameState(ui) },
+            ok = { botPlay -> getGameState(ui.copy(previousPlay = Play.from(botPlay.play))) },
             error = { error ->
                 with (configuration) {
                     fatalError("Failed to make bot play", error)
@@ -181,6 +186,7 @@ class GameStateHandle(
             turnCount = getTurnCount(),
             attackers = ui.attackers,
             defenders = ui.defenders,
+            previousPlay = ui.previousPlay,
         )
     }
 

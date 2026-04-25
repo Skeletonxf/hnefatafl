@@ -25,6 +25,7 @@ interface GameState {
             val turnCount: UInt,
             val attackers: Role,
             val defenders: Role,
+            val previousPlay: Play?,
         ) : State {
             fun turnPlayerRole() = when (turn) {
                 Player.Attacker -> attackers

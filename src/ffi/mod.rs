@@ -14,6 +14,12 @@ pub struct GameStateHandle {
     state: Mutex<GameState>,
 }
 
+#[derive(Clone, Debug, uniffi::Record)]
+pub struct BotPlay {
+    game_state_update: GameStateUpdate,
+    play: FlatPlay,
+}
+
 #[uniffi::export]
 impl GameStateHandle {
     #[uniffi::constructor]
@@ -69,7 +75,10 @@ impl GameStateHandle {
     }
 
     /// Makes a play with the bot, if legal
-    fn make_bot_play(&self) -> Result<GameStateUpdate, PlayError> {
+    ///
+    /// If a play was made successfully, also returns the play made with the
+    /// game state update.
+    fn make_bot_play(&self) -> Result<BotPlay, PlayError> {
         let mut state = self
             .state
             .lock()
@@ -78,6 +87,10 @@ impl GameStateHandle {
             state
                 .make_play(&play)
                 .map_err(|_| PlayError::Illegal(InvalidPlayError::Illegal))
+                .map(|game_state_update| BotPlay {
+                    game_state_update,
+                    play: play.into(),
+                })
         } else {
             Err(PlayError::None(NoPlayError::None))
         }

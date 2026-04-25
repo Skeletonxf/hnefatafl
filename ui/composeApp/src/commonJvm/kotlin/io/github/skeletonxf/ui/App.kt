@@ -314,6 +314,7 @@ fun Content(
                 plays = state.plays,
                 dead = state.dead,
                 makePlay = makePlay,
+                previousPlay = state.previousPlay,
                 isLoading = state.turnPlayerRole().isLoading
             )
         }
@@ -511,6 +512,7 @@ private fun ContentPreview() = PreviewSurface {
             turnCount = 0u,
             attackers = Role.Human(),
             defenders = Role.Human(),
+            previousPlay = null,
         ),
         makePlay = {},
         onRestart = {},
@@ -567,6 +569,7 @@ private fun GameOverPreview() = PreviewSurface {
             turnCount = 0u,
             attackers = Role.Human(),
             defenders = Role.Human(),
+            previousPlay = null,
         ),
         makePlay = {},
         onRestart = {},
