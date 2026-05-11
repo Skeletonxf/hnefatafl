@@ -1,29 +1,33 @@
 package io.github.skeletonxf.ui
 
+import TooltipIconButton
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.consumeWindowInsets
-import androidx.compose.foundation.layout.exclude
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.safeDrawingPadding
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Snackbar
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -33,24 +37,24 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Constraints
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigationevent.NavigationEventInfo
 import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
+import io.github.skeletonxf.HeaderAlignment
 import io.github.skeletonxf.data.Configuration
 import io.github.skeletonxf.data.Play
 import io.github.skeletonxf.data.Player
 import io.github.skeletonxf.data.Winner
 import io.github.skeletonxf.ffi.GameStateHandle
 import io.github.skeletonxf.functions.then
+import io.github.skeletonxf.getPlatform
 import io.github.skeletonxf.logging.ForestLogger
 import io.github.skeletonxf.logging.Log
 import io.github.skeletonxf.logging.LogLevel
@@ -71,8 +75,7 @@ import io.github.skeletonxf.ui.theme.PreviewSurface
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import java.lang.Integer.max
-import java.lang.Integer.min
+import org.jetbrains.compose.resources.painterResource
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -215,24 +218,11 @@ fun AppContent(
 }
 
 @Composable
-private fun QuitButton(onQuit: () -> Unit) {
-    Button(onClick = onQuit, modifier = Modifier.padding(horizontal = 12.dp)) {
-        Text(text = LocalStrings.current.game.quit)
-    }
-}
-
-@Composable
-private fun RestartButton(onRestart: () -> Unit) {
-    Button(onClick = onRestart, modifier = Modifier.padding(horizontal = 12.dp)) {
-        Text(text = LocalStrings.current.game.restart)
-    }
-}
-
-@Composable
 private fun Title(
     turn: Player,
     winner: Winner,
     turnCount: UInt,
+    textAlign: TextAlign,
     modifier: Modifier = Modifier,
 ) {
     val strings = LocalStrings.current.game
@@ -252,7 +242,7 @@ private fun Title(
         },
         modifier = modifier,
         color = HnefataflColors.night,
-        textAlign = TextAlign.Center,
+        textAlign = textAlign,
         style = TextStyle(
             fontWeight = FontWeight.Bold,
             fontSize = 32.sp,
@@ -261,7 +251,64 @@ private fun Title(
     )
 }
 
-@Suppress("NAME_SHADOWING")
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun Header(
+    state: GameState.State.Game,
+    onRestart: () -> Unit,
+    onQuit: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val strings = LocalStrings.current.game
+    Surface(
+        color = HnefataflColors.light,
+        modifier = modifier,
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            TooltipIconButton(
+                onClick = onQuit,
+                painter = painterResource(Res.drawable.close),
+                text = strings.quit,
+            )
+            val headerAlignment = getPlatform().headerAlignment
+            Box(modifier = Modifier.weight(1F)) {
+                Crossfade(
+                    targetState = state.turn,
+                    animationSpec = tween(durationMillis = 500)
+                ) { turn ->
+                    Title(
+                        turn = turn,
+                        winner = state.winner,
+                        turnCount = state.turnCount,
+                        textAlign = when (headerAlignment) {
+                            HeaderAlignment.Left -> TextAlign.Left
+                            HeaderAlignment.Center -> TextAlign.Center
+                        },
+                        modifier = Modifier.align(
+                            when (headerAlignment) {
+                                HeaderAlignment.Left -> Alignment.CenterStart
+                                HeaderAlignment.Center -> Alignment.Center
+                            }
+                        )
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp)
+                    )
+                }
+            }
+            TooltipIconButton(
+                onClick = onRestart,
+                painter = painterResource(Res.drawable.restart),
+                text = strings.restart,
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Content(
     state: GameState.State.Game,
@@ -273,39 +320,49 @@ fun Content(
     val onRestart = boardState::deselect.then(onRestart)
     val onQuit = boardState::deselect.then(onQuit)
     val safeDrawing = WindowInsets.safeDrawing
-    val title: @Composable () -> Unit = {
-        Crossfade(targetState = state.turn, animationSpec = tween(durationMillis = 500)) { turn ->
-            Title(
-                turn = turn,
-                winner = state.winner,
-                turnCount = state.turnCount,
-                modifier = Modifier
-                    .padding(
-                        top = safeDrawing
-                            .asPaddingValues()
-                            .calculateTopPadding(),
-                        start = safeDrawing
-                            .asPaddingValues()
-                            .calculateLeftPadding(LayoutDirection.Ltr),
-                        end = safeDrawing
-                                .asPaddingValues()
-                            .calculateRightPadding(LayoutDirection.Ltr)
-                    )
-                    .padding(start = 8.dp, top = 8.dp, end = 8.dp),
+
+    Column {
+        Box(
+            modifier = Modifier
+                .background(HnefataflColors.light)
+                .then(
+                    safeDrawing.let { insets ->
+                        val padding = insets.asPaddingValues()
+                        val layoutDirection = LocalLayoutDirection.current
+                        val excludingBottom = PaddingValues(
+                            top = padding.calculateTopPadding(),
+                            start = padding.calculateStartPadding(layoutDirection),
+                            end = padding.calculateEndPadding(layoutDirection),
+                        )
+                        Modifier
+                            .padding(excludingBottom)
+                            .consumeWindowInsets(excludingBottom)
+                    }
+                ),
+        ) {
+            Header(
+                state = state,
+                onRestart = onRestart,
+                onQuit = onQuit,
             )
         }
-    }
-    val mainContent: @Composable () -> Unit = {
+
         Box(
-            Modifier
+            modifier = Modifier
                 .fillMaxSize()
-                .let { modifier ->
-                    val otherSafeDrawingInsets = WindowInsets.safeDrawing
-                        .exclude(WindowInsets.statusBars)
-                    modifier
-                        .padding(otherSafeDrawingInsets.asPaddingValues())
-                        .consumeWindowInsets(otherSafeDrawingInsets)
-                },
+                .then(safeDrawing.let {
+                        insets ->
+                    val padding = insets.asPaddingValues()
+                    val layoutDirection = LocalLayoutDirection.current
+                    val excludingBottom = PaddingValues(
+                        start = padding.calculateStartPadding(layoutDirection),
+                        end = padding.calculateEndPadding(layoutDirection),
+                        bottom = padding.calculateBottomPadding(),
+                    )
+                    Modifier
+                        .padding(excludingBottom)
+                        .consumeWindowInsets(excludingBottom)
+                }),
             contentAlignment = Alignment.Center,
         ) {
             Board(
@@ -317,133 +374,6 @@ fun Content(
                 previousPlay = state.previousPlay,
                 isLoading = state.turnPlayerRole().isLoading
             )
-        }
-    }
-    val header: @Composable () -> Unit = {
-        Box(Modifier.background(HnefataflColors.light))
-    }
-    Layout(
-        content = {
-            QuitButton(onQuit = onQuit)
-            RestartButton(onRestart = onRestart)
-            title()
-            mainContent()
-            header()
-        },
-        modifier = Modifier.fillMaxSize()
-    ) { measurables, constraints ->
-        if (
-            !constraints.hasBoundedHeight || !constraints.hasBoundedWidth ||
-            constraints.minHeight > constraints.maxHeight || constraints.minWidth > constraints.maxWidth
-        ) {
-            throw IllegalArgumentException("Constraints unsupported: $constraints")
-        }
-
-        val quitButton = measurables[0]
-        val restartButton = measurables[1]
-        val titleMeasurable = measurables[2]
-        val mainContentMeasurable = measurables[3]
-        val headerMeasurable = measurables[4]
-
-        val quitPlaceable = quitButton.measure(constraints.copy(minHeight = 0, minWidth = 0))
-        val restartPlaceable = restartButton.measure(constraints.copy(minHeight = 0, minWidth = 0))
-
-        val titleMargin = max(quitPlaceable.width, restartPlaceable.width)
-
-        // Ideally each button goes in the top left and top right, but when horizontal space is
-        // tight switch to both buttons on the left to give the main text more room
-        val centerAlignTitle = quitPlaceable.width + restartPlaceable.width < constraints.maxWidth * 0.25
-
-        val titleMargins = when (centerAlignTitle) {
-            true -> 2 * titleMargin
-            false -> titleMargin
-        }
-        val titlePlaceable = titleMeasurable.measure(
-            constraints.copy(
-                minHeight = 0,
-                minWidth = 0,
-                maxWidth = constraints.maxWidth - titleMargins,
-            )
-        )
-        val titleTopPaddingPixels = safeDrawing.getTop(this)
-        val titleLeftPaddingPixels = safeDrawing.getLeft(this, LayoutDirection.Ltr)
-        val titleHeaderHeight = titleTopPaddingPixels + when (centerAlignTitle) {
-            true -> max(titlePlaceable.height, max(quitPlaceable.height, restartPlaceable.height))
-            false -> max(titlePlaceable.height, quitPlaceable.height + restartPlaceable.height)
-        }
-
-        val mainContentPlaceable = mainContentMeasurable.measure(
-            Constraints(
-                minWidth = constraints.minWidth,
-                maxWidth = constraints.maxWidth,
-                minHeight = 0,
-                maxHeight = constraints.maxHeight - (titleHeaderHeight),
-            )
-        )
-
-        val desiredVerticalPadding = constraints.maxHeight - mainContentPlaceable.height
-        val usedHeight = mainContentPlaceable.height + titleHeaderHeight
-        val emptyHeight = constraints.maxHeight - usedHeight
-        val verticalPadding = min(max((desiredVerticalPadding / 2) - titleHeaderHeight, 0), emptyHeight)
-
-        val headerHeight = verticalPadding + titleHeaderHeight
-        val headerPlaceable = headerMeasurable.measure(
-            Constraints(
-                minWidth = constraints.maxWidth,
-                maxWidth = constraints.maxWidth,
-                minHeight = headerHeight,
-                maxHeight = headerHeight,
-            )
-        )
-
-        layout(constraints.maxWidth, constraints.maxHeight) {
-            // Header sits at the top behind everything else
-            headerPlaceable.placeRelative(x = 0, y = 0)
-            titlePlaceable.placeRelative(
-                x = when (centerAlignTitle) {
-                    // Title sits above board, centered between the two buttons
-                    true -> (constraints.maxWidth - titlePlaceable.width) / 2
-                    // Title header is left aligned, placed after the two buttons
-                    false -> titleMargin
-                },
-                // On very portrait layouts, top align the title instead of sitting above
-                // the board, to keep it aligned with the buttons
-                y = when (constraints.maxHeight > constraints.maxWidth * 1.1) {
-                    true -> 0
-                    false -> verticalPadding
-                }
-            )
-            // Main content varies based on available space for vertical alignment, but always starts just below
-            // title
-            mainContentPlaceable.placeRelative(
-                x = 0,
-                y = verticalPadding + titleHeaderHeight
-            )
-            when (centerAlignTitle) {
-                true -> {
-                    // Quit and restart buttons are pinned to the top corners
-                    quitPlaceable.placeRelative(
-                        x = titleLeftPaddingPixels,
-                        y = titleTopPaddingPixels
-                    )
-                    restartPlaceable.placeRelative(
-                        x = titleLeftPaddingPixels + (constraints.maxWidth - restartPlaceable.width),
-                        y = titleTopPaddingPixels
-                    )
-                }
-
-                false -> {
-                    // Quit and restart buttons are left aligned in a column
-                    quitPlaceable.placeRelative(
-                        x = titleLeftPaddingPixels,
-                        y = titleTopPaddingPixels
-                    )
-                    restartPlaceable.placeRelative(
-                        x = titleLeftPaddingPixels,
-                        y = titleTopPaddingPixels + quitPlaceable.height
-                    )
-                }
-            }
         }
     }
 }

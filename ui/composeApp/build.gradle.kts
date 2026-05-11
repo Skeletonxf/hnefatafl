@@ -49,6 +49,8 @@ kotlin {
             implementation(libs.androidx.lifecycle.viewmodel.navigation3)
             implementation(libs.kotlinx.serialization.core)
             implementation(project(":bindings"))
+            // Will also need to credit Google Fonts when adding licences viewer.
+            // The close and restart assets are under Apache-2
         }
         commonJvmTest.dependencies {
             implementation(libs.kotlin.test)
