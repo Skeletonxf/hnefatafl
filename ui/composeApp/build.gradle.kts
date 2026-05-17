@@ -1,3 +1,4 @@
+import com.android.build.gradle.internal.tasks.factory.dependsOn
 import org.gradle.kotlin.dsl.creating
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.compose.resources.ResourcesExtension
@@ -115,4 +116,41 @@ compose.desktop {
 compose.resources {
     packageOfResClass = "io.github.skeletonxf.ui"
     generateResClass = ResourcesExtension.ResourceClassGeneration.Always
+}
+
+licensee {
+    allow("Apache-2.0")
+    allow("MIT")
+}
+
+// Make sure Licensee runs when building so artifacts are up to date.
+// We want each build variant to put the artifacts.json into the appropriate
+// variant/composeResources/files directory so we'll be able to read this
+// via Res.readBytes("files/artifacts.json") at runtime on each platform.
+val copyArtifactsJvm = tasks.register<Copy>("copyLicenseeArtifactsJvm") {
+    from(project.layout.buildDirectory.dir("reports/licensee/jvm"))
+    include("artifacts.json")
+    into("src/jvmMain/composeResources/files")
+    dependsOn(tasks.named("licenseeJvm"))
+}
+tasks.named("copyNonXmlValueResourcesForJvmMain").dependsOn(copyArtifactsJvm)
+
+val copyArtifactsAndroidDebug = tasks.register<Copy>("copyLicenseeArtifactsAndroidDebug") {
+    from(project.layout.buildDirectory.dir("reports/licensee/androidDebug"))
+    include("artifacts.json")
+    into("src/androidMainDebug/composeResources/files")
+    dependsOn(tasks.named("licenseeAndroidDebug"))
+}
+afterEvaluate {
+    tasks.named("copyNonXmlValueResourcesForAndroidDebug").dependsOn(copyArtifactsAndroidDebug)
+}
+
+val copyArtifactsAndroidRelease = tasks.register<Copy>("copyLicenseeArtifactsAndroidRelease") {
+    from(project.layout.buildDirectory.dir("reports/licensee/androidRelease"))
+    include("artifacts.json")
+    into("src/androidMainRelease/composeResources/files")
+    dependsOn(tasks.named("licenseeAndroidRelease"))
+}
+afterEvaluate {
+    tasks.named("copyNonXmlValueResourcesForAndroidRelease").dependsOn(copyArtifactsAndroidRelease)
 }
