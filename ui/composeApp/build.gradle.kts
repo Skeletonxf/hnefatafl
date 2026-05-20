@@ -50,6 +50,7 @@ kotlin {
             implementation(libs.androidx.navigation3.ui)
             implementation(libs.androidx.lifecycle.viewmodel.navigation3)
             implementation(libs.kotlinx.serialization.core)
+            implementation(libs.kotlinx.serialization.json)
             implementation(project(":bindings"))
             // Will also need to credit Google Fonts when adding licences viewer.
             // The close and restart assets are under Apache-2

@@ -22,7 +22,7 @@ compose-componentsResources = "1.10.0"
 
 nav3Core = "1.1.0-alpha02"
 lifecycleViewmodelNav3 = "2.10.0-alpha08"
-kotlinxSerializationCore = "1.10.0"
+kotlinxSerialization = "1.10.0"
 
 # UniFFI version needs to match Gobley version used in gradle
 # https://gobley.dev/docs/bindgen
@@ -48,7 +48,9 @@ androidx-navigation3-ui = { module = "org.jetbrains.androidx.navigation3:navigat
 
 # Optional add-on libraries
 androidx-lifecycle-viewmodel-navigation3 = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-navigation3", version.ref = "lifecycleViewmodelNav3" }
-kotlinx-serialization-core = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core", version.ref = "kotlinxSerializationCore" }
+
+kotlinx-serialization-core = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core", version.ref = "kotlinxSerialization" }
+kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
