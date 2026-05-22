@@ -2,13 +2,16 @@ package io.github.skeletonxf.ui.menu
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -87,13 +90,26 @@ fun LanguagePicker(
 fun MainMenu(
     onNewGame: (Configuration) -> Unit,
     onVersusComputer: () -> Unit,
+    onCredits: () -> Unit,
 ) = Column {
     val strings = LocalStrings.current.mainMenu
-    Box(
-        modifier = Modifier.fillMaxWidth().padding(8.dp),
-        contentAlignment = Alignment.TopEnd
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        LanguagePicker()
+        TextButton(
+            onClick = onCredits,
+            modifier = Modifier.padding(8.dp),
+            colors = ButtonDefaults.textButtonColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            ),
+        ) {
+            Text(text = strings.credits)
+        }
+        Box(modifier = Modifier.padding(8.dp)) {
+            LanguagePicker()
+        }
     }
     Box(modifier = Modifier.fillMaxSize()) {
         Column(

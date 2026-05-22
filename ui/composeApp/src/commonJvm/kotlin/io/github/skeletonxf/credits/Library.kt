@@ -14,17 +14,20 @@ data class Library(
     val licences: List<Licence>,
 ) {
     companion object {
+        // TODO: Need to parse unknownLicenses array too
+        private val jsonConfiguration = Json { ignoreUnknownKeys = true }
+
         fun from(
             json: String
         ): KResult<List<Library>, IllegalArgumentException> = try {
             KResult.Ok(
-                Json.decodeFromString<List<LibraryData>>(json).map { artifact ->
+                jsonConfiguration.decodeFromString<List<LibraryData>>(json).map { artifact ->
                     Library(
                         group = artifact.group,
                         artifact = artifact.artifact,
                         version = artifact.version,
                         name = artifact.name,
-                        url = artifact.links.firstOrNull()?.url,
+                        url = artifact.scm.url,
                         licences = artifact.licences.map { licence ->
                             Licence(
                                 identifier = licence.identifier,
@@ -57,7 +60,7 @@ private data class LibraryData(
     val name: String,
     @SerialName("spdxLicenses")
     val licences: List<Licence>,
-    val links: List<Link>,
+    val scm: Link,
 ) {
     @Serializable
     data class Link(val url: String)

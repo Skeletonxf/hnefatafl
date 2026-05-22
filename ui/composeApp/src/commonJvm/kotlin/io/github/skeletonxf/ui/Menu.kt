@@ -18,6 +18,7 @@ import androidx.compose.ui.tooling.preview.Preview
 fun MainMenuContent(
     onNewGame: (Configuration) -> Unit,
     onVersusComputer: () -> Unit,
+    onCredits: () -> Unit,
 ) = Surface {
     Column(
         modifier = Modifier
@@ -28,6 +29,7 @@ fun MainMenuContent(
         MainMenu(
             onNewGame = onNewGame,
             onVersusComputer = onVersusComputer,
+            onCredits = onCredits,
         )
     }
 }
@@ -53,7 +55,7 @@ fun RolePickerContent(
 @Composable
 @Preview
 private fun MainMenuContentPreview() = PreviewSurface {
-    MainMenuContent(onNewGame = {}, onVersusComputer = {})
+    MainMenuContent(onNewGame = {}, onVersusComputer = {}, onCredits = {})
 }
 
 @Composable

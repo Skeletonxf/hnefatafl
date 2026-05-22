@@ -24,6 +24,7 @@ import io.github.skeletonxf.ui.AppContent
 import io.github.skeletonxf.ui.Environment
 import io.github.skeletonxf.ui.MainMenuContent
 import io.github.skeletonxf.ui.RolePickerContent
+import io.github.skeletonxf.ui.credits.CreditsContent
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
@@ -36,6 +37,9 @@ sealed interface Route: NavKey {
     @Serializable
     data object RolePicker : Route
 
+    @Serializable
+    data object Credits : Route
+
     // We must use class here not data class so that a new instance causes recomposition
     // when restarting the game.
     @Serializable
@@ -47,9 +51,10 @@ sealed interface Route: NavKey {
         private val configuration = SavedStateConfiguration {
             serializersModule = SerializersModule {
                 polymorphic(NavKey::class) {
-                   subclass(Main::class, Main.serializer())
-                   subclass(RolePicker::class, RolePicker.serializer())
-                   subclass(Game::class, Game.serializer())
+                    subclass(Main::class, Main.serializer())
+                    subclass(RolePicker::class, RolePicker.serializer())
+                    subclass(Game::class, Game.serializer())
+                    subclass(Credits::class, Credits.serializer())
                 }
             }
         }
@@ -123,6 +128,9 @@ private fun NavigationRoot(
                             },
                             onVersusComputer = {
                                 backStack.add(Route.RolePicker)
+                            },
+                            onCredits = {
+                                backStack.add(Route.Credits)
                             }
                         )
                     }
@@ -137,6 +145,10 @@ private fun NavigationRoot(
                                 backStack.removeLastOrNull()
                             }
                         )
+                    }
+
+                    is Route.Credits -> NavEntry(key) {
+                        CreditsContent(onBack = { backStack.removeLastOrNull() })
                     }
 
                     is Route.Game -> NavEntry(key) {

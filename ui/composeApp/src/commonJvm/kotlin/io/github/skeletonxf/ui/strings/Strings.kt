@@ -16,6 +16,7 @@ data class Strings(
     val type: Type,
     val mainMenu: MainMenu = MainMenu(),
     val rolePicker: RolePicker = RolePicker(),
+    val credits: Credits = Credits(),
     val game: Game = Game(),
     val component: Component = Component(),
 ) {
@@ -23,6 +24,7 @@ data class Strings(
         val twoPlayerGame: String = "Two player game",
         val versusComputer: String = "Versus computer",
         val appIcon: String = "App icon",
+        val credits: String = "Credits",
     ) {
         val title: String = "Hnefatafl"
     }
@@ -31,6 +33,11 @@ data class Strings(
         val attackers: String = "Play Attackers",
         val defenders: String = "Play Defenders",
         val cancel: String = "Cancel",
+    )
+
+    data class Credits(
+        val title: String = "Credits",
+        val back: String = "Back",
     )
 
     data class Game(
@@ -76,11 +83,16 @@ private val castilianSpanish = Strings(
         twoPlayerGame = "Jugar contra su amigo",
         versusComputer = "Jugar contra el ordenador",
         appIcon = "Icono de la aplicación",
+        credits = "Ver los créditos",
     ),
     rolePicker = Strings.RolePicker(
         attackers = "Jugar los atacantes",
         defenders = "Jugar los defensores",
         cancel = "Cancelar"
+    ),
+    credits = Strings.Credits(
+        title = "Los créditos",
+        back = "Volver",
     ),
     game = Strings.Game(
         quit = "Abandonar",
