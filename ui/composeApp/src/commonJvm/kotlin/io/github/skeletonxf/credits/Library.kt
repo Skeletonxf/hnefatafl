@@ -9,11 +9,10 @@ data class Library(
     val name: String,
     val description: String,
     val url: String?,
-    val licences: List<Licence>,
+    val licenses: List<License>,
 ) {
     companion object {
-        // TODO: Need to parse unknownLicenses array too
-        private val jsonConfiguration = Json { ignoreUnknownKeys = true }
+        private val jsonConfiguration = Json
 
         fun from(
             json: String
@@ -24,11 +23,15 @@ data class Library(
                         name = artifact.name,
                         description = "${artifact.group}:${artifact.artifact}",
                         url = artifact.scm.url,
-                        licences = artifact.licences.map { licence ->
-                            Licence(
-                                identifier = licence.identifier,
-                                name = licence.name,
-                                url = licence.url,
+                        licenses = artifact.licenses.map { license ->
+                            License(
+                                name = license.name,
+                                url = license.url,
+                            )
+                        } + artifact.unknownLicenses.map { license ->
+                            License(
+                                name = license.name,
+                                url = license.url,
                             )
                         },
                     )
@@ -40,8 +43,7 @@ data class Library(
     }
 }
 
-data class Licence(
-    val identifier: String,
+data class License(
     val name: String,
     val url: String,
 )
@@ -55,7 +57,8 @@ private data class LibraryData(
     val version: String,
     val name: String,
     @SerialName("spdxLicenses")
-    val licences: List<Licence>,
+    val licenses: List<Licence>,
+    val unknownLicenses: List<UnknownLicence> = listOf(),
     val scm: Link,
 ) {
     @Serializable
@@ -64,6 +67,12 @@ private data class LibraryData(
     @Serializable
     data class Licence(
         val identifier: String,
+        val name: String,
+        val url: String,
+    )
+
+    @Serializable
+    data class UnknownLicence(
         val name: String,
         val url: String,
     )

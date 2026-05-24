@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -30,6 +31,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -151,11 +154,17 @@ fun CreditsMenu(
                         Spacer(modifier = Modifier.height(16.dp))
                     }
                 }
-                // TODO: Error state
+
                 is CreditsState.State.NoContent -> {
                     if (state.isLoading) {
                         item(key = "Loading") {
                             LoadingSpinner(size = 32.dp, strokeWidth = 4.dp)
+                        }
+                    }
+                    if (state.isError) {
+                        // TODO: Proper error state
+                        item(key = "Error") {
+                            Text(text = state.error?.message ?: "")
                         }
                     }
                 }
@@ -173,10 +182,19 @@ private fun LibraryItem(
     library: Library,
 ) = Column(horizontalAlignment = Alignment.CenterHorizontally) {
     val strings = LocalStrings.current.credits
+    val uriHandler = LocalUriHandler.current
 
-    Text(text = library.name)
-    Spacer(modifier = Modifier.width(4.dp))
-    Text(text = library.description, style = MaterialTheme.typography.bodySmall)
+    SelectionContainer {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(text = library.name, textAlign = TextAlign.Center)
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(
+                text = library.description,
+                textAlign = TextAlign.Center,
+                style = MaterialTheme.typography.bodySmall
+            )
+        }
+    }
     Spacer(modifier = Modifier.width(8.dp))
     FlowRow(
         modifier = Modifier,
@@ -185,14 +203,14 @@ private fun LibraryItem(
     ) {
         library.url?.let {
             TooltipTextButton(
-                onClick = { /* TODO open URL */ },
+                onClick = { uriHandler.openUri(library.url) },
                 text = strings.homepage,
                 tooltip = library.url,
             )
         }
-        library.licences.forEachIndexed { index, licence ->
+        library.licenses.forEachIndexed { index, licence ->
             TooltipTextButton(
-                onClick = { /* TODO open URL */ },
+                onClick = { uriHandler.openUri(licence.url) },
                 text = licence.name,
                 tooltip = licence.url
             )
