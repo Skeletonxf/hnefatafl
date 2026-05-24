@@ -36,6 +36,7 @@ data class Strings(
 
     data class Credits(
         val title: String = "Credits",
+        val homepage: String = "Homepage",
     )
 
     data class Game(
@@ -91,6 +92,7 @@ private val castilianSpanish = Strings(
     ),
     credits = Strings.Credits(
         title = "Los créditos",
+        homepage = "Página",
     ),
     game = Strings.Game(
         quit = "Abandonar",

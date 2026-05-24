@@ -9,6 +9,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TooltipAnchorPosition
 import androidx.compose.material3.TooltipBox
 import androidx.compose.material3.TooltipDefaults
@@ -104,6 +105,47 @@ fun TooltipIconButtonPreview() = PreviewSurface {
         onClick = {},
         painter = painterResource(Res.drawable.restart),
         text = "Restart",
+    )
+}
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TooltipTextButton(
+    onClick: () -> Unit,
+    text: String,
+    tooltip: String,
+    modifier: Modifier = Modifier,
+    tooltipAnchorPosition: TooltipAnchorPosition = TooltipAnchorPosition.Below,
+) {
+    TooltipBox(
+        modifier = modifier,
+        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(
+            positioning = tooltipAnchorPosition
+        ),
+        tooltip = {
+            PlainTooltip {
+                Text(text = tooltip)
+            }
+        },
+        state = rememberTooltipState(),
+    ) {
+        TextButton(
+            onClick = onClick,
+        ) {
+            Text(text = text)
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+@Preview
+fun TooltipTextButtonPreview() = PreviewSurface {
+    TooltipTextButton(
+        onClick = {},
+        text = "Apache License 2.0",
+        tooltip = "https://www.apache.org/licenses/LICENSE-2.0",
     )
 }
 

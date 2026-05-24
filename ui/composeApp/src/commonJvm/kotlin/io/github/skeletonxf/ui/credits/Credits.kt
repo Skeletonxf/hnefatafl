@@ -3,16 +3,22 @@ package io.github.skeletonxf.ui.credits
 import BackButton
 import LoadingSpinner
 import TitleHeader
+import TooltipTextButton
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -131,7 +137,8 @@ fun CreditsMenu(
         LazyColumn(
             modifier = Modifier
                 .align(Alignment.TopCenter)
-                .padding(horizontal = 16.dp),
+                .padding(horizontal = 16.dp)
+                .fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             item(key = "StartingGap") {
@@ -140,8 +147,8 @@ fun CreditsMenu(
             when (state) {
                 is CreditsState.State.Content -> {
                     items(state.credits) { library ->
-                        Text(text = library.name)
-                        Spacer(modifier = Modifier.height(8.dp))
+                        LibraryItem(library)
+                        Spacer(modifier = Modifier.height(16.dp))
                     }
                 }
                 // TODO: Error state
@@ -156,6 +163,39 @@ fun CreditsMenu(
             item(key = "Footer") {
                 Spacer(modifier = Modifier.height(24.dp))
             }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun LibraryItem(
+    library: Library,
+) = Column(horizontalAlignment = Alignment.CenterHorizontally) {
+    val strings = LocalStrings.current.credits
+
+    Text(text = library.name)
+    Spacer(modifier = Modifier.width(4.dp))
+    Text(text = library.description, style = MaterialTheme.typography.bodySmall)
+    Spacer(modifier = Modifier.width(8.dp))
+    FlowRow(
+        modifier = Modifier,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        library.url?.let {
+            TooltipTextButton(
+                onClick = { /* TODO open URL */ },
+                text = strings.homepage,
+                tooltip = library.url,
+            )
+        }
+        library.licences.forEachIndexed { index, licence ->
+            TooltipTextButton(
+                onClick = { /* TODO open URL */ },
+                text = licence.name,
+                tooltip = licence.url
+            )
         }
     }
 }

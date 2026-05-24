@@ -6,10 +6,8 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
 data class Library(
-    val group: String,
-    val artifact: String,
-    val version: String,
     val name: String,
+    val description: String,
     val url: String?,
     val licences: List<Licence>,
 ) {
@@ -23,10 +21,8 @@ data class Library(
             KResult.Ok(
                 jsonConfiguration.decodeFromString<List<LibraryData>>(json).map { artifact ->
                     Library(
-                        group = artifact.group,
-                        artifact = artifact.artifact,
-                        version = artifact.version,
                         name = artifact.name,
+                        description = "${artifact.group}:${artifact.artifact}",
                         url = artifact.scm.url,
                         licences = artifact.licences.map { licence ->
                             Licence(
