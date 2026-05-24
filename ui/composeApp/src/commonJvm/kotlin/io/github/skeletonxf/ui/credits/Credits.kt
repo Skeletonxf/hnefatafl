@@ -1,6 +1,7 @@
 package io.github.skeletonxf.ui.credits
 
 import BackButton
+import LoadingSpinner
 import TitleHeader
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -33,6 +34,7 @@ import io.github.skeletonxf.data.KResult
 import io.github.skeletonxf.functions.launchUnit
 import io.github.skeletonxf.ui.localBackgroundScope
 import io.github.skeletonxf.ui.shaderGradient
+import io.github.skeletonxf.ui.state.StateHolder
 import io.github.skeletonxf.ui.strings.LocalStrings
 import io.github.skeletonxf.ui.theme.HnefataflColors
 import io.github.skeletonxf.ui.theme.PreviewSurface
@@ -42,7 +44,7 @@ import kotlinx.coroutines.Dispatchers
 data class CreditsState(
     private val scope: CoroutineScope,
     private val credits: Credits,
-) {
+): StateHolder {
 
     val state = mutableStateOf<State>(State.NoContent(isLoading = false, error = null))
 
@@ -58,9 +60,17 @@ data class CreditsState(
         }
     }
 
-    sealed class State {
-        data class NoContent(val isLoading: Boolean, val error: Throwable?) : State()
-        data class Content(val credits: List<Library>) : State()
+    sealed class State: StateHolder.StatefulLoading {
+        data class NoContent(
+            override val isLoading: Boolean,
+            override val error: Throwable?,
+        ) : State()
+        data class Content(
+            val credits: List<Library>
+        ) : State() {
+            override val isLoading: Boolean = false
+            override val error: Throwable? = null
+        }
     }
 
     companion object {
@@ -88,7 +98,7 @@ fun CreditsContent(
     // those on desktop
     LaunchedEffect(state) {
         val s = state
-        if (s is CreditsState.State.NoContent && !s.isLoading && s.error == null) {
+        if (s is CreditsState.State.NoContent && !s.isLoading && !s.isError) {
             creditsState.load()
         }
     }
@@ -127,10 +137,20 @@ fun CreditsMenu(
             item(key = "StartingGap") {
                 Spacer(modifier = Modifier.height(16.dp))
             }
-            if (state is CreditsState.State.Content) {
-                items(state.credits) { library ->
-                    Text(text = library.name)
-                    Spacer(modifier = Modifier.height(8.dp))
+            when (state) {
+                is CreditsState.State.Content -> {
+                    items(state.credits) { library ->
+                        Text(text = library.name)
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                }
+                // TODO: Error state
+                is CreditsState.State.NoContent -> {
+                    if (state.isLoading) {
+                        item(key = "Loading") {
+                            LoadingSpinner(size = 32.dp, strokeWidth = 4.dp)
+                        }
+                    }
                 }
             }
             item(key = "Footer") {
@@ -144,4 +164,13 @@ fun CreditsMenu(
 @Preview
 private fun CreditsMenuPreview() = PreviewSurface {
     CreditsMenu(onBack = {}, state = CreditsState.State.Content(credits = listOf()))
+}
+
+@Composable
+@Preview
+private fun CreditsMenuLoadingPreview() = PreviewSurface {
+    CreditsMenu(
+        onBack = {},
+        state = CreditsState.State.NoContent(isLoading = true, error = null)
+    )
 }
