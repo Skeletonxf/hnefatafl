@@ -1,4 +1,8 @@
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -20,7 +24,9 @@ import io.github.skeletonxf.ui.theme.PreviewSurface
 import androidx.compose.ui.tooling.preview.Preview
 import io.github.skeletonxf.ui.Res
 import io.github.skeletonxf.ui.restart
+import io.github.skeletonxf.ui.strings.LocalStrings
 import org.jetbrains.compose.resources.painterResource
+import kotlin.math.max
 
 @Composable
 private fun ContentSpacer(
@@ -98,5 +104,89 @@ fun TooltipIconButtonPreview() = PreviewSurface {
         onClick = {},
         painter = painterResource(Res.drawable.restart),
         text = "Restart",
+    )
+}
+
+@Composable
+fun CancelButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val strings = LocalStrings.current.component
+    Button(onClick = onClick, modifier = modifier) {
+        Text(text = strings.cancel)
+    }
+}
+
+@Composable
+@Preview
+fun CancelButtonPreview() = PreviewSurface {
+    CancelButton(onClick = {})
+}
+
+@Composable
+fun BackButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val strings = LocalStrings.current.component
+    Button(onClick = onClick, modifier = modifier) {
+        Text(text = strings.back)
+    }
+}
+
+@Composable
+@Preview
+fun BackButtonPreview() = PreviewSurface {
+    BackButton(onClick = {})
+}
+
+@Composable
+fun TitleHeader(
+    start: @Composable () -> Unit,
+    title: @Composable () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Layout(
+        content = {
+            Box { start() }
+            Box { title() }
+        },
+        modifier = modifier.fillMaxWidth(),
+    ) { measurables, constraints ->
+        // Remove minWidth constraint from fillMaxWidth for each component
+        // so they don't expand to fill space
+        val start = measurables[0].measure(constraints = constraints.copy(minWidth = 0))
+        // Deduct the start content width twice over so we can center the title.
+        val title = measurables[1].measure(
+            constraints = constraints.copy(
+                minWidth = 0,
+                maxWidth = constraints.maxWidth - (start.width * 2)
+            )
+        )
+        // The minWidth constraint always determines our width
+        val height = max(start.height, title.height)
+        layout(
+            width = constraints.minWidth,
+            height = height,
+        ) {
+            // Put the start content vertically centered at the start of the layout
+            start.placeRelative(x = 0, y = (height - start.height) / 2)
+            // Try to center the title content horizontally and vertically
+            title.placeRelative(
+                x = (constraints.minWidth - title.width) / 2,
+                y = (height - title.height) / 2
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+fun TitleHeaderPreview() = PreviewSurface {
+    TitleHeader(
+        start = { BackButton(onClick = {}) },
+        title = { Text("Title header") },
+        modifier = Modifier.width(300.dp)
     )
 }

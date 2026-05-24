@@ -1,5 +1,8 @@
 package io.github.skeletonxf.ui.menu
 
+import CancelButton
+import TitleHeader
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -13,6 +16,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -24,6 +28,7 @@ import io.github.skeletonxf.data.Configuration
 import io.github.skeletonxf.ui.Icon
 import io.github.skeletonxf.ui.RoleType
 import io.github.skeletonxf.ui.strings.LocalStrings
+import io.github.skeletonxf.ui.theme.HnefataflColors
 
 @Composable
 fun RolePickerMenu(
@@ -31,14 +36,13 @@ fun RolePickerMenu(
     onCancel: () -> Unit,
 ) = Column {
     val strings = LocalStrings.current.rolePicker
-    Box(
-        modifier = Modifier.fillMaxWidth().padding(8.dp),
-        contentAlignment = Alignment.TopStart
-    ) {
-        Button(onClick = onCancel, modifier = Modifier.padding(horizontal = 12.dp)) {
-            Text(text = strings.cancel)
-        }
-    }
+    TitleHeader(
+        start = {
+            CancelButton(onClick = onCancel, modifier = Modifier.padding(horizontal = 8.dp))
+        },
+        title = {},
+        modifier = Modifier.background(color = MaterialTheme.colorScheme.background),
+    )
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier

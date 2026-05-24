@@ -99,7 +99,7 @@ fun MainMenu(
     ) {
         TextButton(
             onClick = onCredits,
-            modifier = Modifier.padding(8.dp),
+            modifier = Modifier.padding(horizontal = 8.dp),
             colors = ButtonDefaults.textButtonColors(
                 containerColor = MaterialTheme.colorScheme.surfaceVariant,
                 contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -107,7 +107,7 @@ fun MainMenu(
         ) {
             Text(text = strings.credits)
         }
-        Box(modifier = Modifier.padding(8.dp)) {
+        Box(modifier = Modifier.padding(horizontal = 8.dp)) {
             LanguagePicker()
         }
     }

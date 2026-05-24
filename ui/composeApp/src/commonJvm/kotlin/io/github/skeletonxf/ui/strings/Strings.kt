@@ -32,12 +32,10 @@ data class Strings(
     data class RolePicker(
         val attackers: String = "Play Attackers",
         val defenders: String = "Play Defenders",
-        val cancel: String = "Cancel",
     )
 
     data class Credits(
         val title: String = "Credits",
-        val back: String = "Back",
     )
 
     data class Game(
@@ -60,6 +58,8 @@ data class Strings(
 
     data class Component(
         val ok: String = "OK",
+        val back: String = "Back",
+        val cancel: String = "Cancel",
     )
 
     enum class Type {
@@ -88,11 +88,9 @@ private val castilianSpanish = Strings(
     rolePicker = Strings.RolePicker(
         attackers = "Jugar los atacantes",
         defenders = "Jugar los defensores",
-        cancel = "Cancelar"
     ),
     credits = Strings.Credits(
         title = "Los créditos",
-        back = "Volver",
     ),
     game = Strings.Game(
         quit = "Abandonar",
@@ -112,6 +110,8 @@ private val castilianSpanish = Strings(
     component = Strings.Component(
         // pronunciation is different but this word seems regularly used in spanish for computing contexts?
         ok = "OK",
+        back = "Volver",
+        cancel = "Cancelar",
     )
 )
 
