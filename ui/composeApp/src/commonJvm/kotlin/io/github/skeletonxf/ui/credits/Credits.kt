@@ -37,8 +37,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.skeletonxf.credits.AndroidCredits
+import io.github.skeletonxf.credits.CombinedCredits
 import io.github.skeletonxf.credits.Credits
 import io.github.skeletonxf.credits.Library
+import io.github.skeletonxf.credits.RustCredits
 import io.github.skeletonxf.data.KResult
 import io.github.skeletonxf.functions.launchUnit
 import io.github.skeletonxf.ui.localBackgroundScope
@@ -89,7 +91,12 @@ data class CreditsState(
             return remember(scope) {
                 CreditsState(
                     scope = localBackgroundScope,
-                    credits = AndroidCredits(ioDispatcher = Dispatchers.IO)
+                    credits = CombinedCredits(
+                        credits = listOf(
+                            AndroidCredits(ioDispatcher = Dispatchers.IO),
+                            RustCredits(ioDispatcher = Dispatchers.IO)
+                        )
+                    )
                 )
             }
         }
@@ -187,12 +194,14 @@ private fun LibraryItem(
     SelectionContainer {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(text = library.name, textAlign = TextAlign.Center)
-            Spacer(modifier = Modifier.width(4.dp))
-            Text(
-                text = library.description,
-                textAlign = TextAlign.Center,
-                style = MaterialTheme.typography.bodySmall
-            )
+            library.identifier?.let {
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = library.identifier,
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
         }
     }
     Spacer(modifier = Modifier.width(8.dp))

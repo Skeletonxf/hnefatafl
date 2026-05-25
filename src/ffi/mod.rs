@@ -7,6 +7,7 @@ use std::fmt;
 use std::sync::Mutex;
 
 mod config;
+mod licenses;
 
 /// A handle to the game state behind a mutex to allow calling from Kotlin without issue
 #[derive(Debug, uniffi::Object)]

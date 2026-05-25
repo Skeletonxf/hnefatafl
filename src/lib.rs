@@ -7,6 +7,6 @@ uniffi::setup_scaffolding!();
 
 mod bot;
 mod config;
+mod ffi;
 mod piece;
 mod state;
-mod ffi;
