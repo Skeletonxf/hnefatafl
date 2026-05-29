@@ -73,6 +73,7 @@ data class Library(
     }
 }
 
+@Serializable
 data class License(
     val name: String,
     val url: String,

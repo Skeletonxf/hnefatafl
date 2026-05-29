@@ -15,7 +15,7 @@ import io.github.skeletonxf.ui.theme.PreviewSurface
 import androidx.compose.ui.tooling.preview.Preview
 
 @Composable
-fun MainMenuContent(
+fun MainMenuScreen(
     onNewGame: (Configuration) -> Unit,
     onVersusComputer: () -> Unit,
     onCredits: () -> Unit,
@@ -35,7 +35,7 @@ fun MainMenuContent(
 }
 
 @Composable
-fun RolePickerContent(
+fun RolePickerScreen(
     onNewGame: (Configuration) -> Unit,
     onCancel: () -> Unit,
 ) = Surface {
@@ -55,11 +55,11 @@ fun RolePickerContent(
 @Composable
 @Preview
 private fun MainMenuContentPreview() = PreviewSurface {
-    MainMenuContent(onNewGame = {}, onVersusComputer = {}, onCredits = {})
+    MainMenuScreen(onNewGame = {}, onVersusComputer = {}, onCredits = {})
 }
 
 @Composable
 @Preview
 private fun RolePickerContentPreview() = PreviewSurface {
-    RolePickerContent(onNewGame = {}, onCancel = {})
+    RolePickerScreen(onNewGame = {}, onCancel = {})
 }

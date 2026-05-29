@@ -37,6 +37,7 @@ data class Strings(
     data class Credits(
         val title: String = "Credits",
         val homepage: String = "Homepage",
+        val viewText: String = "View licence",
     )
 
     data class Game(
@@ -93,6 +94,7 @@ private val castilianSpanish = Strings(
     credits = Strings.Credits(
         title = "Los créditos",
         homepage = "Página",
+        viewText = "Ver la licencia",
     ),
     game = Strings.Game(
         quit = "Abandonar",
@@ -119,7 +121,13 @@ private val castilianSpanish = Strings(
 
 val locales = mapOf(
     "en-GB" to britishEnglish,
-    "en-US" to britishEnglish.copy(name = "English 🇺🇸", type = Strings.Type.American),
+    "en-US" to britishEnglish.copy(
+        name = "English 🇺🇸",
+        type = Strings.Type.American,
+        credits = britishEnglish.credits.copy(
+            viewText = "View license"
+        )
+    ),
     "es-ES" to castilianSpanish,
     "es-419" to castilianSpanish.copy(
         name = "Español latinoaméricano",

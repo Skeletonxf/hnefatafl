@@ -20,11 +20,13 @@ import androidx.navigation3.ui.NavDisplay
 import androidx.savedstate.serialization.SavedStateConfiguration
 import io.github.skeletonxf.data.Configuration
 import io.github.skeletonxf.logging.Log
-import io.github.skeletonxf.ui.AppContent
+import io.github.skeletonxf.ui.AppContentScreen
 import io.github.skeletonxf.ui.Environment
-import io.github.skeletonxf.ui.MainMenuContent
-import io.github.skeletonxf.ui.RolePickerContent
-import io.github.skeletonxf.ui.credits.CreditsContent
+import io.github.skeletonxf.ui.MainMenuScreen
+import io.github.skeletonxf.ui.RolePickerScreen
+import io.github.skeletonxf.ui.credits.CreditsScreen
+import io.github.skeletonxf.ui.credits.LicenseDetail
+import io.github.skeletonxf.ui.credits.LicenseViewerScreen
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
@@ -39,6 +41,11 @@ sealed interface Route: NavKey {
 
     @Serializable
     data object Credits : Route
+
+    @Serializable
+    data class LicenseViewer(
+        val license: LicenseDetail,
+    ) : Route
 
     // We must use class here not data class so that a new instance causes recomposition
     // when restarting the game.
@@ -55,6 +62,7 @@ sealed interface Route: NavKey {
                     subclass(RolePicker::class, RolePicker.serializer())
                     subclass(Game::class, Game.serializer())
                     subclass(Credits::class, Credits.serializer())
+                    subclass(LicenseViewer::class, LicenseViewer.serializer())
                 }
             }
         }
@@ -121,7 +129,7 @@ private fun NavigationRoot(
             if (key is Route) {
                 when (key) {
                     is Route.Main -> NavEntry(key) {
-                        MainMenuContent(
+                        MainMenuScreen(
                             onNewGame = { configuration ->
                                 environment.startNewGame(configuration)
                                 backStack.add(Route.Game(configuration))
@@ -136,7 +144,7 @@ private fun NavigationRoot(
                     }
 
                     is Route.RolePicker -> NavEntry(key) {
-                        RolePickerContent(
+                        RolePickerScreen(
                             onNewGame = { configuration ->
                                 environment.startNewGame(configuration)
                                 backStack[backStack.lastIndex] = Route.Game(configuration)
@@ -148,13 +156,23 @@ private fun NavigationRoot(
                     }
 
                     is Route.Credits -> NavEntry(key) {
-                        CreditsContent(onBack = { backStack.removeLastOrNull() })
+                        CreditsScreen(
+                            onBack = { backStack.removeLastOrNull() },
+                            onView = { backStack.add(Route.LicenseViewer(it)) }
+                        )
+                    }
+
+                    is Route.LicenseViewer -> NavEntry(key) {
+                        LicenseViewerScreen(
+                            onBack = { backStack.removeLastOrNull() },
+                            license = key.license
+                        )
                     }
 
                     is Route.Game -> NavEntry(key) {
                         if (handle != null) {
                             val state by handle.state
-                            AppContent(
+                            AppContentScreen(
                                 state = state,
                                 makePlay = handle::makePlay,
                                 makeBotPlay = handle::makeBotPlay,

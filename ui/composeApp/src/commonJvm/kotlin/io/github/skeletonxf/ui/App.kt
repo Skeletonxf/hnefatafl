@@ -157,7 +157,7 @@ fun Root(
 }
 
 @Composable
-fun AppContent(
+fun AppContentScreen(
     state: GameState.State,
     makePlay: (Play) -> Unit,
     makeBotPlay: () -> Unit,
@@ -453,7 +453,7 @@ private fun ContentPreview() = PreviewSurface {
 @Composable
 @Preview
 private fun FatalErrorPreview() = PreviewSurface {
-    AppContent(
+    AppContentScreen(
         state = GameState.State.FatalError(
             message = "Contextual message here",
             cause = Throwable("Problem here"),
@@ -471,7 +471,7 @@ private fun FatalErrorPreview() = PreviewSurface {
 @Preview
 private fun FatalErrorSpanishPreview() = PreviewSurface {
     CompositionLocalProvider(LocalStrings provides locales["es-ES"]!!) {
-        AppContent(
+        AppContentScreen(
             state = GameState.State.FatalError(
                 message = "Contextual message here",
                 cause = Throwable("Problem here"),

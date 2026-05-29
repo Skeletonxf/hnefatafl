@@ -4,12 +4,14 @@ import BackButton
 import LoadingSpinner
 import TitleHeader
 import TooltipTextButton
+import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -18,6 +20,8 @@ import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -55,7 +59,7 @@ import kotlinx.coroutines.Dispatchers
 data class CreditsState(
     private val scope: CoroutineScope,
     private val credits: Credits,
-): StateHolder {
+) : StateHolder {
 
     val state = mutableStateOf<State>(State.NoContent(isLoading = false, error = null))
 
@@ -71,11 +75,12 @@ data class CreditsState(
         }
     }
 
-    sealed class State: StateHolder.StatefulLoading {
+    sealed class State : StateHolder.StatefulLoading {
         data class NoContent(
             override val isLoading: Boolean,
             override val error: Throwable?,
         ) : State()
+
         data class Content(
             val credits: List<Library>
         ) : State() {
@@ -104,8 +109,9 @@ data class CreditsState(
 }
 
 @Composable
-fun CreditsContent(
+fun CreditsScreen(
     onBack: () -> Unit,
+    onView: (LicenseDetail) -> Unit,
 ) = Surface {
     val creditsState = CreditsState.remember()
     val state by creditsState.state
@@ -124,13 +130,14 @@ fun CreditsContent(
             .shaderGradient(color1 = HnefataflColors.grey, color2 = Color.White)
             .safeDrawingPadding()
     ) {
-        CreditsMenu(onBack = onBack, state = state)
+        CreditsContent(onBack = onBack, onView = onView, state = state)
     }
 }
 
 @Composable
-fun CreditsMenu(
+fun CreditsContent(
     onBack: () -> Unit,
+    onView: (LicenseDetail) -> Unit,
     state: CreditsState.State,
 ) = Column {
     val strings = LocalStrings.current.credits
@@ -144,11 +151,13 @@ fun CreditsMenu(
         modifier = Modifier.background(color = MaterialTheme.colorScheme.background)
     )
     Box(modifier = Modifier.fillMaxSize()) {
+        val scrollState = rememberLazyListState()
         LazyColumn(
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .padding(horizontal = 16.dp)
                 .fillMaxWidth(),
+            state = scrollState,
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             item(key = "StartingGap") {
@@ -157,7 +166,7 @@ fun CreditsMenu(
             when (state) {
                 is CreditsState.State.Content -> {
                     items(state.credits) { library ->
-                        LibraryItem(library)
+                        LibraryItem(library, onView)
                         Spacer(modifier = Modifier.height(16.dp))
                     }
                 }
@@ -180,6 +189,10 @@ fun CreditsMenu(
                 Spacer(modifier = Modifier.height(24.dp))
             }
         }
+        VerticalScrollbar(
+            adapter = rememberScrollbarAdapter(scrollState),
+            modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
+        )
     }
 }
 
@@ -187,6 +200,7 @@ fun CreditsMenu(
 @Composable
 private fun LibraryItem(
     library: Library,
+    onView: (LicenseDetail) -> Unit,
 ) = Column(horizontalAlignment = Alignment.CenterHorizontally) {
     val strings = LocalStrings.current.credits
     val uriHandler = LocalUriHandler.current
@@ -217,11 +231,18 @@ private fun LibraryItem(
                 tooltip = library.url,
             )
         }
-        library.licenses.forEachIndexed { index, licence ->
+        library.licenses.forEachIndexed { index, license ->
             TooltipTextButton(
-                onClick = { uriHandler.openUri(licence.url) },
-                text = licence.name,
-                tooltip = licence.url
+                onClick = {
+                    onView(
+                        LicenseDetail(
+                            libraryName = library.name,
+                            license = license,
+                        )
+                    )
+                },
+                text = license.name,
+                tooltip = strings.viewText,
             )
         }
     }
@@ -230,14 +251,19 @@ private fun LibraryItem(
 @Composable
 @Preview
 private fun CreditsMenuPreview() = PreviewSurface {
-    CreditsMenu(onBack = {}, state = CreditsState.State.Content(credits = listOf()))
+    CreditsContent(
+        onBack = {},
+        onView = {},
+        state = CreditsState.State.Content(credits = listOf()),
+    )
 }
 
 @Composable
 @Preview
 private fun CreditsMenuLoadingPreview() = PreviewSurface {
-    CreditsMenu(
+    CreditsContent(
         onBack = {},
+        onView = {},
         state = CreditsState.State.NoContent(isLoading = true, error = null)
     )
 }
