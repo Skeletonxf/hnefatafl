@@ -28,10 +28,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -40,6 +39,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.skeletonxf.credits.AndroidCredits
 import io.github.skeletonxf.credits.CombinedCredits
 import io.github.skeletonxf.credits.Credits
@@ -47,7 +49,6 @@ import io.github.skeletonxf.credits.Library
 import io.github.skeletonxf.credits.RustCredits
 import io.github.skeletonxf.data.KResult
 import io.github.skeletonxf.functions.launchUnit
-import io.github.skeletonxf.ui.localBackgroundScope
 import io.github.skeletonxf.ui.shaderGradient
 import io.github.skeletonxf.ui.state.StateHolder
 import io.github.skeletonxf.ui.strings.LocalStrings
@@ -88,23 +89,22 @@ data class CreditsState(
             override val error: Throwable? = null
         }
     }
+}
 
-    companion object {
-        @Composable
-        fun remember(): CreditsState {
-            val scope = localBackgroundScope
-            return remember(scope) {
-                CreditsState(
-                    scope = localBackgroundScope,
-                    credits = CombinedCredits(
-                        credits = listOf(
-                            AndroidCredits(ioDispatcher = Dispatchers.IO),
-                            RustCredits(ioDispatcher = Dispatchers.IO)
-                        )
-                    )
-                )
-            }
-        }
+@Stable
+class CreditsViewModel: ViewModel() {
+    val state = CreditsState(
+        scope = viewModelScope,
+        credits = CombinedCredits(
+            credits = listOf(
+                AndroidCredits(ioDispatcher = Dispatchers.IO),
+                RustCredits(ioDispatcher = Dispatchers.IO)
+            )
+        )
+    )
+
+    init {
+        state.load()
     }
 }
 
@@ -113,17 +113,8 @@ fun CreditsScreen(
     onBack: () -> Unit,
     onView: (LicenseDetail) -> Unit,
 ) = Surface {
-    val creditsState = CreditsState.remember()
-    val state by creditsState.state
-    // TODO: More suitable trigger for state refresh? Android has
-    // lifecycles tied to the backstack entry but not sure we have
-    // those on desktop
-    LaunchedEffect(state) {
-        val s = state
-        if (s is CreditsState.State.NoContent && !s.isLoading && !s.isError) {
-            creditsState.load()
-        }
-    }
+    val creditsViewModel = viewModel { CreditsViewModel() }
+    val state by creditsViewModel.state.state
     Column(
         modifier = Modifier
             .fillMaxSize()
