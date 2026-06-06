@@ -120,8 +120,14 @@ compose.resources {
 }
 
 licensee {
+    // The text of licenses like MIT typically vary per project due to the author
+    // and the ecosystem for Gradle seems particularly lacking in plugins that
+    // can bundle together the project's license text. Apache 2.0 however is very
+    // standard and fortunately has no such project specific author line. Hence,
+    // MIT licenses in our Rust dependencies are fine because we will bundle their
+    // actual text at compile time, but for gradle libraries we only accept Apache 2.0
+    // so we can get by with the limitations of licensee and alternatives.
     allow("Apache-2.0")
-    allow("MIT")
 }
 
 // Make sure Licensee runs when building so artifacts are up to date.
