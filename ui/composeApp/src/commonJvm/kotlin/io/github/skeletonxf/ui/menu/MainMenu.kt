@@ -90,6 +90,7 @@ fun LanguagePicker(
 fun MainMenu(
     onNewGame: (Configuration) -> Unit,
     onVersusComputer: () -> Unit,
+    onTutorial: () -> Unit,
     onCredits: () -> Unit,
 ) = Column {
     val strings = LocalStrings.current.mainMenu
@@ -141,6 +142,16 @@ fun MainMenu(
                 onClick = onVersusComputer,
             ) {
                 Text(text = strings.versusComputer)
+            }
+            Spacer(Modifier.height(16.dp))
+            TextButton(
+                onClick = onTutorial,
+                colors = ButtonDefaults.textButtonColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                ),
+            ) {
+                Text(text = strings.tutorial)
             }
         }
     }

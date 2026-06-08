@@ -17,12 +17,14 @@ data class Strings(
     val mainMenu: MainMenu = MainMenu(),
     val rolePicker: RolePicker = RolePicker(),
     val credits: Credits = Credits(),
+    val tutorial: Tutorial = Tutorial(),
     val game: Game = Game(),
     val component: Component = Component(),
 ) {
     data class MainMenu(
         val twoPlayerGame: String = "Two player game",
         val versusComputer: String = "Versus computer",
+        val tutorial: String = "Tutorial",
         val appIcon: String = "App icon",
         val credits: String = "Credits",
     ) {
@@ -38,6 +40,12 @@ data class Strings(
         val title: String = "Credits",
         val homepage: String = "Homepage",
         val viewText: String = "View licence",
+    )
+
+    data class Tutorial(
+        val title: String = "Tutorial",
+        val movement: String = "Movement",
+        val movementDescription: String = "All pieces can move any number of empty squares vertically or horizontally (like the rook in chess).",
     )
 
     data class Game(
@@ -84,12 +92,18 @@ private val castilianSpanish = Strings(
         // like the repetition
         twoPlayerGame = "Jugar contra su amigo",
         versusComputer = "Jugar contra el ordenador",
+        tutorial = "Jugar el tutorial",
         appIcon = "Icono de la aplicación",
         credits = "Ver los créditos",
     ),
     rolePicker = Strings.RolePicker(
         attackers = "Jugar los atacantes",
         defenders = "Jugar los defensores",
+    ),
+    tutorial = Strings.Tutorial(
+        title = "Tutorial",
+        movement = "El movimiento",
+        movementDescription = "Todas las fichas pueden moverse cualquier número de casillas vacías horizontal o verticalmente (igual que la torre de ajedrez).",
     ),
     credits = Strings.Credits(
         title = "Los créditos",

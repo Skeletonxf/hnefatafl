@@ -64,6 +64,8 @@ import io.github.skeletonxf.logging.TreeIdentifier
 import io.github.skeletonxf.settings.FilePaths
 import io.github.skeletonxf.settings.Setting
 import io.github.skeletonxf.settings.Settings
+import io.github.skeletonxf.ui.game.Actions
+import io.github.skeletonxf.ui.game.FatalError
 import io.github.skeletonxf.ui.nav.NavigationRoot
 import io.github.skeletonxf.ui.strings.LocalStrings
 import io.github.skeletonxf.ui.strings.ProvideStrings
@@ -193,27 +195,14 @@ fun AppContentScreen(
             )
         }
 
-        is GameState.State.FatalError -> Column(
-            modifier = Modifier.safeDrawingPadding()
-        ) {
-            Text(text = strings.failure)
-            Spacer(Modifier.height(16.dp))
-            Text(state.message)
-            Spacer(Modifier.height(8.dp))
-            Text(state.cause.message ?: "")
-            Spacer(Modifier.height(24.dp))
-            Button(
-                onClick = onRestart,
-            ) {
-                Text(text = strings.restart)
-            }
-            Spacer(Modifier.height(16.dp))
-            Button(
-                onClick = onQuit,
-            ) {
-                Text(text = strings.mainMenu)
-            }
-        }
+        is GameState.State.FatalError -> FatalError(
+            state = state,
+            actions = Actions(
+                onRestart = onRestart,
+                onQuit = onQuit,
+            ),
+            modifier = Modifier.safeDrawingPadding(),
+        )
     }
 }
 

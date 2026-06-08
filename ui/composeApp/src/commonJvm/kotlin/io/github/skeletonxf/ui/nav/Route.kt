@@ -27,6 +27,7 @@ import io.github.skeletonxf.ui.RolePickerScreen
 import io.github.skeletonxf.ui.credits.CreditsScreen
 import io.github.skeletonxf.ui.credits.LicenseDetail
 import io.github.skeletonxf.ui.credits.LicenseViewerScreen
+import io.github.skeletonxf.ui.tutorial.TutorialScreen
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
@@ -47,6 +48,9 @@ sealed interface Route: NavKey {
         val license: LicenseDetail,
     ) : Route
 
+    @Serializable
+    data object Tutorial : Route
+
     // We must use class here not data class so that a new instance causes recomposition
     // when restarting the game.
     @Serializable
@@ -63,6 +67,7 @@ sealed interface Route: NavKey {
                     subclass(Game::class, Game.serializer())
                     subclass(Credits::class, Credits.serializer())
                     subclass(LicenseViewer::class, LicenseViewer.serializer())
+                    subclass(Tutorial::class, Tutorial.serializer())
                 }
             }
         }
@@ -137,6 +142,9 @@ private fun NavigationRoot(
                             onVersusComputer = {
                                 backStack.add(Route.RolePicker)
                             },
+                            onTutorial = {
+                                backStack.add(Route.Tutorial)
+                            },
                             onCredits = {
                                 backStack.add(Route.Credits)
                             }
@@ -166,6 +174,12 @@ private fun NavigationRoot(
                         LicenseViewerScreen(
                             onBack = { backStack.removeLastOrNull() },
                             license = key.license
+                        )
+                    }
+
+                    is Route.Tutorial -> NavEntry(key) {
+                        TutorialScreen(
+                            onBack = { backStack.removeLastOrNull() },
                         )
                     }
 
