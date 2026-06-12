@@ -4,7 +4,6 @@ import BackButton
 import LoadingSpinner
 import TitleHeader
 import TooltipTextButton
-import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,7 +20,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -49,6 +47,7 @@ import io.github.skeletonxf.credits.Library
 import io.github.skeletonxf.credits.RustCredits
 import io.github.skeletonxf.data.KResult
 import io.github.skeletonxf.functions.launchUnit
+import io.github.skeletonxf.ui.scroll.VerticalScrollbar
 import io.github.skeletonxf.ui.shaderGradient
 import io.github.skeletonxf.ui.state.StateHolder
 import io.github.skeletonxf.ui.strings.LocalStrings
@@ -181,7 +180,7 @@ fun CreditsContent(
             }
         }
         VerticalScrollbar(
-            adapter = rememberScrollbarAdapter(scrollState),
+            scrollState = scrollState,
             modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
         )
     }

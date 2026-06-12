@@ -2,7 +2,6 @@ package io.github.skeletonxf.ui.credits
 
 import BackButton
 import TitleHeader
-import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,7 +12,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
@@ -27,6 +25,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.skeletonxf.credits.License
+import io.github.skeletonxf.ui.scroll.VerticalScrollbar
 import io.github.skeletonxf.ui.shaderGradient
 import io.github.skeletonxf.ui.theme.HnefataflColors
 import kotlinx.serialization.Serializable
@@ -96,7 +95,7 @@ fun LicenseViewerContent(
                 }
             }
             VerticalScrollbar(
-                adapter = rememberScrollbarAdapter(scrollState),
+                scrollState = scrollState,
                 modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
             )
         }
