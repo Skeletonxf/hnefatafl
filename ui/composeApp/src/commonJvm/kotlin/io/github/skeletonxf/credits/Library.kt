@@ -67,7 +67,15 @@ data class Library(
                             licenses = listOf(
                                 License(
                                     name = artifact.licenseIdentifier ?: "Unknown license",
-                                    text = artifact.licenseText ?: "Unknown license text",
+                                    text = artifact
+                                        .licenseTexts
+                                        .joinToString(separator = "\n\n") { list ->
+                                            // type on Rust side is actually Vec<(String, String)>
+                                            // but Kotlin doesn't have real tuples or fixed length
+                                            // arrays to deserialize with.
+                                            val (name, text) = list
+                                            "$name\n$text"
+                                        }
                                 )
                             ),
                         )
@@ -125,8 +133,10 @@ private data class RustLibrary(
     val repository: String?,
     @SerialName("license_identifier")
     val licenseIdentifier: String?,
-    @SerialName("license_text")
-    val licenseText: String?,
+    @SerialName("license_texts")
+    // type on Rust side is actually Vec<(String, String)> but Kotlin
+    // doesn't have real tuples or fixed length arrays to deserialize with.
+    val licenseTexts: List<List<String>>,
 )
 
 private val apacheLicenseText = """

@@ -1,5 +1,5 @@
 use license_fetcher::build::config::{Config, ConfigBuilder};
-use license_fetcher::build::package_list_with_licenses;
+use license_fetcher::build::fetcher::package_list_with_licenses;
 use license_fetcher::PackageList;
 
 fn main() {
