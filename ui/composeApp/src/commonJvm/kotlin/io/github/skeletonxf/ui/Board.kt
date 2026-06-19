@@ -35,12 +35,14 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap.Companion.Round
 import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.isFinite
 import androidx.compose.ui.unit.max
 import androidx.compose.ui.unit.min
+import androidx.compose.ui.unit.times
 import io.github.skeletonxf.data.BoardData
 import io.github.skeletonxf.data.Piece
 import io.github.skeletonxf.data.Play
@@ -60,6 +62,34 @@ import kotlin.math.roundToInt
 
 val emptyBoard = BoardData(
     List(11 * 11) { Tile.Empty }, 11
+)
+
+val startingBoard = BoardData(
+    tiles = List(11 * 11) { i ->
+        val x = i / 11
+        val y = i % 11
+        if (x == 5 && y == 5) {
+            Tile.King
+        } else if (
+            ((x >= 4 && x <= 6) && (y >= 4 && y <= 6)) ||
+            (x == 3 && y == 5) || (x == 7 && y == 5) ||
+            (y == 3 && x == 5) || (y == 7 && x == 5)
+        ) {
+            Tile.Defender
+        } else if (
+            (x == 0 && y >= 3 && y <= 7) ||
+            (x == 10 && y >= 3 && y <= 7) ||
+            (y == 0 && x >= 3 && x <= 7) ||
+            (y == 10 && x >= 3 && x <= 7) ||
+            (y == 5 && (x == 1 || x == 9)) ||
+            ((y == 1 || y == 9) && x == 5)
+        ) {
+            Tile.Attacker
+        } else {
+            Tile.Empty
+        }
+    },
+    length = 11,
 )
 
 @Composable
@@ -274,6 +304,21 @@ fun Board(
 private fun EmptyBoardPreview() = PreviewSurface {
     Board(
         board = emptyBoard,
+        moves = listOf(),
+        dead = listOf(),
+        onSelect = {},
+        selected = null,
+        makePlay = {},
+        previousPlay = null,
+        isLoading = false,
+    )
+}
+
+@Composable
+@Preview
+private fun StartingBoardPreview() = PreviewSurface {
+    Board(
+        board = startingBoard,
         moves = listOf(),
         dead = listOf(),
         onSelect = {},
