@@ -28,8 +28,10 @@ class BoardState(initialSate: Position? = null) {
 }
 
 @Composable
-fun rememberBoardState(): BoardState = rememberSaveable(saver = BoardStateSaver) {
-    BoardState()
+fun rememberBoardState(
+    initialSelection: Position? = null
+): BoardState = rememberSaveable(saver = BoardStateSaver) {
+    BoardState(initialSelection)
 }
 
 // There must be some official way of making Bundle-storable types for desktop too?

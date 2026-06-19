@@ -54,8 +54,6 @@ import io.github.skeletonxf.ui.strings.LocalStrings
 import io.github.skeletonxf.ui.theme.HnefataflColors
 import io.github.skeletonxf.ui.theme.PreviewSurface
 import org.jetbrains.compose.resources.painterResource
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.times
 import java.lang.Float.min
 import kotlin.math.max
 import kotlin.math.roundToInt
@@ -210,14 +208,7 @@ fun Board(
                                         isMoveForSelected && selectedPiece is Piece -> selectedPiece
                                         else -> null
                                     },
-                                    isSpecial = position.let { (x, y) ->
-                                        (x == board.length / 2 && y == board.length / 2) ||
-                                                (x == 0 && y == 0) ||
-                                                (x == board.length - 1 && y == 0) ||
-                                                (x == 0 && y == board.length - 1) ||
-                                                (x == board.length - 1 && y == board.length - 1)
-
-                                    }
+                                    isSpecial = board.isSpecial(x = position.x, y = position.y)
                                 )
                             }
                             Spacer(Modifier.height(margin))

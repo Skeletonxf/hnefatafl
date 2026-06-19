@@ -23,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
@@ -31,17 +32,24 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.skeletonxf.data.BoardData
 import io.github.skeletonxf.data.Configuration
 import io.github.skeletonxf.data.Play
+import io.github.skeletonxf.data.Player
+import io.github.skeletonxf.data.Position
+import io.github.skeletonxf.data.Tile
+import io.github.skeletonxf.data.Winner
 import io.github.skeletonxf.ffi.GameStateHandle
 import io.github.skeletonxf.ui.Board
 import io.github.skeletonxf.ui.GameState
+import io.github.skeletonxf.ui.Role
 import io.github.skeletonxf.ui.RoleType
 import io.github.skeletonxf.ui.game.FatalError
 import io.github.skeletonxf.ui.localBackgroundScope
 import io.github.skeletonxf.ui.rememberBoardState
 import io.github.skeletonxf.ui.shaderGradient
+import io.github.skeletonxf.ui.startingBoard
 import io.github.skeletonxf.ui.state.StateHolder
 import io.github.skeletonxf.ui.strings.LocalStrings
 import io.github.skeletonxf.ui.theme.HnefataflColors
+import io.github.skeletonxf.ui.theme.PreviewSurface
 import kotlinx.coroutines.CoroutineScope
 
 data class PieceMovingTutorialState(
@@ -83,9 +91,15 @@ enum class Step {
 fun TutorialScreen(
     onBack: () -> Unit,
 ) {
+    // FIXME: The view model store owner should be scoped to our back stack entry
+    val viewModel = viewModel { PieceMovingTutorialViewModel() }
+    val viewModelState = viewModel.state.state.value.handle
+    val state by viewModelState.state
     TutorialContent(
         onBack = onBack,
         step = Step.Moving,
+        state = state,
+        makePlay = viewModel::makePlay,
     )
 }
 
@@ -93,6 +107,8 @@ fun TutorialScreen(
 fun TutorialContent(
     onBack: () -> Unit,
     step: Step,
+    state: GameState.State,
+    makePlay: (Play) -> Unit,
 ) {
     val strings = LocalStrings.current.tutorial
     Column(
@@ -112,19 +128,22 @@ fun TutorialContent(
         )
         Box(modifier = Modifier.fillMaxSize()) {
             when (step) {
-                Step.Moving -> PieceMovingTutorialContent()
+                Step.Moving -> PieceMovingTutorialContent(
+                    state = state,
+                    makePlay = makePlay,
+                )
             }
         }
     }
 }
 
 @Composable
-fun PieceMovingTutorialContent() {
+fun PieceMovingTutorialContent(
+    state: GameState.State,
+    makePlay: (Play) -> Unit,
+) {
     val strings = LocalStrings.current.tutorial
-    val viewModel = viewModel { PieceMovingTutorialViewModel() }
-    val viewModelState = viewModel.state.state.value.handle
-    val state by viewModelState.state
-    val boardState = rememberBoardState()
+    val boardState = rememberBoardState(initialSelection = Position(x = 3, y = 5))
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally
@@ -158,6 +177,7 @@ fun PieceMovingTutorialContent() {
                                     boardData.get(x = row, y = column)
                                 },
                                 length = 7,
+                                specialTiles = s.board.specialTiles,
                             )
                         },
                         boardState = boardState,
@@ -166,7 +186,7 @@ fun PieceMovingTutorialContent() {
                         },
                         // Ignore dead for now
                         dead = listOf(),
-                        makePlay = viewModel::makePlay,
+                        makePlay = makePlay,
                         previousPlay = s.previousPlay,
                         isLoading = s.turnPlayerRole().isLoading
                     )
@@ -175,4 +195,32 @@ fun PieceMovingTutorialContent() {
             }
         }
     }
+}
+
+@Composable
+@Preview
+fun PieceMovingTutorialPreview() = PreviewSurface {
+    TutorialContent(
+        state = GameState.State.Game(
+            board = startingBoard,
+            plays = listOf(
+                Position(x = 2, y = 5),
+                Position(x = 3, y = 1),
+                Position(x = 3, y = 2),
+                Position(x = 3, y = 3),
+                Position(x = 3, y = 4),
+                Position(x = 3, y = 6),
+            ).map { Play(from = Position(x = 3, y = 5), to = it) },
+            winner = Winner.None,
+            turn = Player.Defender,
+            dead = listOf(),
+            turnCount = 0.toUInt(),
+            attackers = Role.Human(),
+            defenders = Role.Human(),
+            previousPlay = null,
+        ),
+        makePlay = {},
+        onBack = {},
+        step = Step.Moving,
+    )
 }
