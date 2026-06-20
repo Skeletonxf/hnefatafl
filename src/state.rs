@@ -81,7 +81,8 @@ impl Index<Position> for Board {
     type Output = Tile;
 
     fn index(&self, position: Position) -> &Self::Output {
-        self.board.get_reference(position.1 as usize, position.0 as usize)
+        self.board
+            .get_reference(position.1 as usize, position.0 as usize)
     }
 }
 
@@ -245,13 +246,13 @@ impl GameState {
         }
     }
 
-    pub fn from_setup(
-        pieces: Matrix<Tile>,
-        turn: Player,
-    ) -> Self {
+    pub fn from_setup(pieces: Matrix<Tile>, turn: Player, dead: Vec<Piece>) -> Self {
         assert_eq!((11, 11), pieces.size(), "Board must be 11x11");
         let board = pieces;
-        let (king, _) = board.row_major_iter().with_index().find(|&(_, tile)| tile == Tile::King)
+        let (king, _) = board
+            .row_major_iter()
+            .with_index()
+            .find(|&(_, tile)| tile == Tile::King)
             .expect("1 king must be present in board");
         GameState {
             board: Board {
@@ -260,7 +261,7 @@ impl GameState {
             },
             turn,
             winner: None,
-            dead: vec![],
+            dead,
             turn_count: 0,
             king: (king.0 as u8, king.1 as u8),
         }
@@ -362,9 +363,9 @@ impl GameState {
             info = info.update(GameStateUpdate::DefenderWin);
         } else {
             self.turn = self.turn.next();
-            if info != GameStateUpdate::DefenderWin &&
-                info != GameStateUpdate::AttackerWin &&
-                self.available_plays().is_empty()
+            if info != GameStateUpdate::DefenderWin
+                && info != GameStateUpdate::AttackerWin
+                && self.available_plays().is_empty()
             {
                 // give victory to the player that just stopped the other from being able to make
                 // any plays (this could be due to capturing all the Attacker's pieces or either

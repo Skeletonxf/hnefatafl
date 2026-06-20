@@ -6,6 +6,8 @@ use crate::uniffi;
 use std::fmt;
 use std::sync::Mutex;
 
+use easy_ml::matrices::Matrix;
+
 mod config;
 mod licenses;
 
@@ -27,6 +29,56 @@ impl GameStateHandle {
     fn new() -> Self {
         GameStateHandle {
             state: Mutex::new(GameState::default()),
+        }
+    }
+
+    /// Creates a handle for a game that is configured based on the input arguments.
+    ///
+    /// The tiles are for the 11x11 row major board, and there must be a single king on the board.
+    /// If the input doesn't meet the requirements, it will be silently modified with
+    /// adjusted pieces.
+    #[uniffi::constructor]
+    fn with_starting_configuration(tiles: Vec<Tile>, turn: TurnPlayer, dead: Vec<Dead>) -> Self {
+        // Because we don't want to handle errors from the caller, silently pad or truncate
+        // the input tiles to the required size.
+        let mut padded_tiles: Vec<Tile>;
+        if tiles.len() != 11 * 11 {
+            padded_tiles = tiles.into_iter().chain(TilePadding).take(11 * 11).collect();
+        } else {
+            padded_tiles = tiles;
+        }
+
+        // Make sure there is the required 1 king on the board. We might be able to
+        // relax this requirement in the future but the state will need tweaks to generalise.
+        let kings = padded_tiles
+            .iter()
+            .filter(|&&piece| piece == Tile::King)
+            .count();
+        if kings != 1 {
+            if kings == 0 {
+                // Insert a king
+                padded_tiles[5 + (5 * 11)] = Tile::King;
+            } else {
+                // Demote the excess kings
+                let excess_kings: Vec<usize> = padded_tiles
+                    .iter()
+                    .enumerate()
+                    .filter(|(_, &piece)| piece == Tile::King)
+                    .map(|(i, _)| i)
+                    .skip(1)
+                    .collect();
+                for i in excess_kings.iter() {
+                    padded_tiles[*i] = Tile::Defender;
+                }
+            }
+        }
+
+        GameStateHandle {
+            state: Mutex::new(GameState::from_setup(
+                Matrix::from_flat_row_major((11, 11), padded_tiles),
+                (&turn).into(),
+                dead.into_iter().map(|dead| (&dead).into()).collect(),
+            )),
         }
     }
 
@@ -237,6 +289,15 @@ impl From<Player> for TurnPlayer {
     }
 }
 
+impl From<&TurnPlayer> for Player {
+    fn from(value: &TurnPlayer) -> Self {
+        match value {
+            TurnPlayer::Defenders => Player::Defender,
+            TurnPlayer::Attackers => Player::Attacker,
+        }
+    }
+}
+
 #[repr(u8)]
 #[derive(Clone, Copy, Debug, Eq, PartialEq, uniffi::Enum)]
 pub enum Dead {
@@ -252,5 +313,25 @@ impl From<&Piece> for Dead {
             Piece::Defender => Dead::Defender,
             Piece::King => Dead::King,
         }
+    }
+}
+
+impl From<&Dead> for Piece {
+    fn from(value: &Dead) -> Self {
+        match value {
+            Dead::Attacker => Piece::Attacker,
+            Dead::Defender => Piece::Defender,
+            Dead::King => Piece::King,
+        }
+    }
+}
+
+struct TilePadding;
+
+impl Iterator for TilePadding {
+    type Item = Tile;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        Some(Tile::Empty)
     }
 }
