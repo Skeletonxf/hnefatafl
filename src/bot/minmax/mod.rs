@@ -322,7 +322,7 @@ fn defenders_minmax_takes_the_winning_move() {
             E, E, E, E, A, A, E, A, E, E, E,
         ])
     };
-    let mut game_state = GameState::from_setup(board, Player::Defender);
+    let mut game_state = GameState::from_setup(board, Player::Defender, vec![]);
     println!("Game state before defender's turn: {}", game_state);
     let best_play = min_max_play(&game_state).expect("Defenders should have a play to make");
     let result = game_state.make_play(&best_play);
@@ -358,7 +358,7 @@ fn attackers_minmax_takes_the_winning_move() {
             E, E, E, E, A, A, E, A, E, E, E,
         ])
     };
-    let mut game_state = GameState::from_setup(board, Player::Attacker);
+    let mut game_state = GameState::from_setup(board, Player::Attacker, vec![]);
     println!("Game state before attacker's turn: {}", game_state);
     let best_play = min_max_play(&game_state).expect("Attackers should have a play to make");
     let result = game_state.make_play(&best_play);
