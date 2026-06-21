@@ -1,4 +1,4 @@
-package io.github.skeletonxf.ui
+package io.github.skeletonxf.ui.game
 
 import LoadingSpinner
 import androidx.compose.animation.core.animateFloatAsState
@@ -50,6 +50,9 @@ import io.github.skeletonxf.data.Player
 import io.github.skeletonxf.data.Position
 import io.github.skeletonxf.data.Tile
 import io.github.skeletonxf.data.TileColor
+import io.github.skeletonxf.ui.Res
+import io.github.skeletonxf.ui.king
+import io.github.skeletonxf.ui.piece
 import io.github.skeletonxf.ui.strings.LocalStrings
 import io.github.skeletonxf.ui.theme.HnefataflColors
 import io.github.skeletonxf.ui.theme.PreviewSurface

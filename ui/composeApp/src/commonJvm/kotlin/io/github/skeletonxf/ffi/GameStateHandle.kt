@@ -2,7 +2,7 @@ package io.github.skeletonxf.ffi
 
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
-import io.github.skeletonxf.ui.GameState
+import io.github.skeletonxf.ui.game.GameState
 import io.github.skeletonxf.data.BoardData
 import io.github.skeletonxf.data.Configuration
 import io.github.skeletonxf.data.KResult
@@ -12,8 +12,8 @@ import io.github.skeletonxf.data.Player
 import io.github.skeletonxf.data.Tile
 import io.github.skeletonxf.data.Winner
 import io.github.skeletonxf.logging.Log
-import io.github.skeletonxf.ui.Role
-import io.github.skeletonxf.ui.RoleType
+import io.github.skeletonxf.ui.game.Role
+import io.github.skeletonxf.ui.game.RoleType
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job

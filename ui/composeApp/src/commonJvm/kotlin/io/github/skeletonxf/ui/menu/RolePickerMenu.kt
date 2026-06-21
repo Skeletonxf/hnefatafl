@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -25,10 +24,9 @@ import androidx.compose.ui.unit.dp
 import io.github.skeletonxf.data.Piece
 import io.github.skeletonxf.data.Tile
 import io.github.skeletonxf.data.Configuration
-import io.github.skeletonxf.ui.Icon
-import io.github.skeletonxf.ui.RoleType
+import io.github.skeletonxf.ui.game.Icon
+import io.github.skeletonxf.ui.game.RoleType
 import io.github.skeletonxf.ui.strings.LocalStrings
-import io.github.skeletonxf.ui.theme.HnefataflColors
 
 @Composable
 fun RolePickerMenu(

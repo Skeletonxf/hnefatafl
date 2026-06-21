@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
@@ -21,14 +20,13 @@ import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import androidx.savedstate.serialization.SavedStateConfiguration
 import io.github.skeletonxf.data.Configuration
-import io.github.skeletonxf.logging.Log
-import io.github.skeletonxf.ui.AppContentScreen
 import io.github.skeletonxf.ui.Environment
 import io.github.skeletonxf.ui.MainMenuScreen
 import io.github.skeletonxf.ui.RolePickerScreen
 import io.github.skeletonxf.ui.credits.CreditsScreen
 import io.github.skeletonxf.ui.credits.LicenseDetail
 import io.github.skeletonxf.ui.credits.LicenseViewerScreen
+import io.github.skeletonxf.ui.game.GameContentScreen
 import io.github.skeletonxf.ui.tutorial.TutorialScreen
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.modules.SerializersModule
@@ -110,7 +108,6 @@ private fun NavigationRoot(
     environment: Environment,
     backStack: NavBackStack<NavKey> = Route.rememberNavigationStack(),
 ) {
-    val handle = environment.gameStateHandle
     NavDisplay(
         backStack = backStack,
         onBack = { backStack.removeLastOrNull() },
@@ -142,7 +139,6 @@ private fun NavigationRoot(
                     is Route.Main -> NavEntry(key) {
                         MainMenuScreen(
                             onNewGame = { configuration ->
-                                environment.startNewGame(configuration)
                                 backStack.add(Route.Game(configuration))
                             },
                             onVersusComputer = {
@@ -160,7 +156,6 @@ private fun NavigationRoot(
                     is Route.RolePicker -> NavEntry(key) {
                         RolePickerScreen(
                             onNewGame = { configuration ->
-                                environment.startNewGame(configuration)
                                 backStack[backStack.lastIndex] = Route.Game(configuration)
                             },
                             onCancel = {
@@ -190,29 +185,10 @@ private fun NavigationRoot(
                     }
 
                     is Route.Game -> NavEntry(key) {
-                        if (handle != null) {
-                            val state by handle.state
-                            AppContentScreen(
-                                state = state,
-                                makePlay = handle::makePlay,
-                                makeBotPlay = handle::makeBotPlay,
-                                onRestart = {
-                                    val success = environment.restartGame()
-                                    if (!success) {
-                                        Log.error("Unable to find configuration used for previous game")
-                                    }
-                                    backStack[backStack.lastIndex] = Route.Game(handle.configuration)
-                                },
-                                onQuit = {
-                                    environment.stopGame()
-                                    backStack.removeLastOrNull()
-                                },
-                            )
-                        } else {
-                            // We lost our handle somehow, so kick the
-                            // user back
-                            backStack.removeLastOrNull()
-                        }
+                        GameContentScreen(
+                            configuration = key.configuration,
+                            onBack = { backStack.removeLastOrNull() },
+                        )
                     }
                 }
             } else {

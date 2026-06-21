@@ -1,4 +1,4 @@
-package io.github.skeletonxf.ui
+package io.github.skeletonxf.ui.game
 
 import androidx.compose.runtime.State as ComposeState
 import io.github.skeletonxf.data.BoardData

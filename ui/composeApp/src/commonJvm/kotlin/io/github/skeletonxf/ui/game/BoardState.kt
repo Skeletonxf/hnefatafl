@@ -1,4 +1,4 @@
-package io.github.skeletonxf.ui
+package io.github.skeletonxf.ui.game
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue

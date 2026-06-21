@@ -1,6 +1,6 @@
 package io.github.skeletonxf.data
 
-import io.github.skeletonxf.ui.RoleType
+import io.github.skeletonxf.ui.game.RoleType
 import kotlinx.serialization.Serializable
 
 @Serializable
