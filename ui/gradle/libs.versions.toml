@@ -43,10 +43,8 @@ compose-ui = { module = "org.jetbrains.compose.ui:ui", version.ref = "compose-ui
 compose-uiToolingPreview = { module = "org.jetbrains.compose.ui:ui-tooling-preview", version.ref = "compose-uiToolingPreview" }
 compose-componentsResources = { module = "org.jetbrains.compose.components:components-resources", version.ref = "compose-componentsResources" }
 
-# Core Navigation 3 libraries
+# Navigation 3
 androidx-navigation3-ui = { module = "org.jetbrains.androidx.navigation3:navigation3-ui", version.ref = "nav3Core" }
-
-# Optional add-on libraries
 androidx-lifecycle-viewmodel-navigation3 = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-navigation3", version.ref = "lifecycleViewmodelNav3" }
 
 kotlinx-serialization-core = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core", version.ref = "kotlinxSerialization" }

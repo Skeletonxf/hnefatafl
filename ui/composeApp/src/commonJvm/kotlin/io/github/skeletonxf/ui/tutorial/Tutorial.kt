@@ -34,7 +34,6 @@ import io.github.skeletonxf.data.Configuration
 import io.github.skeletonxf.data.Play
 import io.github.skeletonxf.data.Player
 import io.github.skeletonxf.data.Position
-import io.github.skeletonxf.data.Tile
 import io.github.skeletonxf.data.Winner
 import io.github.skeletonxf.ffi.GameStateHandle
 import io.github.skeletonxf.ui.Board
@@ -91,7 +90,6 @@ enum class Step {
 fun TutorialScreen(
     onBack: () -> Unit,
 ) {
-    // FIXME: The view model store owner should be scoped to our back stack entry
     val viewModel = viewModel { PieceMovingTutorialViewModel() }
     val viewModelState = viewModel.state.state.value.handle
     val state by viewModelState.state
