@@ -141,8 +141,8 @@ fun GameContent(
                 onRestart = onRestart,
                 onQuit = onQuit,
             )
-            LaunchedEffect(state.turn) {
-                if (state.turnPlayerRole() is Role.Computer) {
+            LaunchedEffect(state.turnCount) {
+                if (state.turnPlayerRole() is Role.Computer && state.winner == Winner.None) {
                     makeBotPlay()
                 }
             }
