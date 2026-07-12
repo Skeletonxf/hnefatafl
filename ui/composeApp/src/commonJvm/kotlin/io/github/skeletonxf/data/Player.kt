@@ -4,6 +4,11 @@ enum class Player {
     Defender,
     Attacker;
 
+    fun toTurnPlayer(): uniffi.hnefatafl.TurnPlayer = when (this) {
+        Defender -> uniffi.hnefatafl.TurnPlayer.DEFENDERS
+        Attacker -> uniffi.hnefatafl.TurnPlayer.ATTACKERS
+    }
+
     companion object {
         fun from(player: uniffi.hnefatafl.TurnPlayer): Player = when (player) {
             uniffi.hnefatafl.TurnPlayer.DEFENDERS -> Defender

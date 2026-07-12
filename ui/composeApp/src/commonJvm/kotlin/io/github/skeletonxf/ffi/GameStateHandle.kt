@@ -26,17 +26,48 @@ private fun uniffi.hnefatafl.FlatPlay.Companion.from(play: Play) = uniffi.hnefat
     toY = play.to.y.toUByte(),
 )
 
-class GameStateHandle(
+class GameStateHandle private constructor(
     private val coroutineScope: CoroutineScope,
     val configuration: Configuration,
+    private val handle: uniffi.hnefatafl.GameStateHandle
 ) : GameState {
-    private val handle = uniffi.hnefatafl.GameStateHandle()
 
     private var ongoingPlay: Job? = null
 
-    override val state: MutableState<GameState.State> = mutableStateOf(
-        getGameState(UIState.from(configuration))
+    constructor(coroutineScope: CoroutineScope, configuration: Configuration) : this(
+        coroutineScope,
+        configuration,
+        uniffi.hnefatafl.GameStateHandle()
     )
+
+    override val state: MutableState<GameState.State> = mutableStateOf(
+        getGameState(UIState.from(configuration, Role.Computer.Strategy.MinMax))
+    )
+
+    companion object {
+        fun fromStartingConfiguration(
+            coroutineScope: CoroutineScope,
+            configuration: Configuration,
+            strategy: Role.Computer.Strategy,
+            tiles: List<Tile>,
+            turn: Player,
+            dead: List<Piece>,
+        ): GameStateHandle {
+            if (tiles.size != (11 * 11)) {
+                throw IllegalArgumentException(
+                    "Invalid number of tiles for starting state, expected ${11 * 11}, was ${tiles.size}"
+                )
+            }
+            val handle = uniffi.hnefatafl.GameStateHandle.withStartingConfiguration(
+                tiles.map { it.toTile() },
+                turn.toTurnPlayer(),
+                dead.map { it.toDead() }
+            )
+            return GameStateHandle(coroutineScope, configuration, handle).apply {
+                state.value = getGameState(UIState.from(configuration, strategy))
+            }
+        }
+    }
 
     private fun Configuration.fatalError(
         message: String,
@@ -54,15 +85,24 @@ class GameStateHandle(
         val previousPlay: Play?,
     ) {
         companion object {
-            fun from(configuration: Configuration) = UIState(
-                attackers = initialRoleState(configuration.attackers),
-                defenders = initialRoleState(configuration.defenders),
+            fun from(
+                configuration: Configuration,
+                strategy: Role.Computer.Strategy,
+            ) = UIState(
+                attackers = initialRoleState(configuration.attackers, strategy),
+                defenders = initialRoleState(configuration.defenders, strategy),
                 previousPlay = null,
             )
 
-            private fun initialRoleState(type: RoleType): Role = when (type) {
+            private fun initialRoleState(
+                type: RoleType,
+                strategy: Role.Computer.Strategy,
+            ): Role = when (type) {
                 RoleType.Human -> Role.Human()
-                RoleType.Computer -> Role.Computer(isLoading = false)
+                RoleType.Computer -> Role.Computer(
+                    isLoading = false,
+                    strategy = strategy,
+                )
             }
         }
     }
@@ -106,8 +146,9 @@ class GameStateHandle(
     }
 
     override fun makeBotPlay() = attemptPlay {
+        val strategy: Role.Computer.Strategy
         val ui = when (val s = state.value) {
-            is GameState.State.Game -> when (s.turnPlayerRole()) {
+            is GameState.State.Game -> when (val r = s.turnPlayerRole()) {
                 is Role.Computer -> {
                     val loading = when (s.turn) {
                         Player.Attacker -> s.copy(
@@ -120,6 +161,7 @@ class GameStateHandle(
                             attackers = s.attackers.exitLoading()
                         )
                     }
+                    strategy = r.strategy
                     state.value = loading
                     // UI state we'll enter after a play will be not loading again
                     loading.uiState().copy(
@@ -140,16 +182,36 @@ class GameStateHandle(
                 return@attemptPlay
             }
         }
-        state.value = KResult.runCatching {
-            handle.makeBotPlay()
-        }.fold(
-            ok = { botPlay -> getGameState(ui.copy(previousPlay = Play.from(botPlay.play))) },
-            error = { error ->
-                with (configuration) {
-                    fatalError("Failed to make bot play", error)
+        when (strategy) {
+            Role.Computer.Strategy.MinMax -> {
+                state.value = KResult.runCatching {
+                    handle.makeBotPlay()
+                }.fold(
+                    ok = { botPlay ->
+                        getGameState(ui.copy(previousPlay = Play.from(botPlay.play)))
+                    },
+                    error = { error ->
+                        with (configuration) {
+                            fatalError("Failed to make bot play", error)
+                        }
+                    }
+                )
+            }
+            Role.Computer.Strategy.Random -> {
+                val randomPlay = getAvailablePlays().randomOrNull()
+                if (randomPlay != null) {
+                    handle.makePlay(uniffi.hnefatafl.FlatPlay.from(randomPlay))
+                    state.value = getGameState(ui.copy(previousPlay = randomPlay))
+                } else {
+                    state.value = with (configuration) {
+                        fatalError(
+                            "Failed to make bot play",
+                            IllegalStateException("No plays available")
+                        )
+                    }
                 }
             }
-        )
+        }
     }
 
     /**

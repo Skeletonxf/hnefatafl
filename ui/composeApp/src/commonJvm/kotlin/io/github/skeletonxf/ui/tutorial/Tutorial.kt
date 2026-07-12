@@ -15,9 +15,12 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -34,6 +37,7 @@ import io.github.skeletonxf.data.Configuration
 import io.github.skeletonxf.data.Play
 import io.github.skeletonxf.data.Player
 import io.github.skeletonxf.data.Position
+import io.github.skeletonxf.data.Tile
 import io.github.skeletonxf.data.Winner
 import io.github.skeletonxf.ffi.GameStateHandle
 import io.github.skeletonxf.ui.game.Board
@@ -50,23 +54,69 @@ import io.github.skeletonxf.ui.strings.LocalStrings
 import io.github.skeletonxf.ui.theme.HnefataflColors
 import io.github.skeletonxf.ui.theme.PreviewSurface
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.coroutineScope
 
-data class PieceMovingTutorialState(
+data class TutorialState(
     private val scope: CoroutineScope,
 ) : StateHolder {
 
-    val state = mutableStateOf(
-        State(
-            GameStateHandle(
-                localBackgroundScope,
-                Configuration(attackers = RoleType.Human, defenders = RoleType.Human)
-            )
-        )
-    )
+    val state = mutableStateOf(pieceMovingInitialState())
 
     fun makePlay(play: Play) {
         state.value.handle.makePlay(play)
     }
+
+    fun makeBotPlay() {
+        state.value.handle.makeBotPlay()
+    }
+
+    fun showCapturing() {
+        state.value = capturingInitialState()
+    }
+
+    private fun pieceMovingInitialState() = State(
+        GameStateHandle(
+            localBackgroundScope,
+            Configuration(attackers = RoleType.Human, defenders = RoleType.Human)
+        )
+    )
+
+    private fun capturingInitialState() = State(
+        GameStateHandle.fromStartingConfiguration(
+            coroutineScope = localBackgroundScope,
+            configuration = Configuration(
+                attackers = RoleType.Computer,
+                defenders = RoleType.Human
+            ),
+            strategy = Role.Computer.Strategy.Random,
+            tiles = List(11 * 11) { i ->
+                val x = i / 11
+                val y = i % 11
+                if (x == 8 && y == 8) {
+                    Tile.King
+                } else if (
+                    (x == 3 && y == 3) ||
+                    (x == 4 && y == 1) ||
+                    (x == 3 && y == 0) ||
+                    (x == 0 && y == 6) ||
+                    (x == 6 && y == 6) ||
+                    (x == 6 && y == 0) ||
+                    (x == 6 && y == 5) ||
+                    (x == 5 && y == 6) ||
+                    (x == 7) ||
+                    (y == 7)
+                ) {
+                    Tile.Defender
+                } else if ((x == 3 && y == 1) || (x == 0 && y == 5)) {
+                    Tile.Attacker
+                } else {
+                    Tile.Empty
+                }
+            },
+            turn = Player.Defender,
+            dead = listOf(),
+        )
+    )
 
     data class State(
         val handle: GameStateHandle,
@@ -74,28 +124,43 @@ data class PieceMovingTutorialState(
 }
 
 @Stable
-class PieceMovingTutorialViewModel : ViewModel() {
-    val state = PieceMovingTutorialState(
+class TutorialViewModel : ViewModel() {
+    val state = TutorialState(
         scope = viewModelScope,
     )
 
     fun makePlay(play: Play) = state.makePlay(play)
+    fun makeBotPlay() = state.makeBotPlay()
+    fun showCapturing() = state.showCapturing()
 }
 
 enum class Step {
     Moving,
+    Capture,
 }
 
 @Composable
 fun TutorialScreen(
     onBack: () -> Unit,
 ) {
-    val viewModel = viewModel { PieceMovingTutorialViewModel() }
+    val viewModel = viewModel { TutorialViewModel() }
     val viewModelState = viewModel.state.state.value.handle
     val state by viewModelState.state
+    var step by rememberSaveable { mutableStateOf(Step.Moving) }
+    val turn = (state as? GameState.State.Game)?.turn
+    LaunchedEffect(turn) {
+        val game = (state as? GameState.State.Game)
+        if (turn == Player.Attacker && step == Step.Moving) {
+            viewModel.showCapturing()
+            step = Step.Capture
+        }
+        if (game?.turnPlayerRole() is Role.Computer && game.winner == Winner.None) {
+            viewModel.makeBotPlay()
+        }
+    }
     TutorialContent(
         onBack = onBack,
-        step = Step.Moving,
+        step = step,
         state = state,
         makePlay = viewModel::makePlay,
     )
@@ -126,7 +191,8 @@ fun TutorialContent(
         )
         Box(modifier = Modifier.fillMaxSize()) {
             when (step) {
-                Step.Moving -> PieceMovingTutorialContent(
+                Step.Moving, Step.Capture -> PartialBoardTutorialContent(
+                    step = step,
                     state = state,
                     makePlay = makePlay,
                 )
@@ -136,7 +202,8 @@ fun TutorialContent(
 }
 
 @Composable
-fun PieceMovingTutorialContent(
+fun PartialBoardTutorialContent(
+    step: Step,
     state: GameState.State,
     makePlay: (Play) -> Unit,
 ) {
@@ -148,7 +215,10 @@ fun PieceMovingTutorialContent(
     ) {
         val readingWidth = 500.dp
         Text(
-            text = strings.movement,
+            text = when (step) {
+                Step.Moving -> strings.movement
+                Step.Capture -> strings.capture
+            },
             modifier = Modifier.widthIn(max = readingWidth).padding(horizontal = 16.dp),
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center,
@@ -156,7 +226,10 @@ fun PieceMovingTutorialContent(
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = strings.movementDescription,
+            text = when (step) {
+                Step.Moving -> strings.movementDescription
+                Step.Capture -> strings.captureDescription
+            },
             modifier = Modifier.widthIn(max = readingWidth).padding(horizontal = 16.dp),
             textAlign = TextAlign.Center,
         )

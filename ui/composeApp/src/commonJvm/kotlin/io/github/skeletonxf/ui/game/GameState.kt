@@ -61,10 +61,16 @@ sealed interface Role {
 
     data class Computer(
         override val isLoading: Boolean,
+        val strategy: Strategy,
     ) : Role {
         override fun enterLoading() = copy(isLoading = true)
         override fun exitLoading() = copy(isLoading = false)
         override fun type() = RoleType.Computer
+
+        enum class Strategy {
+            MinMax,
+            Random,
+        }
     }
 }
 

@@ -46,6 +46,8 @@ data class Strings(
         val title: String = "Tutorial",
         val movement: String = "Movement",
         val movementDescription: String = "All pieces can move any number of empty squares vertically or horizontally (like the rook in chess).",
+        val capture: String = "Capture",
+        val captureDescription: String = "Move your pieces to opposite sides of an enemy piece to capture it.",
     )
 
     data class Game(
@@ -104,6 +106,8 @@ private val castilianSpanish = Strings(
         title = "Tutorial",
         movement = "El movimiento",
         movementDescription = "Todas las fichas pueden moverse cualquier número de casillas vacías horizontal o verticalmente (igual que la torre de ajedrez).",
+        capture = "La captura",
+        captureDescription = "Mueve tus fichas a los lados opuestos de una enemiga para capturarla.",
     ),
     credits = Strings.Credits(
         title = "Los créditos",
