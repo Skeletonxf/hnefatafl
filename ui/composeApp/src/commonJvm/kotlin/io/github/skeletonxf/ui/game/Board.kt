@@ -154,7 +154,15 @@ fun Board(
         val roundedDownTileSize = (availableTileSize.value.roundToInt() / 4) * 4
         val tileSize = roundedDownTileSize.dp - margin
         val boardSize = (tileSize * board.length) + (margin * (board.length + 1))
-        val selectedPiece = selected?.let { board[it.x, it.y] }
+        val selectedPiece = selected?.let { position ->
+            // In rare cases like the tutorial where we could change the board size
+            // the selected piece may briefly be out of bounds.
+            if (position.x < board.length && position.y < board.length) {
+                board[position.x, position.y]
+            } else {
+                null
+            }
+        }
 
         val availableSideWidth = (longerLength - boardSize) / 2
         val sideMargin = if (availableSideWidth < 100.dp) {
@@ -233,7 +241,18 @@ fun Board(
                     }
                 }
                 if (previousPlay != null) {
-                    val piece = board[previousPlay.to.x, previousPlay.to.y]
+                    // In rare cases such as the tutorial, the previous play might be
+                    // outside the dimensions of the board that is visible.
+                    val piece = if (
+                        previousPlay.to.x < board.length &&
+                        previousPlay.to.y < board.length &&
+                        previousPlay.from.x < board.length &&
+                        previousPlay.from.y < board.length
+                    ) {
+                        board[previousPlay.to.x, previousPlay.to.y]
+                    } else {
+                        null
+                    }
                     val color = (piece as? Piece)?.tint() ?: Color.Unspecified
                     Canvas(modifier = Modifier.size(boardSize)) {
                         val stride = tileSize + margin

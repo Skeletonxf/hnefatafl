@@ -48,6 +48,8 @@ data class Strings(
         val movementDescription: String = "All pieces can move any number of empty squares vertically or horizontally (like the rook in chess).",
         val capture: String = "Capture",
         val captureDescription: String = "Move your pieces to opposite sides of an enemy piece to capture it.",
+        val specialTiles: String = "Special tiles",
+        val specialTilesDescription: String = "Only the King can stop at the 5 special tiles in the corners and centre of the board. If the King reaches a corner tile the Defenders win the game. If the Attackers capture the King by surrounding it on all 4 sides they win the game. Corner tiles can be used as a second piece for captures. If the King is at the edge of the board and is surrounded on all 3 available sides it is also captured."
     )
 
     data class Game(
@@ -108,6 +110,8 @@ private val castilianSpanish = Strings(
         movementDescription = "Todas las fichas pueden moverse cualquier número de casillas vacías horizontal o verticalmente (igual que la torre de ajedrez).",
         capture = "La captura",
         captureDescription = "Mueve tus fichas a los lados opuestos de una enemiga para capturarla.",
+        specialTiles = "Las casillas especiales",
+        specialTilesDescription = "Solo el rey puede detenerse en las 5 casillas especiales de las esquinas y el centro del tablero. Si el rey alcanza una casilla de esquina, los defensores ganan el juego. Si los atacantes capturan al rey rodeándolo por los 4 lados, ellos ganan el juego. Las casillas de esquina se pueden usar como una segunda ficha para realizar capturas. Si el rey está en el borde del tablero y es rodeado por los 3 lados disponibles, también es capturado."
     ),
     credits = Strings.Credits(
         title = "Los créditos",
@@ -144,6 +148,12 @@ val locales = mapOf(
         type = Strings.Type.American,
         credits = britishEnglish.credits.copy(
             viewText = "View license"
+        ),
+        tutorial = britishEnglish.tutorial.copy(
+            specialTilesDescription = britishEnglish.tutorial.specialTilesDescription.replace(
+                " centre ",
+                " center "
+            )
         )
     ),
     "es-ES" to castilianSpanish,

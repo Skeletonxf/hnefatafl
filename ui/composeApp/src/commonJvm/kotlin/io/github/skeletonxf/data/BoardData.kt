@@ -18,4 +18,15 @@ data class BoardData(
     fun isSpecial(x: Int, y: Int) = specialTiles.any { position ->
         x == position.x && y == position.y
     }
+
+    /**
+     * Returns true if all elements match the given predicate
+     */
+    fun all(
+        predicate: (Position, Tile) -> Boolean
+    ): Boolean = (0 until (length * length)).all { i ->
+        val x = i / length
+        val y = i % length
+        predicate(Position(x, y), get(x, y))
+    }
 }

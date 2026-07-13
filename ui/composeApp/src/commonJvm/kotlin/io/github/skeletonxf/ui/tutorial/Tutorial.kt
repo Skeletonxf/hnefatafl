@@ -53,14 +53,16 @@ import io.github.skeletonxf.ui.state.StateHolder
 import io.github.skeletonxf.ui.strings.LocalStrings
 import io.github.skeletonxf.ui.theme.HnefataflColors
 import io.github.skeletonxf.ui.theme.PreviewSurface
+import io.github.skeletonxf.ui.tutorial.TutorialState.State
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
 
 data class TutorialState(
+    val initialState: State,
     private val scope: CoroutineScope,
 ) : StateHolder {
 
-    val state = mutableStateOf(pieceMovingInitialState())
+    val state = mutableStateOf(initialState)
 
     fun makePlay(play: Play) {
         state.value.handle.makePlay(play)
@@ -70,53 +72,9 @@ data class TutorialState(
         state.value.handle.makeBotPlay()
     }
 
-    fun showCapturing() {
-        state.value = capturingInitialState()
+    fun changeState(to: State) {
+        state.value = to
     }
-
-    private fun pieceMovingInitialState() = State(
-        GameStateHandle(
-            localBackgroundScope,
-            Configuration(attackers = RoleType.Human, defenders = RoleType.Human)
-        )
-    )
-
-    private fun capturingInitialState() = State(
-        GameStateHandle.fromStartingConfiguration(
-            coroutineScope = localBackgroundScope,
-            configuration = Configuration(
-                attackers = RoleType.Computer,
-                defenders = RoleType.Human
-            ),
-            strategy = Role.Computer.Strategy.Random,
-            tiles = List(11 * 11) { i ->
-                val x = i / 11
-                val y = i % 11
-                if (x == 8 && y == 8) {
-                    Tile.King
-                } else if (
-                    (x == 3 && y == 3) ||
-                    (x == 4 && y == 1) ||
-                    (x == 3 && y == 0) ||
-                    (x == 0 && y == 6) ||
-                    (x == 6 && y == 6) ||
-                    (x == 6 && y == 0) ||
-                    (x == 6 && y == 5) ||
-                    (x == 5 && y == 6) ||
-                    (x == 7) ||
-                    (y == 7)
-                ) {
-                    Tile.Defender
-                } else if ((x == 3 && y == 1) || (x == 0 && y == 5)) {
-                    Tile.Attacker
-                } else {
-                    Tile.Empty
-                }
-            },
-            turn = Player.Defender,
-            dead = listOf(),
-        )
-    )
 
     data class State(
         val handle: GameStateHandle,
@@ -127,16 +85,106 @@ data class TutorialState(
 class TutorialViewModel : ViewModel() {
     val state = TutorialState(
         scope = viewModelScope,
+        initialState = pieceMovingInitialState(),
     )
 
     fun makePlay(play: Play) = state.makePlay(play)
     fun makeBotPlay() = state.makeBotPlay()
-    fun showCapturing() = state.showCapturing()
+    fun showCapturing() = state.changeState(capturingInitialState())
+    fun showSpecialTiles() = state.changeState(specialTilesInitialState())
+
+    companion object {
+        private fun pieceMovingInitialState() = State(
+            GameStateHandle(
+                localBackgroundScope,
+                Configuration(attackers = RoleType.Human, defenders = RoleType.Human)
+            )
+        )
+
+        private fun capturingInitialState() = State(
+            GameStateHandle.fromStartingConfiguration(
+                coroutineScope = localBackgroundScope,
+                configuration = Configuration(
+                    attackers = RoleType.Computer,
+                    defenders = RoleType.Human
+                ),
+                strategy = Role.Computer.Strategy.Random,
+                tiles = List(11 * 11) { i ->
+                    val x = i / 11
+                    val y = i % 11
+                    if (x == 8 && y == 8) {
+                        Tile.King
+                    } else if (
+                        (x == 3 && y == 3) ||
+                        (x == 4 && y == 1) ||
+                        (x == 3 && y == 0) ||
+                        (x == 0 && y == 6) ||
+                        (x == 6 && y == 6) ||
+                        (x == 6 && y == 0) ||
+                        (x == 6 && y == 5) ||
+                        (x == 5 && y == 6) ||
+                        // We pad the 7th row and column with defender tiles to ensure the attackers
+                        // can't run out of the visible board shown to the user. This has the
+                        // unfortunate side effect that the right and bottom of the 'board' can be
+                        // used for captures but the chance of the user triggering this seems fairly
+                        // low?
+                        (x == 7) ||
+                        (y == 7)
+                    ) {
+                        Tile.Defender
+                    } else if ((x == 3 && y == 1) || (x == 0 && y == 5)) {
+                        Tile.Attacker
+                    } else {
+                        Tile.Empty
+                    }
+                },
+                turn = Player.Defender,
+                dead = listOf(),
+            )
+        )
+
+        private fun specialTilesInitialState() = State(
+            GameStateHandle.fromStartingConfiguration(
+                coroutineScope = localBackgroundScope,
+                configuration = Configuration(
+                    attackers = RoleType.Computer,
+                    defenders = RoleType.Human
+                ),
+                strategy = Role.Computer.Strategy.Random,
+                tiles = List(11 * 11) { i ->
+                    val x = i / 11
+                    val y = i % 11
+                    if (
+                        (x == 0 && y == 2) ||
+                        // We trap a lone attacker in a bunch of defenders so it can't do anything
+                        // but always has a single valid turn.
+                        (x == 6 && y == 5) ||
+                        (x == 7 && y == 4) ||
+                        (x == 8 && y == 4) ||
+                        (x == 7 && y == 6) ||
+                        (x == 8 && y == 6) ||
+                        (x == 9 && y == 5)
+                    ) {
+                        Tile.Defender
+                    } else if (x == 2 && y == 0) {
+                        Tile.King
+                    } else if (x == 7 && y == 5) {
+                        Tile.Attacker
+                    } else {
+                        Tile.Empty
+                    }
+                },
+                turn = Player.Defender,
+                dead = listOf(),
+            )
+        )
+    }
 }
 
 enum class Step {
     Moving,
     Capture,
+    SpecialTiles,
 }
 
 @Composable
@@ -156,6 +204,19 @@ fun TutorialScreen(
         }
         if (game?.turnPlayerRole() is Role.Computer && game.winner == Winner.None) {
             viewModel.makeBotPlay()
+        }
+        // The user should have no difficulty winning the capture step but
+        // it is possible to lose all the pieces visible on screen at which
+        // point the game would be considered still running due to the invisible
+        // pieces off screen, so detect if these are the only defender pieces left
+        if (
+            step == Step.Capture &&
+            (game?.winner != Winner.None || game.board.all { position, tile ->
+                tile != Tile.Defender || position.x >= 7 && position.y >= 7
+            })
+        ) {
+            viewModel.showSpecialTiles()
+            step = Step.SpecialTiles
         }
     }
     TutorialContent(
@@ -190,13 +251,11 @@ fun TutorialContent(
             modifier = Modifier.background(color = MaterialTheme.colorScheme.background)
         )
         Box(modifier = Modifier.fillMaxSize()) {
-            when (step) {
-                Step.Moving, Step.Capture -> PartialBoardTutorialContent(
-                    step = step,
-                    state = state,
-                    makePlay = makePlay,
-                )
-            }
+            PartialBoardTutorialContent(
+                step = step,
+                state = state,
+                makePlay = makePlay,
+            )
         }
     }
 }
@@ -208,7 +267,15 @@ fun PartialBoardTutorialContent(
     makePlay: (Play) -> Unit,
 ) {
     val strings = LocalStrings.current.tutorial
-    val boardState = rememberBoardState(initialSelection = Position(x = 3, y = 5))
+    val boardState = rememberBoardState(
+        initialSelection = if (step == Step.Moving) { Position(x = 3, y = 5) } else { null }
+    )
+    LaunchedEffect(step) {
+        // Remove selection state after updating step
+        if (step != Step.Moving) {
+            boardState.deselect()
+        }
+    }
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally
@@ -218,6 +285,7 @@ fun PartialBoardTutorialContent(
             text = when (step) {
                 Step.Moving -> strings.movement
                 Step.Capture -> strings.capture
+                Step.SpecialTiles -> strings.specialTiles
             },
             modifier = Modifier.widthIn(max = readingWidth).padding(horizontal = 16.dp),
             fontWeight = FontWeight.Bold,
@@ -229,6 +297,7 @@ fun PartialBoardTutorialContent(
             text = when (step) {
                 Step.Moving -> strings.movementDescription
                 Step.Capture -> strings.captureDescription
+                Step.SpecialTiles -> strings.specialTilesDescription
             },
             modifier = Modifier.widthIn(max = readingWidth).padding(horizontal = 16.dp),
             textAlign = TextAlign.Center,
@@ -238,24 +307,29 @@ fun PartialBoardTutorialContent(
         Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
             when (val s = state) {
                 is GameState.State.Game -> {
+                    val visibleLength = when (step) {
+                        Step.Moving,
+                        Step.Capture -> 7
+                        Step.SpecialTiles -> 4
+                    }
                     Board(
                         board = s.board.let { boardData ->
                             // Take the top left of the board to display only
                             BoardData(
-                                tiles = List(7 * 7) { i ->
-                                    val row = i / 7
-                                    val column = i % 7
+                                tiles = List(visibleLength * visibleLength) { i ->
+                                    val row = i / visibleLength
+                                    val column = i % visibleLength
                                     boardData.get(x = row, y = column)
                                 },
-                                length = 7,
+                                length = visibleLength,
                                 specialTiles = s.board.specialTiles,
                             )
                         },
                         boardState = boardState,
                         plays = s.plays.filter { play ->
-                            play.from.x < 7 && play.from.y < 7
+                            play.from.x < visibleLength && play.from.y < visibleLength
                         },
-                        // Ignore dead for now
+                        // Ignore dead for tutorial
                         dead = listOf(),
                         makePlay = makePlay,
                         previousPlay = s.previousPlay,
