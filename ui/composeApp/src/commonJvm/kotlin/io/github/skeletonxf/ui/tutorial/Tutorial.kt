@@ -123,6 +123,7 @@ class TutorialViewModel : ViewModel() {
                         (x == 6 && y == 0) ||
                         (x == 6 && y == 5) ||
                         (x == 5 && y == 6) ||
+                        (x == 1 && y == 2) ||
                         // We pad the 7th row and column with defender tiles to ensure the attackers
                         // can't run out of the visible board shown to the user. This has the
                         // unfortunate side effect that the right and bottom of the 'board' can be
@@ -132,7 +133,7 @@ class TutorialViewModel : ViewModel() {
                         (y == 7)
                     ) {
                         Tile.Defender
-                    } else if ((x == 3 && y == 1) || (x == 0 && y == 5)) {
+                    } else if ((x == 3 && y == 1) || (x == 0 && y == 1)) {
                         Tile.Attacker
                     } else {
                         Tile.Empty
@@ -319,7 +320,7 @@ fun PartialBoardTutorialContent(
             when (val s = state) {
                 is GameState.State.Game -> {
                     val visibleLength = when (step) {
-                        Step.Moving,
+                        Step.Moving -> 11
                         Step.Capture -> 7
                         Step.SpecialTiles -> 4
                     }
