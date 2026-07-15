@@ -46,10 +46,17 @@ data class Strings(
         val title: String = "Tutorial",
         val movement: String = "Movement",
         val movementDescription: String = "All pieces can move any number of empty squares vertically or horizontally (like the rook in chess).",
+        val movementAction: String = "Move your piece to another square to continue.",
         val capture: String = "Capture",
-        val captureDescription: String = "Move your pieces to opposite sides of an enemy piece to capture it.",
+        val captureDescription: String = "Move your pieces to opposite sides of an enemy piece to capture it.\n" +
+                "Corner tiles can be used as a second piece for captures.",
+        val captureAction: String = "Capture the two enemy pieces to continue.",
         val specialTiles: String = "Special tiles",
-        val specialTilesDescription: String = "Only the King can stop at the 5 special tiles in the corners and centre of the board. If the King reaches a corner tile the Defenders win the game. If the Attackers capture the King by surrounding it on all 4 sides they win the game. Corner tiles can be used as a second piece for captures. If the King is at the edge of the board and is surrounded on all 3 available sides it is also captured."
+        val specialTilesDescription: String = "Only the King can stop at the 5 special tiles in the corners and centre of the board.\n" +
+                "If the King reaches a corner tile the Defenders win the game.\n" +
+                "If the Attackers capture the King by surrounding it on all 4 sides they win the game.\n" +
+                "If the King is at the edge of the board and is surrounded on all 3 available sides it is also captured.",
+        val specialTilesAction: String = "Move your King to the corner to continue.",
     )
 
     data class Game(
@@ -108,10 +115,17 @@ private val castilianSpanish = Strings(
         title = "Tutorial",
         movement = "El movimiento",
         movementDescription = "Todas las fichas pueden moverse cualquier número de casillas vacías horizontal o verticalmente (igual que la torre de ajedrez).",
+        movementAction = "Mueve tu ficha a otra casilla para continuar.",
         capture = "La captura",
-        captureDescription = "Mueve tus fichas a los lados opuestos de una enemiga para capturarla.",
+        captureDescription = "Mueve tus fichas a los lados opuestos de una enemiga para capturarla.\n" +
+                "Las casillas de esquina se pueden usar como una segunda ficha para realizar capturas.",
+        captureAction = "Captura las dos fichas enemigas para continuar.",
         specialTiles = "Las casillas especiales",
-        specialTilesDescription = "Solo el rey puede detenerse en las 5 casillas especiales de las esquinas y el centro del tablero. Si el rey alcanza una casilla de esquina, los defensores ganan el juego. Si los atacantes capturan al rey rodeándolo por los 4 lados, ellos ganan el juego. Las casillas de esquina se pueden usar como una segunda ficha para realizar capturas. Si el rey está en el borde del tablero y es rodeado por los 3 lados disponibles, también es capturado."
+        specialTilesDescription = "Solo el rey puede detenerse en las 5 casillas especiales de las esquinas y el centro del tablero.\n" +
+                "Si el rey alcanza una casilla de esquina, los defensores ganan el juego.\n" +
+                "Si los atacantes capturan al rey rodeándolo por los 4 lados, ellos ganan el juego.\n" +
+                "Si el rey está en el borde del tablero y es rodeado por los 3 lados disponibles, también es capturado.",
+        specialTilesAction = "Mueve tu rey a la esquina para continuar."
     ),
     credits = Strings.Credits(
         title = "Los créditos",

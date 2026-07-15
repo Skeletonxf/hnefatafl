@@ -303,6 +303,17 @@ fun PartialBoardTutorialContent(
             textAlign = TextAlign.Center,
         )
         Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = when (step) {
+                Step.Moving -> strings.movementAction
+                Step.Capture -> strings.captureAction
+                Step.SpecialTiles -> strings.specialTilesAction
+            },
+            modifier = Modifier.widthIn(max = readingWidth).padding(horizontal = 16.dp),
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center,
+        )
+        Spacer(modifier = Modifier.height(16.dp))
 
         Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
             when (val s = state) {
