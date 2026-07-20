@@ -55,7 +55,6 @@ import io.github.skeletonxf.ui.theme.HnefataflColors
 import io.github.skeletonxf.ui.theme.PreviewSurface
 import io.github.skeletonxf.ui.tutorial.TutorialState.State
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.coroutineScope
 
 data class TutorialState(
     val initialState: State,
@@ -186,6 +185,7 @@ enum class Step {
     Moving,
     Capture,
     SpecialTiles,
+    Complete,
 }
 
 @Composable
@@ -197,8 +197,12 @@ fun TutorialScreen(
     val state by viewModelState.state
     var step by rememberSaveable { mutableStateOf(Step.Moving) }
     val turn = (state as? GameState.State.Game)?.turn
-    LaunchedEffect(turn) {
+    val turnCount = (state as? GameState.State.Game)?.turnCount
+    LaunchedEffect(turn, turnCount) {
         val game = (state as? GameState.State.Game)
+        if (step == Step.SpecialTiles && game?.winner != Winner.None) {
+            step = Step.Complete
+        }
         if (turn == Player.Attacker && step == Step.Moving) {
             viewModel.showCapturing()
             step = Step.Capture
@@ -287,6 +291,7 @@ fun PartialBoardTutorialContent(
                 Step.Moving -> strings.movement
                 Step.Capture -> strings.capture
                 Step.SpecialTiles -> strings.specialTiles
+                Step.Complete -> strings.complete
             },
             modifier = Modifier.widthIn(max = readingWidth).padding(horizontal = 16.dp),
             fontWeight = FontWeight.Bold,
@@ -299,6 +304,7 @@ fun PartialBoardTutorialContent(
                 Step.Moving -> strings.movementDescription
                 Step.Capture -> strings.captureDescription
                 Step.SpecialTiles -> strings.specialTilesDescription
+                Step.Complete -> strings.completeDescription
             },
             modifier = Modifier.widthIn(max = readingWidth).padding(horizontal = 16.dp),
             textAlign = TextAlign.Center,
@@ -309,6 +315,7 @@ fun PartialBoardTutorialContent(
                 Step.Moving -> strings.movementAction
                 Step.Capture -> strings.captureAction
                 Step.SpecialTiles -> strings.specialTilesAction
+                Step.Complete -> strings.completeAction
             },
             modifier = Modifier.widthIn(max = readingWidth).padding(horizontal = 16.dp),
             fontWeight = FontWeight.Bold,
@@ -322,7 +329,8 @@ fun PartialBoardTutorialContent(
                     val visibleLength = when (step) {
                         Step.Moving -> 11
                         Step.Capture -> 7
-                        Step.SpecialTiles -> 4
+                        Step.SpecialTiles,
+                        Step.Complete -> 4
                     }
                     Board(
                         board = s.board.let { boardData ->

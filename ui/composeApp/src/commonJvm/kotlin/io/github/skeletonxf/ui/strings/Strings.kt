@@ -57,6 +57,9 @@ data class Strings(
                 "If the Attackers capture the King by surrounding it on all 4 sides they win the game.\n" +
                 "If the King is at the edge of the board and is surrounded on all 3 available sides it is also captured.",
         val specialTilesAction: String = "Move your King to the corner to continue.",
+        val complete: String = "Complete",
+        val completeDescription: String = "You have completed the tutorial",
+        val completeAction: String = "Return to the main menu to play a game",
     )
 
     data class Game(
@@ -125,7 +128,10 @@ private val castilianSpanish = Strings(
                 "Si el rey alcanza una casilla de esquina, los defensores ganan el juego.\n" +
                 "Si los atacantes capturan al rey rodeándolo por los 4 lados, ellos ganan el juego.\n" +
                 "Si el rey está en el borde del tablero y es rodeado por los 3 lados disponibles, también es capturado.",
-        specialTilesAction = "Mueve tu rey a la esquina para continuar."
+        specialTilesAction = "Mueve tu rey a la esquina para continuar.",
+        complete = "Completo",
+        completeDescription = "Has completado el tutorial",
+        completeAction = "Puedes volver al menú principal para jugar un juego"
     ),
     credits = Strings.Credits(
         title = "Los créditos",
