@@ -39,7 +39,7 @@ jobs:
     - name: Print rust version
       run: rustc --version
     - name: Build with Gradle
-      run: ./ui/gradlew assembleRelease
+      run: ./ui/gradlew --project-dir ui/ assembleRelease
     # https://github.com/ilharp/sign-android-release
     # - uses: ilharp/sign-android-release@v2
     #   name: Sign APK
