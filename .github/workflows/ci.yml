@@ -41,26 +41,26 @@ jobs:
     - name: Build with Gradle
       run: ./ui/gradlew --project-dir ui/ assembleRelease
     # https://github.com/ilharp/sign-android-release
-    # - uses: ilharp/sign-android-release@v2
-    #   name: Sign APK
-    #   # ID used to access action output
-    #   id: sign_app
-    #   with:
-    #     releaseDir: ui/build/outputs/apk/release
-    #     signingKey: ${{ secrets.SIGNING_KEY }}
-    #     keyAlias: ${{ secrets.ALIAS }}
-    #     keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
-    #     keyPassword: ${{ secrets.KEY_PASSWORD }}
-    #     buildToolsVersion: 34.0.0
-    # - name: Rename APK
-    #   run: mv ${{steps.sign_app.outputs.signedFile}} "hnefatafl-app-${{ github.ref_name }}.apk"
-    # - name: Upload APK
-    #   uses: actions/upload-artifact@v4
-    #   with:
-    #     name: "app.apk"
-    #     path: "hnefatafl-app-${{ github.ref_name }}.apk"
-    #     retention-days: 90
-    # - name: Create release
-    #   run: gh release create ${{ github.ref_name }} "hnefatafl-app-${{ github.ref_name }}.apk" --title "Version ${{ github.ref_name }} release"
-    #   env:
-    #       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - uses: ilharp/sign-android-release@v2
+      name: Sign APK
+      # ID used to access action output
+      id: sign_app
+      with:
+        releaseDir: ui/build/outputs/apk/release
+        signingKey: ${{ secrets.SIGNING_KEY }}
+        keyAlias: ${{ secrets.ALIAS }}
+        keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
+        keyPassword: ${{ secrets.KEY_PASSWORD }}
+        buildToolsVersion: 34.0.0
+    - name: Rename APK
+      run: mv ${{steps.sign_app.outputs.signedFile}} "hnefatafl-app-${{ github.ref_name }}.apk"
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: "app.apk"
+        path: "hnefatafl-app-${{ github.ref_name }}.apk"
+        retention-days: 90
+    - name: Create release
+      run: gh release create ${{ github.ref_name }} "hnefatafl-app-${{ github.ref_name }}.apk" --title "Version ${{ github.ref_name }} release"
+      env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
