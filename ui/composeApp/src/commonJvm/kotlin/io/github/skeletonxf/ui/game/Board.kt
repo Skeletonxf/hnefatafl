@@ -30,6 +30,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -426,7 +427,7 @@ fun Piece.Icon(
         Tile.Attacker -> Icon(
             painter = painterResource(Res.drawable.piece),
             contentDescription = strings.attacker,
-            modifier = modifier,
+            modifier = modifier.rotate(90F),
             tint = this.tint(),
         )
 
