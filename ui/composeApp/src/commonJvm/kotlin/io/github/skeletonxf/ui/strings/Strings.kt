@@ -45,7 +45,7 @@ data class Strings(
     data class Tutorial(
         val title: String = "Tutorial",
         val movement: String = "Movement",
-        val movementDescription: String = "All pieces can move any number of empty squares vertically or horizontally (like the rook in chess).",
+        val movementDescription: String = "All pieces can move any number of empty squares vertically or horizontally (like the rook/castle in chess).",
         val movementAction: String = "Move your piece to another square to continue.",
         val capture: String = "Capture",
         val captureDescription: String = "Move your pieces to opposite sides of an enemy piece to capture it.\n" +
