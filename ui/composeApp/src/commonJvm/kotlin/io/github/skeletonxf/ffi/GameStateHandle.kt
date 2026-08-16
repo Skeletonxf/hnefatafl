@@ -226,7 +226,11 @@ class GameStateHandle private constructor(
         if (ongoingPlay == null) {
             try {
                 ongoingPlay = coroutineScope.launch {
-                    block()
+                    if (getAvailablePlays().isNotEmpty()) {
+                        block()
+                    } else {
+                        Log.error("Attempted to make play but state has no available plays")
+                    }
                     ongoingPlay = null
                 }
             } catch (error: CancellationException) {
