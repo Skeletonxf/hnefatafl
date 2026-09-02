@@ -154,19 +154,7 @@ class TutorialViewModel : ViewModel() {
                 tiles = List(11 * 11) { i ->
                     val x = i / 11
                     val y = i % 11
-                    if (
-                        (x == 0 && y == 2) ||
-                        // We trap a lone attacker in a bunch of defenders so it can't do anything
-                        // but always has a single valid turn.
-                        (x == 6 && y == 5) ||
-                        (x == 7 && y == 4) ||
-                        (x == 8 && y == 4) ||
-                        (x == 7 && y == 6) ||
-                        (x == 8 && y == 6) ||
-                        (x == 9 && y == 5)
-                    ) {
-                        Tile.Defender
-                    } else if (x == 2 && y == 0) {
+                    if (x == 2 && y == 0) {
                         Tile.King
                     } else if (x == 7 && y == 5) {
                         Tile.Attacker
@@ -326,12 +314,7 @@ fun PartialBoardTutorialContent(
         Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
             when (val s = state) {
                 is GameState.State.Game -> {
-                    val visibleLength = when (step) {
-                        Step.Moving -> 11
-                        Step.Capture -> 7
-                        Step.SpecialTiles,
-                        Step.Complete -> 4
-                    }
+                    val visibleLength = 11
                     Board(
                         board = s.board.let { boardData ->
                             // Take the top left of the board to display only
