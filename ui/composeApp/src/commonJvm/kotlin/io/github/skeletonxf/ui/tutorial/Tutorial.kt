@@ -260,9 +260,7 @@ fun PartialBoardTutorialContent(
     makePlay: (Play) -> Unit,
 ) {
     val strings = LocalStrings.current.tutorial
-    val boardState = rememberBoardState(
-        initialSelection = if (step == Step.Moving) { Position(x = 3, y = 5) } else { null }
-    )
+    val boardState = rememberBoardState()
     LaunchedEffect(step) {
         // Remove selection state after updating step
         if (step != Step.Moving) {
