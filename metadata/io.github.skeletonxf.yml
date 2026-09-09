@@ -1,0 +1,21 @@
+Categories:
+  - Board Game
+
+License: AGPL-3.0-or-later
+
+RepoType: git
+SourceCode: https://github.com/Skeletonxf/hnefatafl
+Repo: https://github.com/Skeletonxf/hnefatafl
+
+Builds:
+  - versionName: '1.0'
+    versionCode: 1
+    commit: 80ebdebdbd27c33d85f00ecd8cb840040e4ac1f7
+    subdir: ui/composeApp
+    gradle:
+      - yes
+
+UpdateCheckMode: Tags ^v[0-9](\.[0-9])?$
+AutoUpdateMode: Version
+CurrentVersion: '1.0'
+CurrentVersionCode: 1

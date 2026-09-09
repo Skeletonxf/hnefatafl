@@ -1,0 +1,1 @@
+Hnefatafl, also known as viking chess, is a family of games played with asymetric armies. This app implements a modern variant, with computer opponents and local multiplayer modes.
