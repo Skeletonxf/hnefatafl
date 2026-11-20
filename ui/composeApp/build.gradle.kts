@@ -142,22 +142,20 @@ val copyArtifactsJvm = tasks.register<Copy>("copyLicenseeArtifactsJvm") {
 }
 tasks.named("copyNonXmlValueResourcesForJvmMain").dependsOn(copyArtifactsJvm)
 
-val copyArtifactsAndroidDebug = tasks.register<Copy>("copyLicenseeArtifactsAndroidDebug") {
-    from(project.layout.buildDirectory.dir("reports/licensee/androidDebug"))
-    include("artifacts.json")
-    into("src/androidMainDebug/composeResources/files")
-    dependsOn(tasks.named("licenseeAndroidDebug"))
-}
-afterEvaluate {
-    tasks.named("copyNonXmlValueResourcesForAndroidDebug").dependsOn(copyArtifactsAndroidDebug)
-}
+val copyLicenseeArtifactsAndroid = tasks.register<Copy>("copyLicenseeArtifactsAndroid") {
+    // We need to do a dynamic lookup inside a single task so gradle is satisfied there
+    // aren't potentially conflicting tasks both trying to write to androidMain/composeResources
+    val isRelease = gradle.startParameter.taskNames.any {
+        it.contains("release", ignoreCase = true)
+    }
+    val licenseeTask = if (isRelease) "licenseeAndroidRelease" else "licenseeAndroidDebug"
+    val variantDir = if (isRelease) "androidRelease" else "androidDebug"
 
-val copyArtifactsAndroidRelease = tasks.register<Copy>("copyLicenseeArtifactsAndroidRelease") {
-    from(project.layout.buildDirectory.dir("reports/licensee/androidRelease"))
+    from(project.layout.buildDirectory.dir("reports/licensee/$variantDir"))
     include("artifacts.json")
-    into("src/androidMainRelease/composeResources/files")
-    dependsOn(tasks.named("licenseeAndroidRelease"))
+    into("src/androidMain/composeResources/files")
+    dependsOn(tasks.named(licenseeTask))
 }
 afterEvaluate {
-    tasks.named("copyNonXmlValueResourcesForAndroidRelease").dependsOn(copyArtifactsAndroidRelease)
+    tasks.named("copyNonXmlValueResourcesForAndroidMain").dependsOn(copyLicenseeArtifactsAndroid)
 }
